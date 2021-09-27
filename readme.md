@@ -1,0 +1,3 @@
+NOTES for UCSD p-system Pascal:
+
+The University of California, San Diego has made the source code for the UCSD p-system version 1.5 available as a "free download" for non-commerical use.  Thus, to the extent that (and if) the licensing terms granted by the Univerity of California also apply to derivative works; then those terms will also apply to any subsequent port of UCSD p-system pascal to any relevant platform or architecture.  The user is therefore cautioned, so as to determine whether that users intended use of ANY derivative work therefrom is within the scope of the terms offered by the University of California.
