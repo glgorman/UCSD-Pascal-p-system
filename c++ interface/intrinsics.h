@@ -19,7 +19,7 @@ typedef char *TEXT;
 
 typedef	enum { CHAR1, CHARPTR1, DOUBLE1, FLOAT1, INT1, SIZE1 } PTYPE;
 
-class deug_param
+class debug_param
 {
 public:
 	PTYPE	m_type;
@@ -32,58 +32,76 @@ public:
 		int		i;
 		size_t	sz;
 	};
-	deug_param (char arg);
-	deug_param (char* arg);
-	deug_param (double arg);
-	deug_param (float arg);
-	deug_param (int arg);
-	deug_param (size_t arg);
+	debug_param (char arg);
+	debug_param (char* arg);
+	debug_param (double arg);
+	debug_param (float arg);
+	debug_param (int arg);
+	debug_param (size_t arg);
+};
+
+namespace SYSCOMM
+{
+	void LAUNCH_CONSOLE();
+	BOOL WINAPI ConsoleHandler(DWORD);
+	bool IORESULT(void);
+	void OPENNEW(struct _iobuf *,char *);
+	void OPENOLD(struct _iobuf *,char *);
+	void READ(int, char &);
+	int CLOSE(FILE*,bool lock=false);
+	int UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK=0, DWORD MODE=0);
+	int BLOCKWRITE(FILE* param1, const char *param2, int param3,int param4=0);
+	int BLOCKREAD(FILE* param1, char *param2, int param3,int param4=0);
+	void OutputDebugString (const char *str);
 };
 
 void _WRITE(int uid, size_t argc, ...);
 
-void WRITE(int uid, deug_param);
-void WRITE(int uid, deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,
-		   deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,
-		   deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,
-		   deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITE(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,
-		   deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
+void WRITE(int uid, const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+		   const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+		   const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+		   const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+		   const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
 
 void _WRITELN(int uid, size_t argc, ...);
 
 void WRITELN(int uid);
-void WRITELN(int uid, deug_param);
-void WRITELN(int uid, deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
-void WRITELN(int uid, deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param,deug_param);
+void WRITELN(int uid, const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+			 const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &
+			 ,const debug_param &,const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+			 const debug_param &,const debug_param &,const debug_param &);
+void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
+			 const debug_param &,const debug_param &,const debug_param &,const debug_param &);
 
-int SCAN(int,char,const char *);
+void IDSEARCH(int offset, char *(&a));
+
+int SCAN(int,char,const char *(a));
 void RELEASE(void*);
+
+float PWROFTEN(int i);
 int TRUNC(double);
 int ORD(const int &);
 bool ODD(const int &);
 int ROUND (double arg);
 void NEW(void *(&ptr), int sz);
-void READ(int, char &);
 void MARK(void*(&));
 void TIME(int &, int &);
-int CLOSE(FILE*,bool lock=false);
-int UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK=0, DWORD MODE=0);
-int BLOCKWRITE(FILE* param1, const char *param2, int param3,int param4=0);
-int BLOCKREAD(FILE* param1, char *param2, int param3,int param4=0);
 void MOVELEFT(const char*,char*,int);
 DWORD MEMAVAIL();
