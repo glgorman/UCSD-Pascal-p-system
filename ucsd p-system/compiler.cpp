@@ -2,19 +2,34 @@
 #include "stdafx.h"
 #include "compiler.h"
 
-int TREESEARCH(CTP&,CTP&,ALPHA&);
-
-int TREESEARCH(CTP& n1, CTP& n2, ALPHA &str)
+void PASCALCOMPILER::SOURCE_DUMP ()
 {
-	return 0;
+	char *buff;
+	int line;
+	line = 0;
+	if (m_source==NULL)
+	{
+		WRITELN(OUTPUT,"NULL source file");
+		return;
+	}
+	else if ((*m_source).size()==0)
+	{
+		WRITELN(OUTPUT,"Empty source file");
+		return;
+	}
+	else do
+	{
+		buff = (*m_source)[line];
+		WRITE(OUTPUT,buff);
+		line++;
+	}
+	while (buff!=NULL);
 }
 
 PASCALCOMPILER::PASCALCOMPILER(INFOREC &arg)
 {
 	USERINFO = arg;
-#ifdef HAS_CONSOLE
-	AllocConsole();
-#endif
+	SYSCOMM::LAUNCH_CONSOLE();
 }
 
 SEGMENT void USERPROGRAM()
@@ -205,9 +220,9 @@ void COMPINIT::ENTSTDNAMES()
 		CP = (IDENTIFIER*) new IDENTIFIER;
         CP->IDTYPE=m_ptr->BOOLPTR;
         if (I==0)
-			strcpy_s(CP->NAME,15,"false   ");
+			strcpy_s(CP->NAME,15,"FALSE   ");
 		else 
-			strcpy_s(CP->NAME,15,"true    ");
+			strcpy_s(CP->NAME,15,"TRUE    ");
 		CP->NEXT=CP1;
 		CP->VALUES.IVAL=I;
 		CP->KLASS=KONST;
@@ -333,7 +348,7 @@ void COMPINIT::ENTSPCPROCS()
 	strcpy_s(NA[34],15,"GET       ");
 	strcpy_s(NA[35],15,"PUT       ");
 	strcpy_s(NA[36],15,"SCAN      ");
-	strcpy_s(NA[37],15,"BLOCKREEAD");
+	strcpy_s(NA[37],15,"BLOCKREAD");
 	strcpy_s(NA[38],15,"BLOCKWRITE");
 	strcpy_s(NA[39],15,"TRUNC     ");
 	strcpy_s(NA[40],15,"PAGE      ");
@@ -346,7 +361,7 @@ void COMPINIT::ENTSPCPROCS()
 	{
 		if (m_ptr->TINY)
 			if (TSET.in(I))
-               goto fail;
+               continue;
 		ISFUNC= FSET.in(I);
 		LCP = (IDENTIFIER*) new IDENTIFIER;
 		LCP->PFDECKIND = SPECIAL;
@@ -359,7 +374,6 @@ void COMPINIT::ENTSPCPROCS()
 		else
 			LCP->KLASS=PROC1;
          m_ptr->ENTERID(LCP);
-fail:;
 	}
 } /*ENTSPCPROCS*/
 
@@ -485,6 +499,7 @@ void COMPINIT::ENTSTDPROCS()
 		LCP->NEXT=PARAM;
 		m_ptr->ENTERID(LCP);
 	}
+
 }
 /*ENTSTDPROCS*/ ;
 
@@ -542,7 +557,7 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->DEBUGGING=false;
 	 m_ptr->BPTONLINE=false;
 	 m_ptr->INMODULE=false;
-     m_ptr->gotoOK=false;
+     m_ptr->GOTOOK=false;
 	 m_ptr->RANGECHECK=true;
 	 m_ptr->SYSCOMP=false;
 	 m_ptr->TINY=false;
@@ -576,7 +591,7 @@ void COMPINIT::INITSETS()
 	m_ptr->SELECTSYS = SET((3),ARROW,PERIOD,LBRACK);	
 	m_ptr->FACBEGSYS = SET((8),INTCONST,REALCONST,LONGCONST,STRINGCONST,IDENT,
 		LPARENT,LBRACK,NOTSY);	
-	m_ptr->STATBEGSYS = SET((8),BEGINSY,gotoSY,IFSY,WHILESY,REPEATSY,FORSY,WITHSY,CASESY);	
+	m_ptr->STATBEGSYS = SET((8),BEGINSY,GOTOSY,IFSY,WHILESY,REPEATSY,FORSY,WITHSY,CASESY);	
 	m_ptr->VARS = SET((2),FORMALVARS,ACTUALVARS);
 } /*INITSETS*/ ;
 
@@ -609,6 +624,8 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	ENTUNDECL();
 	ENTSPCPROCS();
 	ENTSTDPROCS();
+	PRINTTREE(m_ptr->DISPLAY[0].FNAME);
+
 	if (m_ptr->SYSCOMP)
 	{
 		 m_ptr->OUTERBLOCK=NULL;
@@ -750,7 +767,7 @@ void PASCALCOMPILER::CERROR(int ERRORNUM)
 			{
 				ERRSTART=SCAN(
 					-(LINESTART.val-1),
-					char(EOL),&(*SYMBUFP[LINESTART.val-2])+ (size_t)(LINESTART.val)-1);
+					char(EOL),*(&(SYMBUFP[LINESTART.val-2])+ (size_t)(LINESTART.val)-1));
 
 				MOVELEFT(&(*SYMBUFP[ERRSTART]),&A[0],SYMCURSOR-ERRSTART);
 				WRITE(OUTPUT,A /*SYMCURSOR-ERRSTART*/ );
@@ -764,7 +781,7 @@ void PASCALCOMPILER::CERROR(int ERRORNUM)
 		}
 		do
 		{
-			READ(KEYBOARD,CH);
+			SYSCOMM::READ(KEYBOARD,CH);
 		}
 		while (!(CH==' ')||(CH=='E')
 			||(CH=='e')||(CH==USERINFO.ALTMODE));
@@ -781,7 +798,7 @@ void PASCALCOMPILER::CERROR(int ERRORNUM)
 		throw(this);
 #endif
 	};
-	WRITELN(OUTPUT,0);
+	WRITELN(OUTPUT);
 	if (NOISY)
 		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
 
@@ -795,12 +812,12 @@ void PASCALCOMPILER::GETNEXTPAGE()
 	{
 		if (USEFILE==WORKCODE)
 		{
-			if (BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK)!=2)
+			if (SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK)!=2)
 				USING=false;
 		}
 		else
 			if (USEFILE==SYSLIBRARY)
-				if (BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK)!=2)
+				if (SYSCOMM::BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK)!=2)
 					USING=false;
 		if (!USING)
 		{
@@ -812,9 +829,9 @@ void PASCALCOMPILER::GETNEXTPAGE()
 	if (!USING)
 	{
 		if (INCLUDING)
-			if (BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK)!=2)
+			if (SYSCOMM::BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK)!=2)
 			{
-				CLOSE((FILE*)(&INCLFILE));
+				SYSCOMM::CLOSE((FILE*)(&INCLFILE));
 				INCLUDING=false;
 				SYMBLK=OLDSYMBLK;
 				SYMCURSOR=OLDSYMCURSOR;
@@ -822,7 +839,7 @@ void PASCALCOMPILER::GETNEXTPAGE()
 			}
 	};
 	if (!(INCLUDING||USING))
-		if (BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK)!=2)
+		if (SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK)!=2)
 			CERROR(401);
 	if (SYMCURSOR==0)
 	{
@@ -848,8 +865,12 @@ void PASCALCOMPILER::PRINTLINE()
 
    if (BPTONLINE)
 	   STARORC='*';
-   WRITE(0,_LP._tmpfname,SCREENDOTS,6,SEG.val,4,CURPROC.val,5,
-             STARORC,DORLEV,LINEINFO,6," ");
+   WRITE(OUTPUT,_LP._tmpfname,SCREENDOTS/*6**/,
+	   SEG.val/*4*/,
+	   CURPROC.val,/*5,*/
+	   STARORC,
+	   DORLEV,
+	   LINEINFO/*,6*/," ");
 
    LENG=SYMCURSOR-LINESTART;
    if (LENG > 100)
@@ -871,9 +892,11 @@ void PASCALCOMPILER::PRINTLINE()
 
 void PASCALCOMPILER::ENTERID(CTP FCP)
 {
+#if 0
 	WRITELN(OUTPUT,"PASCALCOMPILER::ENTERID(CTP FCP)");
 	WRITELN(OUTPUT,"FCP->NAME = ",FCP->NAME);
-	
+#endif
+
 	CTP LCP,LCP1;
 	int I;
 	LCP=DISPLAY[TOP].FNAME;
@@ -896,13 +919,237 @@ void PASCALCOMPILER::ENTERID(CTP FCP)
 	};
 	FCP->LLINK=NULL;
 	FCP->RLINK=NULL;
+//	PRINTTREE(LCP);
 } /*ENTERID*/ ;
 
-
+#if 0
 void PASCALCOMPILER::INSYMBOL()
 {
 	WRITELN(OUTPUT,"PASCALCOMPILER::INSYMBOL()");
 }
+#endif
+
+void PASCALCOMPILER::INSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
+{
+	if (GETSTMTLEV)
+	{
+		BEGSTMTLEV=STMTLEV;
+		GETSTMTLEV=false;
+	};
+	OP=NOOP;
+retry:
+	SY=OTHERSY; /* if (NO CASES EXERCISED BLOW UP */
+	switch (*SYMBUFP[SYMCURSOR])
+	{
+	case (int)'"':
+		STRING();
+		break;
+
+	case (int)'0':
+	case (int)'1':
+	case (int)'2':
+	case (int)'3':
+	case (int)'4':
+	case (int)'5':
+	case (int)'6':
+	case (int)'7':
+	case (int)'8':
+	case (int)'9':
+		NUMBER();
+		break;
+
+	case (int)'A':
+	case 'B':
+	case 'C':
+	case 'D':
+	case 'E':
+	case 'F':
+	case 'G':
+	case 'H':
+	case 'I':
+	case 'J':
+	case 'K':
+	case 'L':
+	case 'M':
+	case 'N':
+	case 'O':
+	case 'P':
+	case 'Q':
+	case 'R':
+	case 'S':
+	case 'T':
+	case 'U':
+	case 'V':
+	case 'W':
+	case 'X':
+	case 'Y':
+	case 'Z':
+	case 'a':
+	case 'b':
+	case 'c':
+	case 'd':
+	case 'e':
+	case 'f':
+	case 'g':
+	case 'h':
+	case 'i':
+	case 'j':
+	case 'k':
+	case 'l':
+	case 'm':
+	case 'n':
+	case 'o':
+	case 'p':
+	case 'q':
+	case 'r':
+	case 's':
+	case 't':
+	case 'u':
+	case 'v':
+	case 'w':
+	case 'x':
+	case 'y':
+	case 'z':
+		IDSEARCH(SYMCURSOR,(char*&)(*SYMBUFP)); /* MAGIC PROC */
+		break;
+
+	case '}':
+		COMMENTER('}');
+		goto retry;
+		break;
+
+	case '(':
+		if (*SYMBUFP[SYMCURSOR+1]=='*')
+		{
+			SYMCURSOR=SYMCURSOR+1;
+			COMMENTER('*');
+			SYMCURSOR=SYMCURSOR+1;
+			goto retry; /* GET ANOTHER TOKEN */
+		}
+		else
+			SY=LPARENT;
+		break;
+
+	case ')':
+		SY=RPARENT;
+		break;
+		
+	case ',':
+		SY=COMMA;
+		break;
+
+	case ' ':
+		SYMCURSOR=SYMCURSOR+1;
+		goto retry;
+		break;
+	
+	case '.':
+		if (*SYMBUFP[SYMCURSOR+1]=='.')
+		{
+			SYMCURSOR=SYMCURSOR+1;
+			SY=COLON;
+		}
+		else
+			SY=PERIOD;
+		break;
+		
+	case ':':
+		if (*SYMBUFP[SYMCURSOR+1]=='=')
+		{
+			SYMCURSOR=SYMCURSOR+1;
+			SY=BECOMES;
+		}
+		else
+			SY=COLON;
+			break;
+
+		case ';':
+			SY=SEMICOLON;
+			break;
+
+		case '^':
+			SY=ARROW;
+			break;
+
+		case '[':
+			SY=LBRACK;
+			break;
+			
+		case ']':
+			SY=RBRACK;
+			break;
+
+		case '*':
+			SY=MULOP;
+			OP=MUL;
+			break;
+
+		case '+':
+			SY=ADDOP;
+			OP=PLUS;
+			break;
+
+		case '-':
+			SY=ADDOP;
+			OP=MINUS;
+			break;
+
+		case '/':
+			SY=MULOP;
+			OP=RDIV;
+			break;
+			
+		case '<':
+			SY=RELOP;
+			OP=LTOP;
+			switch (*SYMBUFP[SYMCURSOR+1])
+			{
+				case '>':
+					OP=NEOP;
+					SYMCURSOR=SYMCURSOR+1;
+					break;
+
+				case '==':
+					OP=LEOP;
+					SYMCURSOR=SYMCURSOR+1;
+					break;
+
+				default:
+					break;
+			}
+
+		case '=':
+			SY=RELOP;
+			OP=EQOP;
+			break;
+			
+		case '>':
+			SY=RELOP;
+			if (*SYMBUFP[SYMCURSOR+1]=='=')
+			{
+				OP=GEOP;
+				SYMCURSOR=SYMCURSOR+1;
+			}
+			else
+				OP=GTOP;
+			break;
+
+		default:
+			break;
+		
+		} /* switch (SYMBUFP^[SYMCURSOR]) */;
+
+		if (SY==OTHERSY)
+			if (*SYMBUFP[SYMCURSOR]==(char)(EOL))
+			{
+				CHECK();
+				GETSTMTLEV=true;
+				goto retry;
+			}
+			else
+				PASCALCOMPILER::CERROR(400);
+		SYMCURSOR=SYMCURSOR+1; /* NEXT CALL TALKS ABOUT NEXT TOKEN */
+} /*INSYMBOL*/
 
 void PASCALCOMPILER::SEARCHSECTION(CTP FCP, CTP &FCP1)
 {
@@ -918,6 +1165,7 @@ void PASCALCOMPILER::SEARCHSECTION(CTP FCP, CTP &FCP1)
 void PASCALCOMPILER::SEARCHID(SETOFIDS FIDCLS, CTP &FCP)
 {
 	CTP LCP;
+	WRITELN(OUTPUT,"PASCALCOMPILER::SEARCHID(SETOFIDS FIDCLS, CTP &FCP)");
 	for (DISX=TOP;DISX>0;DISX--)
 	{
 		LCP=DISPLAY[DISX].FNAME;
@@ -1248,7 +1496,7 @@ void PASCALCOMPILER::WRITETEXT()
 {
 	MOVELEFT(SYMBUFP[SYMCURSOR],CODEP[0],1024);
 	if (USERINFO.ERRNUM==0)
-       if (BLOCKWRITE(USERINFO.WORKCODE,*CODEP,2,CURBLK)!=2)
+       if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,2,CURBLK)!=2)
          CERROR(402);
      CURBLK=CURBLK+2;
 } /*WRITETEXT*/ ;
@@ -1269,7 +1517,7 @@ void PASCALCOMPILER::WRITECODE(bool FORCEBUF)
        if ((CURBYTE==512)||FORCEBUF)
 	   {
 		   if (USERINFO.ERRNUM==0)
-			   if (BLOCKWRITE(USERINFO.WORKCODE,*CODEP,CURBLK)!=1)
+			   if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,CURBLK)!=1)
 				CERROR(402);
            CURBLK=CURBLK+1;
 		   CURBYTE=0;
@@ -1476,13 +1724,13 @@ void PASCALCOMPILER::COMPILER_MAIN ()
 	USERINFO.ERRBLK=0;
 	TIME(LGTH,STARTDOTS);
 	LOWTIME=STARTDOTS-LOWTIME;
-	UNITWRITE(3,".......",7);
+	SYSCOMM::UNITWRITE(3,".......",7);
 	if (DLINKERINFO||CLINKERINFO)
 	{
 		SEGTABLE[(int)SEG].SEGKIND=1;
 		WRITELINKERINFO(true);
 	};
-	CLOSE(&_LP,LOCK);
+	SYSCOMM::CLOSE(&_LP,LOCK);
 	if (NOISY)
 		WRITELN(OUTPUT);
 	

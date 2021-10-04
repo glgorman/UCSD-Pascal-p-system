@@ -1,8 +1,11 @@
 
 #include "stdafx.h"
+#include <vector>
 #include "intrinsics.h"
 #include "range.h"
 #include "sets.h"
+
+using namespace std;
 
 #define SEGMENT /**/
 #define	DISPLIMIT	12
@@ -33,6 +36,16 @@
 #define MAXPROCNUM	149
 #define MAXDIRLEN	40
 
+typedef	DWORD BITRANGE;
+struct IDENTIFIER;
+typedef IDENTIFIER* CTP;
+struct STRUCTURE;
+typedef STRUCTURE*	STP;
+typedef char ALPHA[16];
+
+int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
+void PRINTTREE(const CTP &n1);
+
 class INFOREC
 {
 public:
@@ -61,7 +74,7 @@ typedef enum _SYMBOL
 	IDENT,COMMA,COLON,SEMICOLON,LPARENT,RPARENT,DOSY,TOSY,
 	DOWNTOSY,ENDSY,UNTILSY,OFSY,THENSY,ELSESY,BECOMES,LBRACK,
 	RBRACK,ARROW,PERIOD,BEGINSY,IFSY,CASESY,REPEATSY,WHILESY,
-	FORSY,WITHSY,gotoSY,LABELSY,CONSTSY,TYPESY,VARSY,PROCSY,
+	FORSY,WITHSY,GOTOSY,LABELSY,CONSTSY,TYPESY,VARSY,PROCSY,
 	FUNCSY,PROGSY,FORWARDSY,INTCONST,REALCONST,STRINGCONST,
 	NOTSY,MULOP,ADDOP,RELOP,SETSY,PACKEDSY,ARRAYSY,RECORDSY,
 	FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
@@ -99,8 +112,10 @@ typedef CONSTREC*	CSP;
 struct CONSTREC
 {
 	CSTCLASS	CCLASS;
+	int	 LLENG,LLAST;
 	union
 	{
+		char	SLGTH;
 		int		LONG;
 		int		*LONGVAL;
 //		int		TRIX[8];
@@ -151,13 +166,6 @@ typedef enum  _DECLKIND
 	SPECIAL,
 } DECLKIND;
 
-typedef	DWORD BITRANGE;
-typedef char ALPHA[16];
-struct IDENTIFIER;
-typedef IDENTIFIER* CTP;
-
-struct STRUCTURE;
-typedef STRUCTURE*	STP;
 struct STRUCTURE
 {
 	ADDRRANGE	SIZE;
@@ -444,31 +452,26 @@ struct LEXSTKREC
 class PASCALCOMPILER;
 void WRITELINKERINFO(bool DECSTUFF);
 
-class COMPINIT
+
+
+namespace INSYMBOL
 {
-protected:
-	PASCALCOMPILER	*m_ptr;
+	void INSYMBOL();
+	void CHECK();
+	void STRING();
+	void NUMBER();
 
-protected:
-	void ENTSTDTYPES();
-	void ENTSTDNAMES();
-	void ENTUNDECL();
-	void ENTSPCPROCS();
-	void ENTSTDPROCS();
-	void INITSCALARS();
-	void INITSETS();
-
-public:
-	void INIT(PASCALCOMPILER*);
+namespace COMMENTER
+{
+	void COMMENTER(char STOPPER);
+	void SCANSTRING(char *STRG, int MAXLENG);
+};
 };
 
-class PASCALCOMPILER
+class COMPILERDATA
 {
-friend class COMPINIT;
-
 protected:
-	/*	PASCALCOMPILER member variables */
-
+/*	PASCALCOMPILER member variables */
 	INFOREC		USERINFO;
 	CODEARRAY	*CODEP;			/*CODE BUFFER while (! WRITEOUT*/
 	SYMBUFARRAY	*SYMBUFP;		/*SYMBOLIC BUFFER...ASCII||CODED*/
@@ -486,12 +489,13 @@ protected:
 	OPERATOR	OP;				/*CLASSif (ICATION) LAST SYMBOL*/
 	ALPHA		ID;				/*LAST IDENTif (IER FOUND*/			
     VALU		VAL;			/*VALUE THEN LAST CONSTANT*/
+	int			LGTH;
 	DISPRANGE	DISX;			/*LEVEL THEN LAST ID SEARCHED*/
 	ADDRRANGE	LCMAX;			/*TEMPORARIES LOCATION COUNTER*/
 
 /*SWITCHES:*/
 
-	bool	PRTERR,gotoOK,RANGECHECK,DEBUGGING;
+	bool	PRTERR,GOTOOK,RANGECHECK,DEBUGGING;
     bool	NOISY,CODEINSEG,IOCHECK,BPTONLINE;
     bool	CLINKERINFO,DLINKERINFO,LIST,TINY,LSEPPROC;
     bool	DP,INCLUDING,USING,NOSWAP,SEPPROC;
@@ -564,6 +568,39 @@ protected:
     FILE		_LP;
 	int			CURBYTE, CURBLK;
     char		DISKBUF[512];
+};
+
+class COMPINIT
+{
+protected:
+	PASCALCOMPILER	*m_ptr;
+
+protected:
+	void ENTSTDTYPES();
+	void ENTSTDNAMES();
+	void ENTUNDECL();
+	void ENTSPCPROCS();
+	void ENTSTDPROCS();
+	void INITSCALARS();
+	void INITSETS();
+
+public:
+	void INIT(PASCALCOMPILER*);
+};
+
+class PASCALCOMPILER: public COMPILERDATA
+{
+friend class COMPINIT;
+
+protected:
+	// from INSYMBOL
+	void CHECK();
+	void STRING();
+	void NUMBER();
+	// from commenter
+	void COMMENTER(char STOPPER);
+	void SCANSTRING(char *STRG, int MAXLENG, char);
+
 
 protected:
 	void COMPINIT();
@@ -596,4 +633,8 @@ public:
 	PASCALCOMPILER(INFOREC &);
 	void COMPILER_MAIN ();
 	void CERROR(int ERRORNUM);
+
+public:
+	vector<char*>	*m_source;
+	void SOURCE_DUMP ();
 };
