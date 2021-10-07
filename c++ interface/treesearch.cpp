@@ -1,10 +1,68 @@
 
 #include "stdafx.h"
+#include "afxmt.h"
+#include <iostream>
+#include "../Frame Lisp/defines.h"
+#include "../Frame Lisp/symbol_table.h"
+#include "../Frame Lisp/btreetype.h"
+#include "../Frame Lisp/node_list.h"
+#include "../Frame Lisp/text_object.h"
+#include "../Frame Lisp/scripts.h"
+#include "../Frame Lisp/frames.h"
+#include "../Frame Lisp/frames1.h"
+#include "../Frame Lisp/extras.h"
 #include "compiler.h"
 
-void IDSEARCH(int,char * &)
+namespace SEARCH
 {
+	char *keywords[] = 
+	{
+		"DO","WITH","IN","TO","GOTO","SET","DOWNTO","LABEL",
+		"PACKED","END","CONST","ARRAY","UNTIL","TYPE","RECORD",
+		"OF","VAR","FILE","THEN","PROCSY","PROCEDURE","USES",
+		"ELSE","FUNCTION","UNIT","BEGIN","PROGRAM","INTERFACE",
+		"IF","SEGMENT","IMPLEMENTATION","CASE","FORWARD","EXTERNAL",
+		"REPEAT","NOT","OTHERWISE","WHILE","AND","DIV","MOD",
+		"FOR","OR",
+	};
+	frame m_pFrame;
+	symbol_table *m_keywords;
+	void RESET_SYMBOLS();
+	void IDSEARCH(int &pos, char *&str);
+};
 
+void SEARCH::RESET_SYMBOLS()
+{
+	frame &f = SEARCH::m_pFrame;
+	symbol_table *t=NULL;
+	t = f.cons(keywords)->sort();
+ 	m_keywords = t;
+}
+
+void SEARCH::IDSEARCH(int &pos, char *&str)
+{
+	char buf[32];
+	SEARCH::RESET_SYMBOLS();
+	symbol_table &T = *SEARCH::m_keywords;
+	size_t i, len, sz;
+	sz = T.size();
+	token *t;
+	pos = -1;
+	for (i=0;i<sz;i++)
+	{
+		t = &T[(int)i];
+		len = strlen(t->ascii);
+		memcpy(buf,str,len);
+		buf[len]=0;
+		if (strcmp(buf,t->ascii)==0)
+		{
+			pos=(int)i;
+//			PASCALCOMPILER::SY;
+//			PASCALCOMPILER::OP;
+//			PASCALCOMPILER::ID;
+			break;
+		}
+	}
 }
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)

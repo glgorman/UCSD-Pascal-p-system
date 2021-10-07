@@ -1,8 +1,19 @@
 
 #include "stdafx.h"
+#include <vector>
 #include "intrinsics.h"
 
+#define PAGESZ (4096)
 #define	BLOCKSIZE	(512)
+
+namespace SYSCOMM
+{
+using namespace std;
+	vector<char*>::iterator m_pos;
+	vector<char*>::iterator m_end;
+	vector<char*> *m_source;
+};
+
 
 // 16MB sounds good for now
 // TODO make something reasonable
@@ -38,10 +49,19 @@ void MOVELEFT(char const *src, char *dest, int count)
 	memcpy(dest,src,count);
 }
 
-int SCAN(int,char,const char *)
+int SCAN(int max,char ch, const char *str)
 {
-	ASSERT(false);
-	return 0;
+	int i;
+	int pos = -1;
+	for (i=0;i<max;i++)
+	{
+		if (str[i]==ch)
+		{
+			pos=i;
+			break;
+		}
+	}
+	return pos;
 }
 
 int ROUND (double arg)
@@ -259,42 +279,42 @@ void WRITELN(int uid, const debug_param &w1, const debug_param &w2, const debug_
 
 void _WRITE(int uid, size_t sz,...)
 {
-	char buffer1[256];
-	char buffer2[256];
+	char buffer1[PAGESZ];
+	char buffer2[PAGESZ];
 	const debug_param *val;
 	unsigned int i;
 	va_list vl;
 	va_start(vl,sz);
 	i=0;
-	memset(buffer1,0,256);
-	memset(buffer2,0,256);
+	memset(buffer1,0,PAGESZ);
+	memset(buffer2,0,PAGESZ);
 	while(i<sz)
 	{
 		val=va_arg(vl,const debug_param *);
 		switch (val->m_type)
 		{
 		case CHAR1:
-			sprintf_s(buffer1,256,"%c",val->ch);
+			sprintf_s(buffer1,PAGESZ,"%c",val->ch);
 			break;
 		case CHARPTR1:
-			sprintf_s(buffer1,256,"%s",val->str);
+			sprintf_s(buffer1,PAGESZ,"%s",val->str);
 			break;
 		case DOUBLE1:
-			sprintf_s(buffer1,256,"%lf",val->d);
+			sprintf_s(buffer1,PAGESZ,"%lf",val->d);
 			break;
 		case FLOAT1:
-			sprintf_s(buffer1,256,"%f",val->f);
+			sprintf_s(buffer1,PAGESZ,"%f",val->f);
 			break;
 		case INT1:
-			sprintf_s(buffer1,256,"%d",val->i);
+			sprintf_s(buffer1,PAGESZ,"%d",val->i);
 			break;
 		case SIZE1:
-			sprintf_s(buffer1,256,"%s"," ");
+			sprintf_s(buffer1,PAGESZ,"%s"," ");
 			break;
 		default:
 			break;
 		}
-		strcat_s(buffer2,256,buffer1);
+		strcat_s(buffer2,PAGESZ,buffer1);
 		i++;
 	}
 	SYSCOMM::OutputDebugString(buffer2);
@@ -303,45 +323,45 @@ void _WRITE(int uid, size_t sz,...)
 
 void _WRITELN(int uid, size_t sz,...)
 {
-	char buffer1[256];
-	char buffer2[256];
+	char buffer1[PAGESZ];
+	char buffer2[PAGESZ];
 	const debug_param *val;
 	unsigned int i;
 	va_list vl;
 	va_start(vl,sz);
 	i=0;
-	memset(buffer1,0,256);
-	memset(buffer2,0,256);
+	memset(buffer1,0,PAGESZ);
+	memset(buffer2,0,PAGESZ);
 	while(i<sz)
 	{
 		val=va_arg(vl,const debug_param *);
 		switch (val->m_type)
 		{
 		case CHAR1:
-			sprintf_s(buffer1,256,"%c",val->ch);
+			sprintf_s(buffer1,PAGESZ,"%c",val->ch);
 			break;
 		case CHARPTR1:
-			sprintf_s(buffer1,256,"%s",val->str);
+			sprintf_s(buffer1,PAGESZ,"%s",val->str);
 			break;
 		case DOUBLE1:
-			sprintf_s(buffer1,256,"%lf",val->d);
+			sprintf_s(buffer1,PAGESZ,"%lf",val->d);
 			break;
 		case FLOAT1:
-			sprintf_s(buffer1,256,"%f",val->f);
+			sprintf_s(buffer1,PAGESZ,"%f",val->f);
 			break;
 		case INT1:
-			sprintf_s(buffer1,256,"%d",val->i);
+			sprintf_s(buffer1,PAGESZ,"%d",val->i);
 			break;
 		case SIZE1:
-			sprintf_s(buffer1,256,"%s"," ");
+			sprintf_s(buffer1,PAGESZ,"%s"," ");
 			break;
 		default:
 			break;
 		}
-		strcat_s(buffer2,256,buffer1);
+		strcat_s(buffer2,PAGESZ,buffer1);
 		i++;
 	}
-	strcat_s(buffer2,256,"\n");
+	strcat_s(buffer2,PAGESZ,"\n");
 	SYSCOMM::OutputDebugString(buffer2);
 	va_end(vl);
 }
@@ -356,7 +376,9 @@ void SYSCOMM::LAUNCH_CONSOLE()
 
 BOOL WINAPI SYSCOMM::ConsoleHandler(DWORD dwEvent)
 {
-	Beep(262,300); 
+#if 0
+	Beep(262,300);
+#endif
 	if (dwEvent==CTRL_CLOSE_EVENT)
 		return true;
 	else
@@ -395,7 +417,7 @@ void SYSCOMM::OutputDebugString (const char *str)
 
 int SYSCOMM::CLOSE(FILE *f,bool)
 {
- 	ASSERT(0);
+// 	ASSERT(0);
 	return 0;
 }
 
@@ -406,7 +428,7 @@ void SYSCOMM::READ(int id, char &a)
 
 void SYSCOMM::OPENNEW(struct _iobuf *,char *)
 {
-
+	m_pos = (*m_source).begin();
 }
 
 bool SYSCOMM::IORESULT(void)
@@ -416,7 +438,7 @@ bool SYSCOMM::IORESULT(void)
 
 void SYSCOMM::OPENOLD(struct _iobuf *,char *)
 {
-
+	m_pos = (*m_source).begin();
 }
 
 int SYSCOMM::UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK, DWORD MODE)
@@ -435,12 +457,38 @@ int SYSCOMM::UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK, DWOR
 	return result;
 }
 
-int SYSCOMM::BLOCKREAD(FILE* file, char *buf, int blocks, int offset)
+// a pascal block is 512 bytes, but an Apple II
+// sector is 256 bytes.  m_source is based on
+// 256 byte sector style granularity.
+
+void SYSCOMM::BLOCKREAD(FILE* file, char *buf, int blocks, int &read)
 {
-	int result;
+	char *block;
+	read = 0;
+	int i;
+	int j;
+	int result = 0;
+	vector<char*>::iterator &iter = m_pos;
+//	iter= (*m_source).begin();
 	memset(buf,0,BLOCKSIZE);
-	result = -1;
-	return result;
+	for (i=0;i<blocks;i++)
+	{
+		for (j=0;j<2;j++)
+		{
+			block = (*iter++);
+			if (block==0)
+				break;
+			memcpy(&(buf[BLOCKSIZE*i+(256*j)]),block,256);
+			buf[BLOCKSIZE*i+256*(j+1)]=0;
+		}
+		if (block!=0)
+			result++;
+	}
+#if 0
+	WRITELN(OUTPUT,"SYSCOMM::BLOCKREAD(FILE*, char*, int, &int)");
+	WRITELN(OUTPUT,"BLOCK ",read,"\n\"",buf,"\"");
+#endif
+	read = result;
 }
 
 int SYSCOMM::BLOCKWRITE(FILE* file, const char *buf, int blocks, int offset)

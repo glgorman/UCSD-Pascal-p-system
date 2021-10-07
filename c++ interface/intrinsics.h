@@ -51,7 +51,7 @@ namespace SYSCOMM
 	int CLOSE(FILE*,bool lock=false);
 	int UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK=0, DWORD MODE=0);
 	int BLOCKWRITE(FILE* param1, const char *param2, int param3,int param4=0);
-	int BLOCKREAD(FILE* param1, char *param2, int param3,int param4=0);
+	void BLOCKREAD(FILE* param1, char *param2, int param3,int &param4);
 	void OutputDebugString (const char *str);
 };
 
@@ -90,7 +90,10 @@ void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param 
 void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
 			 const debug_param &,const debug_param &,const debug_param &,const debug_param &);
 
-void IDSEARCH(int offset, char *(&a));
+namespace SEARCH
+{
+	void IDSEARCH(int &offset, char *(&a));
+};
 
 int SCAN(int,char,const char *(a));
 void RELEASE(void*);
