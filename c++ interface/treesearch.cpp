@@ -13,6 +13,88 @@
 #include "../Frame Lisp/extras.h"
 #include "compiler.h"
 
+
+/* 
+// DEFINED IN COMPILER.H
+
+typedef enum _SYMBOL
+{
+	IDENT,COMMA,COLON,SEMICOLON,LPARENT,RPARENT,DOSY,TOSY,
+	DOWNTOSY,ENDSY,UNTILSY,OFSY,THENSY,ELSESY,BECOMES,LBRACK,
+	RBRACK,ARROW,PERIOD,BEGINSY,IFSY,CASESY,REPEATSY,WHILESY,
+	FORSY,WITHSY,GOTOSY,LABELSY,CONSTSY,TYPESY,VARSY,PROCSY,
+	FUNCSY,PROGSY,FORWARDSY,INTCONST,REALCONST,STRINGCONST,
+	NOTSY,MULOP,ADDOP,RELOP,SETSY,PACKEDSY,ARRAYSY,RECORDSY,
+	FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
+	EXTERNLSY,SEPARATSY,MAXSYMBOL
+}	SYMBOL;
+
+typedef enum _OPERATOR
+{
+	MUL,RDIV,ANDOP,IDIV,IMOD,PLUS,MINUS,OROP,LTOP,LEOP,
+	GEOP,GTOP,NEOP,EQOP,INOP,NOOP,MAXOPERATOR,
+} OPERATOR;	
+*/
+struct key_info
+{
+	ALPHA		ID;
+	SYMBOL		SY;
+	OPERATOR	OP;
+	key_info() { };
+	key_info(char *STR, SYMBOL _SY, OPERATOR _OP)
+	{
+		strcpy_s(ID,16,STR);
+		SY = _SY;
+		OP = _OP;
+	}
+};
+
+key_info key_map[] =
+{
+	key_info("DO",DOSY,NOOP),
+	key_info("WITH",WITHSY,NOOP),
+	key_info("IN",SETSY,INOP),
+	key_info("TO",TOSY,NOOP),
+	key_info("SET",SETSY,NOOP),
+	key_info("DOWNTO",DOWNTOSY,NOOP),
+	key_info("LABEL",LABELSY,NOOP),
+	key_info("PACKED",PACKEDSY,NOOP),
+	key_info("END",ENDSY,NOOP),
+	key_info("CONST",CONSTSY,NOOP),
+	key_info("ARRAY",ARRAYSY,NOOP),
+	key_info("UNTIL",UNTILSY,NOOP),
+	key_info("TYPE",TYPESY,NOOP),
+	key_info("RECORD",RECORDSY,NOOP),
+	key_info("OF",OFSY,NOOP),
+	key_info("VAR",VARSY,NOOP),
+	key_info("FILE",FILESY,NOOP),
+	key_info("THEN",THENSY,NOOP),
+	key_info("PROCSY",PROCSY,NOOP),
+	key_info("PROCEDURE",PROCSY,NOOP),
+	key_info("USES",USESSY,NOOP),
+	key_info("ELSE",ELSESY,NOOP),
+	key_info("FUNCTION",FUNCSY,NOOP),
+	key_info("UNIT",UNITSY,NOOP),
+	key_info("BEGIN",BEGINSY,NOOP),
+	key_info("PROGRAM",PROGSY,NOOP),
+	key_info("INTERFACE",INTERSY,NOOP),
+	key_info("IF",IFSY,NOOP),
+	key_info("SEGMENT",SEPARATSY,NOOP),
+	key_info("IMPLEMENTATION",IMPLESY,NOOP),
+	key_info("CASE",CASESY,NOOP),
+	key_info("FORWARD",FORWARDSY,NOOP),
+	key_info("EXTERNAL",EXTERNLSY,NOOP),
+	key_info("REPEAT",REPEATSY,NOOP),
+	key_info("NOT",NOTSY,NOOP),
+	key_info("OTHERWISE",OTHERSY,NOOP),
+	key_info("WHILE",WHILESY,NOOP),
+	key_info("AND",RELOP,ANDOP),
+	key_info("DIV",MULOP,IDIV),
+	key_info("MOD",MULOP,IMOD),
+	key_info("FOR",FORSY,NOOP),
+	key_info("OR",RELOP,OROP),
+};
+
 namespace SEARCH
 {
 	char *keywords[] = 
@@ -29,6 +111,7 @@ namespace SEARCH
 	symbol_table *m_keywords;
 	void RESET_SYMBOLS();
 	void IDSEARCH(int &pos, char *&str);
+//	SYMBOL SY(token *t);
 };
 
 void SEARCH::RESET_SYMBOLS()
@@ -41,6 +124,8 @@ void SEARCH::RESET_SYMBOLS()
 
 void SEARCH::IDSEARCH(int &pos, char *&str)
 {
+	key_info result;
+	key_info *kp = key_map;
 	char buf[32];
 	SEARCH::RESET_SYMBOLS();
 	symbol_table &T = *SEARCH::m_keywords;
@@ -57,9 +142,8 @@ void SEARCH::IDSEARCH(int &pos, char *&str)
 		if (strcmp(buf,t->ascii)==0)
 		{
 			pos=(int)i;
-//			PASCALCOMPILER::SY;
-//			PASCALCOMPILER::OP;
-//			PASCALCOMPILER::ID;
+			strcpy_s(result.ID,16,t->ascii);
+//			result.SY = SEARCH::SY(t);
 			break;
 		}
 	}
