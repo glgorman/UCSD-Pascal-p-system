@@ -13,6 +13,17 @@
 #include "../Frame Lisp/extras.h"
 #include "compiler.h"
 
+namespace chartype
+{
+	SET digits(10,'0','1','2','3','4','5','6','7','8','9');
+	SET whitespace(3,' ','\t','\n');
+	SET alpha(52,'A','B','C','D','E','F','G','H','I','J','K','L','M',
+		'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
+		'a','b','c','d','e','f','g','h','i','j','k','l','m',
+		'n','o','p','q','r','s','t','u','v','w','x','y','z');
+	SET punct1(10,'.',',',':','\'','(',')','{','}','[',']');
+	SET operat(11,'+','-','*','/','%','|','~','=','&','>','<');
+}
 
 /* 
 // DEFINED IN COMPILER.H
@@ -97,6 +108,11 @@ key_info key_map[] =
 
 namespace SEARCH
 {
+	char *operators[] = 
+	{
+		"~","!","%","&","&&","|","||","*","-","+","/",
+		"<>",">=","<=","==",
+	};
 	char *keywords[] = 
 	{
 		"DO","WITH","IN","TO","GOTO","SET","DOWNTO","LABEL",
@@ -116,6 +132,9 @@ namespace SEARCH
 
 void SEARCH::RESET_SYMBOLS()
 {
+	bool test1,test2;
+	test1 = chartype::alpha.in('B');
+	test2 = chartype::alpha.in('$');
 	frame &f = SEARCH::m_pFrame;
 	symbol_table *t=NULL;
 	t = f.cons(keywords)->sort();
