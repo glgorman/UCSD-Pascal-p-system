@@ -1,9 +1,9 @@
 
 #include "stdafx.h"
 #include <vector>
-#include "intrinsics.h"
-#include "range.h"
-#include "sets.h"
+#include "../Frame Lisp/intrinsics.h"
+#include "../Frame Lisp/range.h"
+#include "../Frame Lisp/sets.h"
 
 using namespace std;
 
@@ -90,10 +90,10 @@ typedef enum _OPERATOR
 /* set of symbols */
 
 
-typedef enum  NONRESIDENT
+typedef enum  _NONRESIDENT_
 {
 	SEEK,FREADREAL,FWRITEREAL,FREADDEC,FWRITEDEC,DECOPS,MAXNONRESIDENT
-};
+} NONRESIDENT;
 
 typedef	int NONRESPFLIST[MAXNONRESIDENT];
 
@@ -306,7 +306,7 @@ struct IDENTIFIER
 							bool		INSCOPE;
 						};
 					};
-					int			MODULE;
+					int			SEGID;//MODULE;
 				};
 			};
 		};};
@@ -393,11 +393,11 @@ struct USERLABEL
 
 struct _REFVALUE_
 {
-	int KEY;
-	int OFFSET;
+	short KEY;
+	short OFFSET;
 };
-typedef _REFVALUE_ REFARRAY[REFSPERBLK+1];
 
+typedef _REFVALUE_ REFARRAY[REFSPERBLK+1];
 typedef char CODEARRAY[MAXCODE+1];
 typedef char SYMBUFARRAY[MAXCURSOR+1];
 typedef enum _UNITFILE
@@ -418,6 +418,7 @@ struct SEGDATA
 struct DISPLAYDATA
 {
 	CTP	FNAME;
+	WHERE	OCCUR;
 	union //(OCCUR: WHERE)
 	{
 		struct //_BLCK
@@ -451,8 +452,6 @@ struct LEXSTKREC
 
 class PASCALCOMPILER;
 void WRITELINKERINFO(bool DECSTUFF);
-
-
 
 namespace INSYMBOL
 {
@@ -554,9 +553,15 @@ protected:
 	JTABRANGE	NEXTJTAB;
 	int JTAB[MAXJTAB];
 
+	
+
+// bodypart
+public:
 	FILE	REFFILE;
     int NREFS,REFBLK;
 	REFARRAY	*REFLIST;
+
+protected:
     int			OLDSYMBLK;
 	int			PREVSYMBLK;
     CURSRANGE	OLDSYMCURSOR;
@@ -630,11 +635,11 @@ protected:
 	void FINDFORW(CTP FCP);
 	
 public:
+	PASCALCOMPILER();
 	PASCALCOMPILER(INFOREC &);
 	void COMPILER_MAIN ();
 	void CERROR(int ERRORNUM);
 
 public:
-	vector<char*>	*m_source;
 	void SOURCE_DUMP ();
 };
