@@ -40,10 +40,23 @@ public:
 	debug_param (size_t arg);
 };
 
+namespace SEARCH
+{
+	void RESET_SYMBOLS();
+	void IDSEARCH(int &offset, char *(&a));
+};
+
 namespace SYSCOMM
 {
+using namespace std;
+	extern vector<char*>::iterator m_pos;
+	extern vector<char*>::iterator m_end;
+	extern vector<char*> *m_source;
+
 	void LAUNCH_CONSOLE();
+	void REWRITE(FILE*,char*);
 	BOOL WINAPI ConsoleHandler(DWORD);
+	void RESET(FILE*);
 	bool IORESULT(void);
 	void OPENNEW(struct _iobuf *,char *);
 	void OPENOLD(struct _iobuf *,char *);
@@ -90,10 +103,6 @@ void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param 
 void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
 			 const debug_param &,const debug_param &,const debug_param &,const debug_param &);
 
-namespace SEARCH
-{
-	void IDSEARCH(int &offset, char *(&a));
-};
 
 int SCAN(int,char,const char *(a));
 void RELEASE(void*);

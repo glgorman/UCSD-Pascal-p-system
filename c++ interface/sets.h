@@ -8,6 +8,7 @@
 //	UCSD Pascal style implementation of sets	
 //	but written in C++!
 //
+//////////////////////////////////////////////////////
 
 class SET 
 {
@@ -25,6 +26,15 @@ public:
 	SET();
 	SET(int,...);
 };
+
+namespace chartype
+{
+	extern SET digits;
+	extern	SET whitespace;
+	extern	SET alpha;
+	extern	SET punct1;
+	extern	SET operat;
+}
 
 class SETOFSYS: public SET 
 {
