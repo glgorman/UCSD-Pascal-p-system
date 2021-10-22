@@ -62,6 +62,17 @@ SET &SET::operator - (const SET &x)
 	return (*this);
 }
 
+int SET::count()
+{
+	int i, j;
+	int result=0;
+	for (i=0;i<SETSZ;i++)
+	for (j=0;j<32;j++)
+		if (bits[i]&(0x1<<j))
+			result++;
+	return result;
+}
+
 bool SET::in(int s)
 {
 	bool result;

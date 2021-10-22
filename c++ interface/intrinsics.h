@@ -17,9 +17,9 @@ typedef char *TEXT;
 //#define WRITE(DEVICE,COUNT,...) _WRITE(DEVICE,COUNT, __VA_ARGS__)
 //#define WRITELN(DEVICE,COUNT,...) _WRITELN(DEVICE,COUNT, __VA_ARGS__)
 
-typedef	enum { CHAR1, CHARPTR1, DOUBLE1, FLOAT1, INT1, SIZE1 } PTYPE;
+typedef	enum { DWORD1, CHAR1, CHARPTR1, DOUBLE1, FLOAT1, INT1, SIZE1 } PTYPE;
 
-class debug_param
+class s_param
 {
 public:
 	PTYPE	m_type;
@@ -32,12 +32,13 @@ public:
 		int		i;
 		size_t	sz;
 	};
-	debug_param (char arg);
-	debug_param (char* arg);
-	debug_param (double arg);
-	debug_param (float arg);
-	debug_param (int arg);
-	debug_param (size_t arg);
+	s_param (DWORD arg);
+	s_param (char arg);
+	s_param (char* arg);
+	s_param (double arg);
+	s_param (float arg);
+	s_param (int arg);
+	s_param (size_t arg);
 };
 
 namespace SEARCH
@@ -56,7 +57,7 @@ using namespace std;
 	void LAUNCH_CONSOLE();
 	void REWRITE(FILE*,char*);
 	BOOL WINAPI ConsoleHandler(DWORD);
-	void RESET(FILE*);
+	void RESET(FILE*,char*);
 	bool IORESULT(void);
 	void OPENNEW(struct _iobuf *,char *);
 	void OPENOLD(struct _iobuf *,char *);
@@ -70,38 +71,38 @@ using namespace std;
 
 void _WRITE(int uid, size_t argc, ...);
 
-void WRITE(int uid, const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-		   const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-		   const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-		   const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-		   const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITE(int uid, const s_param &);
+void WRITE(int uid, const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,
+		   const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,
+		   const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,
+		   const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,
+		   const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
 
 void _WRITELN(int uid, size_t argc, ...);
 
 void WRITELN(int uid);
-void WRITELN(int uid, const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-			 const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &
-			 ,const debug_param &,const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-			 const debug_param &,const debug_param &,const debug_param &);
-void WRITELN(int uid, const debug_param &,const debug_param &,const debug_param &,const debug_param &,
-			 const debug_param &,const debug_param &,const debug_param &,const debug_param &);
+void WRITELN(int uid, const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &,const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &,const s_param &,
+			 const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &,const s_param &
+			 ,const s_param &,const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &,const s_param &,
+			 const s_param &,const s_param &,const s_param &);
+void WRITELN(int uid, const s_param &,const s_param &,const s_param &,const s_param &,
+			 const s_param &,const s_param &,const s_param &,const s_param &);
 
 
 int SCAN(int,char,const char *(a));

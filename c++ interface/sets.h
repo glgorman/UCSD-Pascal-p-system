@@ -19,6 +19,7 @@ protected:
 
 public:
 	bool in(int s);
+	int count();
 	virtual SET &UNION(const SET&);
 	virtual SET &INTERSECT(const SET&);
 	virtual SET &operator + (const SET &);
