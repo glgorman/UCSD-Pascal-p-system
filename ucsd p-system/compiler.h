@@ -278,8 +278,9 @@ struct IDENTIFIER
 			{
 				ADDRRANGE	FLDADDR;
 				bool		FISPACKED;
+				BITRANGE	FLDRBIT,FLDWIDTH;
 			};
-			struct
+			struct  /*PROC FUNC*/
 			{
 				DECLKIND	PFDECKIND;
 				union
@@ -297,13 +298,14 @@ struct IDENTIFIER
 						LEVRANGE	PFLEV;
 						PROCRANGE	PFNAME;
 						SEGRANGE	PFSEG;
+						IDKIND		PFKIND;
 						union
 						{
 							ADDRRANGE	LOCALLC;
-							IDKIND		PFKIND;
 							bool		FORWDECL;
 							bool		EXTURNAL;
 							bool		INSCOPE;
+							bool		IMPORTED;
 						};
 					};
 					int			SEGID;//MODULE;
@@ -467,7 +469,7 @@ namespace COMMENTER
 };
 };
 
-class COMPILERDATA
+class PASCALDATA1
 {
 protected:
 /*	PASCALCOMPILER member variables */
@@ -476,7 +478,7 @@ protected:
 	SYMBUFARRAY	*SYMBUFP;		/*SYMBOLIC BUFFER...ASCII||CODED*/
     ATTR		GATTR;			/*DESCRIBES CURRENT EXPRESSION*/
 	DISPRANGE	TOP;			/*TOP) DISPLAY*/
-    ADDRRANGE	LC,IC;			/*LOCATION&& INSTRUCT COUNTERS*/
+    ADDRRANGE	LC,IC;			/*LOCATION&&INSTRUCT COUNTERS*/
 	bool		TEST;
     SEGRANGE	SEG;			/*CURRENT SEGMENT NO.*/
 
@@ -553,8 +555,6 @@ protected:
 	JTABRANGE	NEXTJTAB;
 	int JTAB[MAXJTAB];
 
-	
-
 // bodypart
 public:
 	FILE	REFFILE;
@@ -575,6 +575,25 @@ protected:
     char		DISKBUF[512];
 };
 
+class PASCALDATA0: public PASCALDATA1
+{
+private:
+	// from INSYMBOL
+	void CHECK();
+	void STRING();
+	void NUMBER();
+	// from commenter
+	void COMMENTER(char STOPPER);
+	void SCANSTRING(char *STRG, int MAXLENG, char);
+	
+protected:
+	void INSYMBOL();
+	void GETNEXTPAGE();
+	void PRINTLINE();
+	void WRITETEXT();
+	void CERROR(int ERRORNUM);
+};
+
 class COMPINIT
 {
 protected:
@@ -593,30 +612,16 @@ public:
 	void INIT(PASCALCOMPILER*);
 };
 
-class PASCALCOMPILER: public COMPILERDATA
+class PASCALCOMPILER: public virtual PASCALDATA0
 {
 friend class COMPINIT;
-
-protected:
-	// from INSYMBOL
-	void CHECK();
-	void STRING();
-	void NUMBER();
-	// from commenter
-	void COMMENTER(char STOPPER);
-	void SCANSTRING(char *STRG, int MAXLENG, char);
-
-
 protected:
 	void COMPINIT();
-	void DECLARATIONPART(SETOFSYS FSYS);
+	void DECLARATIONS(SETOFSYS FSYS);
 	void BODYPART(SETOFSYS FSYS, CTP FPROCP);
 	void WRITELINKERINFO(bool);
 	void UNITPART(SETOFSYS);
-	void GETNEXTPAGE();
-	void PRINTLINE();
 	void ENTERID(CTP FCP);
-	void INSYMBOL();
 	void SEARCHSECTION(CTP FCP, CTP &FCP1);
 	void SEARCHID(SETOFIDS FIDCLS, CTP &FCP);
 	void GETBOUNDS(STP FSP, int &FMIN, int &FMAX);
@@ -628,7 +633,6 @@ protected:
 	bool COMPTYPES(STP FSP1, STP FSP2);
 	void GENBYTE(int FBYTE);
 	void GENWORD(int FWORD);
-	void WRITETEXT();
 	void WRITECODE(bool FORCEBUF);
 	void FINISHSEG();
 	void BLOCK(SETOFSYS FSYS);
@@ -638,7 +642,6 @@ public:
 	PASCALCOMPILER();
 	PASCALCOMPILER(INFOREC &);
 	void COMPILER_MAIN ();
-	void CERROR(int ERRORNUM);
 
 public:
 	void SOURCE_DUMP ();
