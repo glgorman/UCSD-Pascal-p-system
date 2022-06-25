@@ -10,8 +10,7 @@
 
 class RANGE
 {
-public:
-	int m_min, m_max;
+protected:
 	int val;
 
 public:
@@ -19,11 +18,13 @@ public:
 	RANGE() {};
 	RANGE(int min, int max);
 #endif
-	RANGE &operator = (const int &arg);
+
+	RANGE &operator = (const int arg);
+	RANGE operator + (const int arg);
 	RANGE &operator ++ (int);
 	operator int ();
 	bool operator == (int arg);
-	bool operator<=(int arg);
+	bool operator <= (int arg);
 };
 
 class OPRANGE: public RANGE

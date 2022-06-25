@@ -16,7 +16,7 @@ RANGE DISPRANGE(0,DISPLIMIT);
 #endif
 
 #if 0
-RANGE::RANGE(int min, int max)
+RANGE::RANGE(int min=0, int max=0x7FFFFFFF)
 {
 	m_min=min;
 	m_max=max;
@@ -28,16 +28,25 @@ RANGE::operator int()
 	return val;
 }
 
-RANGE &RANGE::operator = (const int &arg)
+RANGE &RANGE::operator = (const int arg)
 {
 	val = arg;
+	ASSERT(val>=0);
 	return (*this);
 }
+
 
 RANGE &RANGE::operator ++ (int)
 {
 	val++;
 	return (*this);
+}
+
+RANGE RANGE::operator + (int arg)
+{
+	RANGE result;
+	result.val=val+arg;
+	return result;
 }
 
 bool RANGE::operator == (int arg)
