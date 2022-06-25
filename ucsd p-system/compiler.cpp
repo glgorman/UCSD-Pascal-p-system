@@ -28,6 +28,20 @@ void PASCALCOMPILER::SOURCE_DUMP ()
 	while (buff!=NULL);
 }
 
+#if 0
+int PASCALCOMPILER::SYMBOL_DUMP (LPVOID)
+{
+	int symbols = 0;
+	while (true)
+	{
+		INSYMBOL();
+		ASSERT((SY>=0)&&(SY<MAXSYMBOL));
+		if (SY>=0)
+			DEBUG_SY();
+		symbols++;
+	}
+}
+#endif
 
 PASCALCOMPILER::PASCALCOMPILER()
 {
@@ -44,10 +58,6 @@ PASCALCOMPILER::PASCALCOMPILER(INFOREC &arg)
 	USERINFO = arg;
 	SYSCOMM::LAUNCH_CONSOLE();
 	SEARCH::RESET_SYMBOLS();
-	char *foo = new char[256];
-//	int pos;
-//	strcpy_s(foo,256,"WITH (nothing) BEGIN something() END;");
-//	SEARCH::IDSEARCH(pos,foo);
 }
 
 SEGMENT void USERPROGRAM()
@@ -108,7 +118,7 @@ void PASCALCOMPILER::COMPINIT()
 
 void COMPINIT::ENTSTDTYPES()
 {
-	WRITELN(OUTPUT,"COMPINIT::ENTSTDTYPES()");
+//	WRITELN(OUTPUT,"COMPINIT::ENTSTDTYPES()");
 //	NEW(INTPTR,SCALAR,STANDARD);
 	m_ptr->INTPTR = (STRUCTURE*) new STRUCTURE;
 	m_ptr->INTPTR->SIZE = INTSIZE;
@@ -168,7 +178,7 @@ void COMPINIT::ENTSTDTYPES()
 
 void COMPINIT::ENTSTDNAMES()
 {
-	WRITELN(OUTPUT,"COMPINIT::ENTSTDNAMES()");
+//	WRITELN(OUTPUT,"COMPINIT::ENTSTDNAMES()");
 	CTP	CP;
 	CTP	CP1;
 	int I;
@@ -274,7 +284,7 @@ void COMPINIT::ENTSTDNAMES()
 
 void COMPINIT::ENTUNDECL()
 {
-	WRITELN(OUTPUT,"COMPINIT::ENTUNDECL()");
+//	WRITELN(OUTPUT,"COMPINIT::ENTUNDECL()");
 	m_ptr->UTYPPTR = (IDENTIFIER*) new IDENTIFIER;
 	strcpy_s(m_ptr->UTYPPTR->NAME,15,"        ");
 	m_ptr->UTYPPTR->IDTYPE=NULL;
@@ -335,7 +345,7 @@ void COMPINIT::ENTSPCPROCS()
 	int	I;
 	bool ISFUNC;
 	ALPHA	NA[44];
-	WRITELN(OUTPUT,"COMPINIT::ENTSPCPROCS()");
+//	WRITELN(OUTPUT,"COMPINIT::ENTSPCPROCS()");
 	strcpy_s(NA[ 1],15,"READ      ");
 	strcpy_s(NA[ 2],15,"READLN    ");
 	strcpy_s(NA[ 3],15,"WRITE     ");
@@ -408,7 +418,7 @@ void COMPINIT::ENTSTDPROCS()
 	int		i;
 	bool	ISPROC;
 	ALPHA	NA[20];
-	WRITELN(OUTPUT,"COMPINIT::ENTSTDPROCS()");
+//	WRITELN(OUTPUT,"COMPINIT::ENTSTDPROCS()");
 	
 	const int SZ = 15;
 	strcpy_s(NA[ 1],SZ,"ODD     ");
@@ -528,8 +538,8 @@ void COMPINIT::ENTSTDPROCS()
 /*ENTSTDPROCS*/ ;
 
 void COMPINIT::INITSCALARS()
- {
-	 WRITELN(OUTPUT,"COMPINIT::INITSCALARS()");
+{
+//	 WRITELN(OUTPUT,"COMPINIT::INITSCALARS()");
 	 NONRESIDENT I;
      m_ptr->FWPTR=NULL;
 	 m_ptr->MODPTR=NULL;
@@ -599,12 +609,13 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->LIBNOTOPEN=true;
 	 m_ptr->GETSTMTLEV=true;
 	 m_ptr->BEGSTMTLEV=0;
+	 m_ptr->STMTLEV=0;
 	 /*INITSCALARS*/ ;
 }
 
 void COMPINIT::INITSETS()
 {
-	WRITELN(OUTPUT,"COMPINIT::INITSETS()");
+//	WRITELN(OUTPUT,"COMPINIT::INITSETS()");
 	m_ptr->CONSTBEGSYS = SET((5),ADDOP,INTCONST,REALCONST,STRINGCONST,IDENT);
 	m_ptr->SIMPTYPEBEGSYS = SET((1),LPARENT) + m_ptr->CONSTBEGSYS;	
 	m_ptr->TYPEBEGSYS = SET((6),ARROW,PACKEDSY,ARRAYSY,RECORDSY,SETSY,FILESY)
@@ -621,8 +632,8 @@ void COMPINIT::INITSETS()
 
 void COMPINIT::INIT(PASCALCOMPILER *p)
 {
-	WRITELN(OUTPUT,"COMPINIT::INIT(PASCALCOMPILER *p)");
-	int IC;
+//	WRITELN(OUTPUT,"COMPINIT::INIT(PASCALCOMPILER *p)");
+	int I;
 	m_ptr=p;
 	INITSCALARS();
 	INITSETS();
@@ -630,7 +641,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->TOP=0;
 	if (m_ptr->NOISY)
 	{
-       for (IC=1;IC<=7;IC++)
+       for (I=1;I<=7;I++)
 	   { 
 		   WRITELN(OUTPUT);
 		   WRITELN(OUTPUT,"PASCAL Compiler [I.5] (Unit Compiler)");
@@ -640,17 +651,18 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->DISPLAY[0].FNAME=NULL;
 	m_ptr->DISPLAY[0].BLCK.FFILE=NULL;
 	m_ptr->DISPLAY[0].BLCK.FLABEL=NULL;
+	m_ptr->DISPLAY[0].OCCUR = BLCK;
 	m_ptr->SMALLESTSPACE=MEMAVAIL();
+
 	m_ptr->GETNEXTPAGE();
 	m_ptr->INSYMBOL();
+
 	ENTSTDTYPES();
 	ENTSTDNAMES();
 	ENTUNDECL();
 	ENTSPCPROCS();
 	ENTSTDPROCS();
-#if 0
-	PRINTTREE(m_ptr->DISPLAY[0].FNAME);
-#endif
+
 	if (m_ptr->SYSCOMP)
 	{
 		 m_ptr->OUTERBLOCK=NULL;
@@ -665,22 +677,24 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 		m_ptr->DISPLAY[1].FNAME=NULL;
 		m_ptr->DISPLAY[1].BLCK.FFILE=NULL;
 		m_ptr->DISPLAY[1].BLCK.FLABEL=NULL;
-//	m_ptr->DISPLAY[0].OCCUR=BLCK; 
+		m_ptr->DISPLAY[1].OCCUR = BLCK;
 	};
 	m_ptr->LC=m_ptr->LC+2;
 	m_ptr->GLEV=3; /*KEEP STACK STRAIGHT FOR NOW*/
       
 	m_ptr->OUTERBLOCK = new IDENTIFIER;
+	m_ptr->OUTERBLOCK->KLASS=PROC1;
+	m_ptr->OUTERBLOCK->PFDECKIND=DECLARED;
+	m_ptr->OUTERBLOCK->PFKIND=ACTUAL;
+
 	m_ptr->OUTERBLOCK->NEXT=NULL;
 	m_ptr->OUTERBLOCK->LOCALLC=m_ptr->LC;
     strcpy_s(m_ptr->OUTERBLOCK->NAME,15,"PROGRAM ");
 	m_ptr->OUTERBLOCK->IDTYPE=NULL;
-	m_ptr->OUTERBLOCK->KLASS=PROC1;
-    m_ptr->OUTERBLOCK->PFDECKIND=DECLARED;
 	m_ptr->OUTERBLOCK->PFLEV=0;
 	m_ptr->OUTERBLOCK->PFNAME=1;
 	m_ptr->OUTERBLOCK->PFSEG=m_ptr->SEG;
-	m_ptr->OUTERBLOCK->PFKIND=ACTUAL;
+	
 	m_ptr->OUTERBLOCK->FORWDECL=false;
 	m_ptr->OUTERBLOCK->EXTURNAL=false;
 	m_ptr->OUTERBLOCK->INSCOPE=true;
@@ -690,15 +704,20 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	   m_ptr->INSYMBOL();
        if (m_ptr->SY==IDENT)
 	   {
-		   strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,8,m_ptr->ID);
+		   strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,16,m_ptr->ID);
            if (m_ptr->OUTERBLOCK!=NULL)
 		   {
-				strcpy_s(m_ptr->OUTERBLOCK->NAME,8,m_ptr->ID);
+				strcpy_s(m_ptr->OUTERBLOCK->NAME,16,m_ptr->ID);
 				m_ptr->ENTERID(m_ptr->OUTERBLOCK); /*ALLOWS EXIT ON PROGRAM NAME*/
            }
 	   }
        else
 		   m_ptr->CERROR(2);
+
+//#define DEBUG_TREE true
+#ifdef DEBUG_TREE
+	PRINTTREE(m_ptr->DISPLAY[0].FNAME);
+#endif
 
 	   m_ptr->INSYMBOL();
 	   SETOFSYS SPECIAL;
@@ -715,6 +734,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	   else
 		   m_ptr->CERROR(4);
    };
+
    if (m_ptr->SY==SEMICOLON)
 	   m_ptr->INSYMBOL();
    else
@@ -757,127 +777,8 @@ void PASCALCOMPILER::UNITPART(SETOFSYS)
 	
 }
 
-void PASCALDATA0::CERROR(int ERRORNUM)
-{
-	int ERRSTART;
-	char CH, A[180];
-//	// // WITH USERINFO
-	if ((USERINFO.ERRSYM!=SYMCURSOR)||(USERINFO.ERRBLK!=SYMBLK))
-	{
-		USERINFO.ERRBLK=SYMBLK;
-		USERINFO.ERRSYM=SYMCURSOR;
-		USERINFO.ERRNUM=ERRORNUM;
-		if (USERINFO.STUPID)
-			CH='E';
-		else
-		{
-			if (NOISY)
-				WRITELN(OUTPUT);
-			else if (LIST&&(ERRORNUM<=400))
-				return;
-			if (LINESTART==0)
-				WRITE(OUTPUT,*SYMBUFP,SYMCURSOR.val);
-			else
-			{
-				ERRSTART=SCAN(
-					-(LINESTART.val-1),
-					char(EOL),*(&(SYMBUFP[LINESTART.val-2])+ (size_t)(LINESTART.val)-1));
 
-				MOVELEFT(&(*SYMBUFP[ERRSTART]),&A[0],SYMCURSOR-ERRSTART);
-				WRITE(OUTPUT,A /*SYMCURSOR-ERRSTART*/ );
-			};
-			WRITELN(OUTPUT," <<<<");
-			WRITE(OUTPUT,"Line ",SCREENDOTS,", error ",ERRORNUM,":");
-			if (NOISY)
-				WRITE(OUTPUT," <sp>(continue), <esc>(terminate), E(dit");
-			char param[] = ":";
-			WRITE(OUTPUT,param);
-		}
-		do
-		{
-			SYSCOMM::READ(KEYBOARD,CH);
-		}
-		while (!(CH==' ')||(CH=='E')
-			||(CH=='e')||(CH==USERINFO.ALTMODE));
-	};
-	if ((CH=='E')||(CH=='e'))
-	{
-		USERINFO.ERRBLK=SYMBLK-2;
-		throw(this);
-	};
-	if ((ERRORNUM>400)||(CH==(char)(27)))
-	{
-		USERINFO.ERRBLK=0;
-#if 0
-		throw(this);
-#endif
-	};
-	WRITELN(OUTPUT);
-	if (NOISY)
-		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
-
-} /*CERROR*/ ;
-
-void PASCALDATA0::GETNEXTPAGE()
-{
-	WRITELN(OUTPUT,"PASCALCOMPILER::GETNEXTPAGE()");
-	SYMCURSOR=0;
-	LINESTART=0;
-	if (USING)
-	{
-		if (USEFILE==WORKCODE)
-		{
-			SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK);
-			if (SYMBLK!=2)
-				USING=false;
-		}
-		else
-			if (USEFILE==SYSLIBRARY)
-			{
-				SYSCOMM::BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK);
-				if (SYMBLK!=2)
-					USING=false;
-			}			
-		if (!USING)
-		{
-			SYMBLK=PREVSYMBLK;
-			SYMCURSOR=PREVSYMCURSOR;
-			LINESTART=PREVLINESTART;
-		}
-	};
-	if (!USING)
-	{
-		if (INCLUDING)
-		{
-			SYSCOMM::BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK);
-			if (SYMBLK!=2)
-			{
-				SYSCOMM::CLOSE((FILE*)(&INCLFILE));
-				INCLUDING=false;
-				SYMBLK=OLDSYMBLK;
-				SYMCURSOR=OLDSYMCURSOR;
-				LINESTART=OLDLINESTART;
-			}
-		}
-	};
-	if (!(INCLUDING||USING))
-	{
-		SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK);
-		if (SYMBLK!=2)
-			CERROR(401);
-	}
-	if (SYMCURSOR==0)
-	{
-		if (INMODULE)
-			if (ININTERFACE&&!USING)
-				WRITETEXT();
-		if ((*SYMBUFP)[0]==(char)(16))
-			SYMCURSOR=2;
-		SYMBLK=SYMBLK+2;
-	};
-}
-
-void PASCALDATA0::PRINTLINE()
+void PASCALSOURCE::PRINTLINE()
 {
 	char	DORLEV,STARORC;
 	int LENG;
@@ -891,8 +792,8 @@ void PASCALDATA0::PRINTLINE()
    if (BPTONLINE)
 	   STARORC='*';
    WRITE(OUTPUT,_LP._tmpfname,SCREENDOTS/*6**/,
-	   SEG.val/*4*/,
-	   CURPROC.val,/*5,*/
+	   (int)SEG/*4*/,
+	   (int)CURPROC,/*5,*/
 	   STARORC,
 	   DORLEV,
 	   LINEINFO/*,6*/," ");
@@ -919,7 +820,7 @@ void PASCALCOMPILER::ENTERID(CTP FCP)
 {
 #if 0
 	WRITELN(OUTPUT,"PASCALCOMPILER::ENTERID(CTP FCP)");
-	WRITELN(OUTPUT,"FCP->NAME = ",FCP->NAME);
+	WRITELN(OUTPUT,"FCP->NAME = \"",FCP->NAME,'"');
 #endif
 
 	CTP LCP,LCP1;
@@ -947,181 +848,6 @@ void PASCALCOMPILER::ENTERID(CTP FCP)
 //	PRINTTREE(LCP);
 } /*ENTERID*/ ;
 
-#if 0
-void PASCALCOMPILER::INSYMBOL()
-{
-	WRITELN(OUTPUT,"PASCALCOMPILER::INSYMBOL()");
-}
-#endif
-
-void PASCALDATA0::INSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
-//void PASCALCOMPILER::INSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
-{
-	WRITELN(OUTPUT,"PASCALCOMPILER::INSYMBOL()");
-	if (GETSTMTLEV)
-	{
-		BEGSTMTLEV=STMTLEV;
-		GETSTMTLEV=false;
-	};
-	OP=NOOP;
-retry:
-	SY=OTHERSY; /* if (NO CASES EXERCISED BLOW UP */
-	char CH = *SYMBUFP[SYMCURSOR];
-	if (chartype::digits.in(CH)==true)
-	{
-		NUMBER();
-	}
-	else if (chartype::alpha.in(CH)==true)
-	{
-		SEARCH::IDSEARCH(SYMCURSOR.val,(char*&)(*SYMBUFP)); /* MAGIC PROC */
-	}
-	else switch (CH)
-	{
-	case (int)'"':
-		STRING();
-		break;
-
-	case '{':
-		COMMENTER('}');
-		goto retry;
-		break;
-
-	case '(':
-		if (*SYMBUFP[SYMCURSOR+1]=='*')
-		{
-			SYMCURSOR=SYMCURSOR+1;
-			COMMENTER('*');
-			SYMCURSOR=SYMCURSOR+1;
-			goto retry; /* GET ANOTHER TOKEN */
-		}
-		else
-			SY=LPARENT;
-		break;
-
-	case ')':
-		SY=RPARENT;
-		break;
-		
-	case ',':
-		SY=COMMA;
-		break;
-
-	case ' ':
-		SYMCURSOR=SYMCURSOR+1;
-		goto retry;
-		break;
-	
-	case '.':
-		if (*SYMBUFP[SYMCURSOR+1]=='.')
-		{
-			SYMCURSOR=SYMCURSOR+1;
-			SY=COLON;
-		}
-		else
-			SY=PERIOD;
-		break;
-		
-	case ':':
-		if (*SYMBUFP[SYMCURSOR+1]=='=')
-		{
-			SYMCURSOR++;
-			SY=BECOMES;
-		}
-		else
-			SY=COLON;
-			break;
-
-		case ';':
-			SY=SEMICOLON;
-			break;
-
-		case '^':
-			SY=ARROW;
-			break;
-
-		case '[':
-			SY=LBRACK;
-			break;
-			
-		case ']':
-			SY=RBRACK;
-			break;
-
-		case '*':
-			SY=MULOP;
-			OP=MUL;
-			break;
-
-		case '+':
-			SY=ADDOP;
-			OP=PLUS;
-			break;
-
-		case '-':
-			SY=ADDOP;
-			OP=MINUS;
-			break;
-
-		case '/':
-			SY=MULOP;
-			OP=RDIV;
-			break;
-			
-		case '<':
-			SY=RELOP;
-			OP=LTOP;
-			switch (*SYMBUFP[SYMCURSOR+1])
-			{
-				case '>':
-					OP=NEOP;
-					SYMCURSOR++;
-					break;
-
-				case '==':
-					OP=LEOP;
-					SYMCURSOR++;
-					break;
-
-				default:
-					break;
-			}
-
-		case '=':
-			SY=RELOP;
-			OP=EQOP;
-			break;
-			
-		case '>':
-			SY=RELOP;
-			if (*SYMBUFP[SYMCURSOR+1]=='=')
-			{
-				OP=GEOP;
-				SYMCURSOR++;
-			}
-			else
-				OP=GTOP;
-			break;
-
-		default:
-			break;
-		
-		} /* switch (SYMBUFP^[SYMCURSOR]) */;
-
-		if (SY==OTHERSY)
-		{
-			CH = (*SYMBUFP[SYMCURSOR]); 
-			if ((CH==(char)(EOL))||(CH==0x0a))
-			{
-				CHECK();
-				GETSTMTLEV=true;
-				goto retry;
-			}
-			else
-				PASCALDATA0::CERROR(400);
-		}
-		SYMCURSOR++; /* NEXT CALL TALKS ABOUT NEXT TOKEN */
-} /*INSYMBOL*/
-
 void PASCALCOMPILER::SEARCHSECTION(CTP FCP, CTP &FCP1)
 {
 	if (FCP!=NULL)
@@ -1146,7 +872,7 @@ void PASCALCOMPILER::SEARCHID(SETOFIDS FIDCLS, CTP &FCP)
 					goto found;
 				else
 				if (PRTERR)
-					PASCALDATA0::CERROR(103);
+					PASCALCOMPILER::CERROR(103);
 				else LCP=NULL;
 			else LCP=NULL;
 		};
@@ -1392,12 +1118,12 @@ bool PASCALCOMPILER::COMPTYPES(STP FSP1, STP FSP2)
 				break;
 			case ARRAYS:
 				COMP=COMPTYPES(FSP1->AELTYPE,FSP2->AELTYPE)
-					&&(FSP1->AISPACKD==FSP2->AISPACKD);
-				if (COMP&&FSP1->AISPACKD)
+					&& (FSP1->AISPACKD==FSP2->AISPACKD);
+				if (COMP&& FSP1->AISPACKD)
 				COMP=(FSP1->ELSPERWD==FSP2->ELSPERWD)
-                    &&(FSP1->ELWIDTH==FSP2->ELWIDTH)
-                    &&(FSP1->AISSTRNG==FSP2->AISSTRNG);
-				if (COMP&&!STRGTYPE(FSP1))
+                    && (FSP1->ELWIDTH==FSP2->ELWIDTH)
+                    && (FSP1->AISSTRNG==FSP2->AISSTRNG);
+				if (COMP&& !STRGTYPE(FSP1))
 				COMP=(FSP1->SIZE==FSP2->SIZE);
 				result=COMP;
 				break;
@@ -1462,15 +1188,6 @@ void PASCALCOMPILER::GENWORD(int FWORD)
 	(*CODEP)[IC] = PCODE.bytes[1];
 	IC++;
 }
-
-void PASCALDATA0::WRITETEXT()
-{
-	MOVELEFT(SYMBUFP[SYMCURSOR],CODEP[0],1024);
-	if (USERINFO.ERRNUM==0)
-       if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,2,CURBLK)!=2)
-         CERROR(402);
-     CURBLK=CURBLK+2;
-} /*WRITETEXT*/ ;
 
 void PASCALCOMPILER::WRITECODE(bool FORCEBUF)
 {
@@ -1591,7 +1308,7 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 					else
 						CERROR(6);  /* PERIOD EXPECTED */
 					SKIP(FSYS+TOS->BFSY);
-					BFSYFOUND=(SY==TOS->BFSY)||(INMODULE&&(SY==ENDSY));
+					BFSYFOUND=(SY==TOS->BFSY)||(INMODULE&& (SY==ENDSY));
 				}
 			}
 			while (!(BFSYFOUND)||BLOCKBEGSYS.in(SY));
@@ -1663,21 +1380,38 @@ fail:		{
 	FINISHSEG();
 }
 
-void PASCALCOMPILER::COMPILER_MAIN ()
+void PASCALSOURCE::DEBUG_SY ()
+{
+	if (SY==STRINGCONST)
+	{
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
+		WRITE (OUTPUT,"(\'",(char*)(&SCONST->SVAL[1]),"\')");
+	}
+	else if (SY==INTCONST)
+	{
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
+		WRITE (OUTPUT,'(',VAL.IVAL,')');
+	}
+	else if (SY!=IDENT)
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
+	else
+		WRITE (OUTPUT," \"",ID,"\"");
+}
+
+UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
+{
+	WRITELN(OUTPUT,"July ",4,", ",1776,"...");
+	PASCALCOMPILER	*p = (PASCALCOMPILER*) param;
+	p->PASCALCOMPILER::COMPINIT();
+	p->COMPILER_MAIN(NULL);
+	return 0;
+}
+
+int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 {
 	/* PASCALCOMPILER */
-	WRITELN(OUTPUT,"July ",4,", ",1776,"...");
-
-	int			LGTH = 0;
-	try
-	{
-		PASCALCOMPILER::COMPINIT();
-	}
-	catch (PASCALCOMPILER)
-	{
-		WRITELN(OUTPUT,"PASCALCOMPILER::COMPINIT() failure");
-		return;
-	}
+	
+	int	LGTH = 0;
 	TIME(LGTH,LOWTIME);
 #if 0
 	// fixme!!
@@ -1688,7 +1422,7 @@ void PASCALCOMPILER::COMPILER_MAIN ()
 	if (LIST)
 	{
 		SCREENDOTS++;
-		*SYMBUFP[SYMCURSOR]=(char)(EOL);
+		(*SYMBUFP)[SYMCURSOR]=(char)(EOL);
 		SYMCURSOR++;
 		PRINTLINE();
 	};
@@ -1748,4 +1482,5 @@ void PASCALCOMPILER::COMPILER_MAIN ()
 	CURBLK=0;
 	CURBYTE=0;
 	WRITECODE(true);
+	return 0;
 }
