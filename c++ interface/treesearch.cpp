@@ -13,6 +13,8 @@
 #include "../Frame Lisp/extras.h"
 #include "compiler.h"
 
+//#define DEBUG_SEARCH
+
 // DEFINED IN COMPILER.H
 /*
 typedef enum _SYMBOL
@@ -33,6 +35,7 @@ typedef enum _OPERATOR
 	GEOP,GTOP,NEOP,EQOP,INOP,NOOP,MAXOPERATOR,
 } OPERATOR;	
 */
+/*
 struct key_info
 {
 	ALPHA		ID;
@@ -46,6 +49,7 @@ struct key_info
 		OP = _OP;
 	}
 };
+*/
 
 key_info key_map[] =
 {
@@ -53,6 +57,7 @@ key_info key_map[] =
 	key_info("WITH",WITHSY,NOOP),
 	key_info("IN",SETSY,INOP),
 	key_info("TO",TOSY,NOOP),
+	key_info("GOTO",GOTOSY,NOOP),
 	key_info("SET",SETSY,NOOP),
 	key_info("DOWNTO",DOWNTOSY,NOOP),
 	key_info("LABEL",LABELSY,NOOP),
@@ -67,7 +72,6 @@ key_info key_map[] =
 	key_info("VAR",VARSY,NOOP),
 	key_info("FILE",FILESY,NOOP),
 	key_info("THEN",THENSY,NOOP),
-	key_info("PROCSY",PROCSY,NOOP),
 	key_info("PROCEDURE",PROCSY,NOOP),
 	key_info("USES",USESSY,NOOP),
 	key_info("ELSE",ELSESY,NOOP),
@@ -104,16 +108,17 @@ namespace SEARCH
 	{
 		"DO","WITH","IN","TO","GOTO","SET","DOWNTO","LABEL",
 		"PACKED","END","CONST","ARRAY","UNTIL","TYPE","RECORD",
-		"OF","VAR","FILE","THEN","PROCSY","PROCEDURE","USES",
+		"OF","VAR","FILE","THEN","PROCEDURE","USES",
 		"ELSE","FUNCTION","UNIT","BEGIN","PROGRAM","INTERFACE",
 		"IF","SEGMENT","IMPLEMENTATION","CASE","FORWARD","EXTERNAL",
 		"REPEAT","NOT","OTHERWISE","WHILE","AND","DIV","MOD",
-		"FOR","OR",
+		"FOR","OR",NULL
 	};
 	frame m_pFrame;
 	symbol_table *m_keywords;
+	key_info *get_key_info (int index);
 	void RESET_SYMBOLS();
-	void IDSEARCH(int &pos, char *&str);
+	int IDSEARCH(int pos, char *&str);
 //	SYMBOL SY(token *t);
 };
 
@@ -128,38 +133,72 @@ void SEARCH::RESET_SYMBOLS()
  	m_keywords = t;
 }
 
-void SEARCH::IDSEARCH(int &pos, char *&str)
+key_info *SEARCH::get_key_info (int index)
 {
+	key_info *result;
+	ASSERT((index>=0)&&(index<=42));
+
+	result = &key_map[index];
+	return result;
+}
+
+int SEARCH::IDSEARCH(int pos, char *&str)
+{
+#ifdef DEBUG_SEARCH
+	WRITE(OUTPUT,"\nSEARCH::IDSEARCH() ");
+#endif
+
+	size_t i, len, sz;
+	bool found = false;
+	int syid = -1;
 	key_info result;
 	key_info *kp = key_map;
-	char buf[32];
+	char c1, buf[32];
+	char *str1=str+pos;
+	for (len=0;len<32;len++)
+	{
+		c1=str1[len];
+		if (!chartype::symbol.in(c1))
+			break;
+	}
+	memcpy(buf,str1,len);
+	buf[len]=0;
+
+#ifdef DEBUG_SEARCH
+	WRITELN (OUTPUT,"searching for \"",buf,"\"");
+#endif
+
 	SEARCH::RESET_SYMBOLS();
 	symbol_table &T = *SEARCH::m_keywords;
-	size_t i, len, sz;
 	sz = T.size();
 	token *t;
-	pos = -1;
 	for (i=0;i<sz;i++)
 	{
 		t = &T[(int)i];
 		len = strlen(t->ascii);
-		memcpy(buf,str,len);
-		buf[len]=0;
 		if (strcmp(buf,t->ascii)==0)
 		{
-			pos=(int)i;
 			strcpy_s(result.ID,16,t->ascii);
-//			result.SY = SEARCH::SY(t);
+			found = true;
+			syid = t->m_index;
 			break;
 		}
 	}
+#ifdef DEBUG_SEARCH
+	if (found==true)
+		WRITELN(OUTPUT,"FOUND \"",result.ID,"\"\n");
+	else
+		WRITELN(OUTPUT,"NOT FOUND \"",buf,"\"\n");
+#endif
+	return syid;
 }
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
 {
-#if 0
+#ifdef DEBUG_TREESEARCH
 	WRITE(OUTPUT,"TREESEARCH(CTP& n1, CTP& n2,\"",(char*)str,"\")");
 #endif
+
 	CTP ptr = n1;
 	bool found = false;
 	bool quit = false;
@@ -211,7 +250,7 @@ void PRINTNODE(const CTP &n1, size_t &N)
 	CTP node;
 	node = n1;
 //	ADJUST_LINE(N);
-	INDENT_NEWLINE((int)N);
+//	INDENT_NEWLINE((int)N);
 	N++;
 	WRITE(OUTPUT,"NODE(");
 //	N+=5;
