@@ -11,7 +11,10 @@ char PASCALSOURCE::PEEK()
 {
 	if (SYMCURSOR>1023)
 		GETNEXTPAGE();
+//		throw (SYMCURSOR);
+//		
 
+	ASSERT(SYMCURSOR>=0);
 	char c = (*SYMBUFP)[SYMCURSOR];
 	ASSERT(c>=0);
 
@@ -29,6 +32,9 @@ char PASCALSOURCE::PEEK(int i)
 {
 	CURSRANGE POS;
 	POS = SYMCURSOR+i;
+	if (POS>1023)
+		throw (SYMCURSOR);
+
 	char c = (*SYMBUFP)[POS];
 
 #ifdef DEBUG_PEEK1
@@ -43,6 +49,9 @@ char PASCALSOURCE::PEEK(int i)
 
 char PASCALSOURCE::GETC()
 {
+	if (SYMCURSOR>1023)
+		throw (SYMCURSOR);
+
 	char c = (*SYMBUFP)[SYMCURSOR];
 
 #ifdef DEBUG_GETC
@@ -137,47 +146,35 @@ void PASCALSOURCE::GETNEXTPAGE()
 //	WRITELN(OUTPUT,"\nPASCALCOMPILER::GETNEXTPAGE()");
 	SYMCURSOR=0;
 	LINESTART=0;
-	if (USING)
-	{
-		if (USEFILE==WORKCODE)
-		{
-			SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK);
-			if (SYMBLK!=2)
-				USING=false;
-		}
-		else
-			if (USEFILE==SYSLIBRARY)
-			{
-				SYSCOMM::BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK);
-				if (SYMBLK!=2)
-					USING=false;
-			}			
-		if (!USING)
-		{
+	int read;
+	if (USING) {
+		if (USEFILE==WORKCODE) {
+			read = SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK);
+			if (read!=2)
+				USING=false; }
+		else if (USEFILE==SYSLIBRARY) {
+			read = SYSCOMM::BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK);
+			if (read!=2)
+				USING=false; }			
+		if (!USING) {
 			SYMBLK=PREVSYMBLK;
 			SYMCURSOR=PREVSYMCURSOR;
-			LINESTART=PREVLINESTART;
-		}
-	};
+			LINESTART=PREVLINESTART; }
+	}
 	if (!USING)
 	{
-		if (INCLUDING)
-		{
-			SYSCOMM::BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK);
-			if (SYMBLK!=2)
-			{
+		if (INCLUDING) {
+			read = SYSCOMM::BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK);
+			if (read!=2) {
 				SYSCOMM::CLOSE((FILE*)(&INCLFILE));
 				INCLUDING=false;
 				SYMBLK=OLDSYMBLK;
 				SYMCURSOR=OLDSYMCURSOR;
-				LINESTART=OLDLINESTART;
-			}
-		}
-	};
-	if (!(INCLUDING||USING))
-	{
-		SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK);
-		if (SYMBLK!=2)
+				LINESTART=OLDLINESTART; } }
+	}
+	if (!(INCLUDING||USING)) {
+		read = SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK);
+		if (read!=2)
 			CERROR(401);
 	}
 	if (SYMCURSOR==0)
@@ -221,7 +218,8 @@ void PASCALSOURCE::CHECK()
 	while(true)
 	{
 		ch=PEEK();
-		if (!chartype::whitespace.in(ch));
+		if (!chartype::whitespace.in(ch))
+			;
 	}	
 	if (DP)
 		LINEINFO=LC;
@@ -287,7 +285,7 @@ void PASCALCOMPILER::COMMENTER(char STOPPER)
 					{
 						SYMCURSOR++;
 						PRINTLINE();
-						SYMCURSOR=SYMCURSOR - 1;
+						SYMCURSOR--;
 					};
 					if (INCLUDING||INMODULE&&ININTERFACE)
 					{
@@ -394,6 +392,7 @@ void PASCALSOURCE::STRING()
 	int TP,NBLANKS,L;
 	bool	DUPLE;
  	T[0] = 0;
+	memset((char*)(&T[0]),0,80);
 	memset((char*)(SCONST->SVAL),0,256);
 
 	DUPLE=false; /* INDICATES WHEN "" IS PRESENT */
@@ -406,6 +405,8 @@ void PASCALSOURCE::STRING()
 		{
 			SYMCURSOR++;
 			TP++;
+			if (TP==80)
+				goto fail;
 			if (PEEK()==char(EOL))
 			{ 
 				CERROR(202);
@@ -440,7 +441,7 @@ fail:
 
 void PASCALSOURCE::NUMBER()
 {
-	CSP LVP;  // FIX<E = wjere os tjos declcared?
+	CSP LVP;
 	int	EXPONENT,ENDI,ENDF,ENDE;
 	int	SIGN,IPART,FPART,EPART,ISUM;
 	enum {REALTIPE, INTTIPE} TIPE;
@@ -459,15 +460,14 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	SIGN=1;
 	NOTLONG=true;
 	EPART=9999; /* OUT) REACH */
+
 	IPART=SYMCURSOR; /* int PART STARTS HERE */
-	
-	do
+	while (chartype::digits.in(PEEK()))
 	{
-		SYMCURSOR++;
+		SYMCURSOR++;	
 	}
-	while (chartype::digits.in(PEEK()));
 	ENDI=SYMCURSOR-1;
-	
+
 /* SYMCURSOR NOW POINTS AT FIRST CHARACTER PAST int PART */
 
 	if (PEEK()=='.')
@@ -569,10 +569,16 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 			LGTH=ENDI-IPART+1;
 			VAL.VALP=LVP;
 		}
+		SYMCURSOR=ENDI;
 	}
 	else
 	{ /* REAL NUMBER HERE */
+		LVP = new CONSTREC;
+		LVP->CCLASS=REEL;
+
 		RSUM=0;
+		SY=REALCONST; 
+		OP=NOOP;
 		for (J=IPART;J<=ENDI;J++)
 		{
 			RSUM=RSUM*10+(ORD(PEEK(J))-ORD('0'));
@@ -587,21 +593,35 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 				if (SIGN==-1)
 					RSUM=RSUM/PWROFTEN(EXPONENT);
 				else
-					RSUM=RSUM*PWROFTEN(EXPONENT);
-				SY=REALCONST; 
-				OP=NOOP;
-				LVP = new CONSTREC;
-				LVP->CCLASS=REEL;
-				LVP->RVAL=RSUM;
-				VAL.VALP=LVP;
+					RSUM=RSUM*PWROFTEN(EXPONENT);		
 			};
-		SYMCURSOR=SYMCURSOR-1; /* ADJUST for (POSTERITY */
+			SYMCURSOR--; /* ADJUST for (POSTERITY */
 		}
+		LVP->RVAL=RSUM;
+		VAL.VALP=LVP;
 	} /*NUMBER*/
-
 }
 
-void PASCALCOMPILER::INSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
+void PASCALCOMPILER::INSYMBOL()
+{
+	bool status = false;
+	CURSRANGE	old_position;
+	while (status==false)
+	{
+		old_position = SYMCURSOR;
+		try
+		{
+			GETSYMBOL();
+			status = true;
+		}
+		catch (CURSRANGE c)
+		{
+			GETNEXTPAGE();
+		}
+	}
+}
+
+void PASCALCOMPILER::GETSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
 {
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
@@ -656,7 +676,7 @@ start:
 					break;
 			}
 			ID[i]=0;
-			SYMCURSOR = SYMCURSOR-1;
+			SYMCURSOR--;
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"IDENTIFIER: \"",ID,"\" ");
 #endif

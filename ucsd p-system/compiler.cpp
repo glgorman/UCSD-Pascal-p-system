@@ -4,45 +4,6 @@
 #include "unitpart.h"
 #include "declarationpart.h"
 
-void PASCALCOMPILER::SOURCE_DUMP ()
-{
-	char *buff;
-	int line;
-	line = 0;
-	if (SYSCOMM::m_source==NULL)
-	{
-		WRITELN(OUTPUT,"NULL source file");
-		return;
-	}
-	else if ((*SYSCOMM::m_source).size()==0)
-	{
-		WRITELN(OUTPUT,"Empty source file");
-		return;
-	}
-	else do
-	{
-		buff = (*SYSCOMM::m_source)[line];
-		WRITE(OUTPUT,buff);
-		line++;
-	}
-	while (buff!=NULL);
-}
-
-#if 0
-int PASCALCOMPILER::SYMBOL_DUMP (LPVOID)
-{
-	int symbols = 0;
-	while (true)
-	{
-		INSYMBOL();
-		ASSERT((SY>=0)&&(SY<MAXSYMBOL));
-		if (SY>=0)
-			DEBUG_SY();
-		symbols++;
-	}
-}
-#endif
-
 PASCALCOMPILER::PASCALCOMPILER()
 {
 //	TODO - this is the default constructor
@@ -56,7 +17,6 @@ PASCALCOMPILER::PASCALCOMPILER()
 PASCALCOMPILER::PASCALCOMPILER(INFOREC &arg)
 {
 	USERINFO = arg;
-	SYSCOMM::LAUNCH_CONSOLE();
 	SEARCH::RESET_SYMBOLS();
 }
 
@@ -182,68 +142,74 @@ void COMPINIT::ENTSTDNAMES()
 	CTP	CP;
 	CTP	CP1;
 	int I;
+	STP &INTPTR = m_ptr->INTPTR;
+	STP &REALPTR = m_ptr->REALPTR;
+	STP &CHARPTR = m_ptr->CHARPTR;
+	STP &BOOLPTR = m_ptr->BOOLPTR;
+	STP &STRGPTR = m_ptr->STRGPTR;
+	STP &TEXTPTR = m_ptr->TEXTPTR;
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"INTEGER ");
-	CP->IDTYPE = m_ptr->INTPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"INTEGER ");
+	CP->IDTYPE = INTPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"REAL    ");
-	CP->IDTYPE = m_ptr->REALPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"REAL    ");
+	CP->IDTYPE = REALPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"CHAR    ");
-	CP->IDTYPE = m_ptr->CHARPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"CHAR    ");
+	CP->IDTYPE = CHARPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"BOOLEAM ");
-	CP->IDTYPE = m_ptr->BOOLPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"BOOLEAM ");
+	CP->IDTYPE = BOOLPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"STRING  ");
-	CP->IDTYPE = m_ptr->STRGPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"STRING  ");
+	CP->IDTYPE = STRGPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"TEXT  ");
-	CP->IDTYPE = m_ptr->TEXTPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"TEXT  ");
+	CP->IDTYPE = TEXTPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"INTERACT ");
+	strcpy_s(CP->NAME,IDENTSIZE,"INTERACT ");
 	CP->IDTYPE = m_ptr->INTRACTVPTR;
 	CP->KLASS = TYPES;
 	m_ptr->ENTERID(CP);
 	
 	m_ptr->INPUTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->INPUTPTR->NAME,15,"INPUT  ");
-	m_ptr->INPUTPTR->IDTYPE = m_ptr->TEXTPTR;
+	strcpy_s(m_ptr->INPUTPTR->NAME,IDENTSIZE,"INPUT  ");
+	m_ptr->INPUTPTR->IDTYPE = TEXTPTR;
 	m_ptr->INPUTPTR->KLASS = FORMALVARS;
 	m_ptr->INPUTPTR->VLEV = 0;
 	m_ptr->INPUTPTR->VADDR = 2;
 	m_ptr->ENTERID(m_ptr->INPUTPTR);
 
 	m_ptr->OUTPUTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->OUTPUTPTR->NAME,15,"OUTPUT  ");
-	m_ptr->OUTPUTPTR->IDTYPE = m_ptr->TEXTPTR;
+	strcpy_s(m_ptr->OUTPUTPTR->NAME,IDENTSIZE,"OUTPUT  ");
+	m_ptr->OUTPUTPTR->IDTYPE = TEXTPTR;
 	m_ptr->OUTPUTPTR->KLASS = FORMALVARS;
 	m_ptr->OUTPUTPTR->VLEV = 0;
 	m_ptr->OUTPUTPTR->VADDR = 3;
 	m_ptr->ENTERID(m_ptr->OUTPUTPTR);
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"KEYBOARD ");
-	CP->IDTYPE = m_ptr->TEXTPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"KEYBOARD ");
+	CP->IDTYPE = TEXTPTR;
 	CP->KLASS = FORMALVARS;
 	CP->VLEV = 0;
 	CP->VADDR = 4;
@@ -253,11 +219,11 @@ void COMPINIT::ENTSTDNAMES()
 	for (I=0;I<=1;I++)
 	{
 		CP = (IDENTIFIER*) new IDENTIFIER;
-        CP->IDTYPE=m_ptr->BOOLPTR;
+        CP->IDTYPE=BOOLPTR;
         if (I==0)
-			strcpy_s(CP->NAME,15,"FALSE   ");
+			strcpy_s(CP->NAME,IDENTSIZE,"FALSE   ");
 		else 
-			strcpy_s(CP->NAME,15,"TRUE    ");
+			strcpy_s(CP->NAME,IDENTSIZE,"TRUE    ");
 		CP->NEXT=CP1;
 		CP->VALUES.IVAL=I;
 		CP->KLASS=KONST;
@@ -267,7 +233,7 @@ void COMPINIT::ENTSTDNAMES()
     m_ptr->BOOLPTR->FCONST=CP;
 
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"NULL     ");
+	strcpy_s(CP->NAME,IDENTSIZE,"NULL     ");
 	CP->IDTYPE=m_ptr->NILPTR;
 	CP->NEXT=NULL;
 	CP->VALUES.IVAL=0;
@@ -275,8 +241,8 @@ void COMPINIT::ENTSTDNAMES()
 	m_ptr->ENTERID(CP);
 	
 	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,15,"MAXINT  ");
-	CP->IDTYPE=m_ptr->INTPTR;
+	strcpy_s(CP->NAME,IDENTSIZE,"MAXINT  ");
+	CP->IDTYPE=INTPTR;
 	CP->KLASS=KONST;
 	CP->VALUES.IVAL=MAXINT;
 	m_ptr->ENTERID(CP);
@@ -286,19 +252,19 @@ void COMPINIT::ENTUNDECL()
 {
 //	WRITELN(OUTPUT,"COMPINIT::ENTUNDECL()");
 	m_ptr->UTYPPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UTYPPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UTYPPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UTYPPTR->IDTYPE=NULL;
 	m_ptr->UTYPPTR->KLASS=TYPES;
 
 	m_ptr->UCSTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UCSTPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UCSTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UCSTPTR->IDTYPE=NULL;
 	m_ptr->UCSTPTR->KLASS=KONST;
 	m_ptr->UCSTPTR->VALUES.IVAL = NULL;
 	m_ptr->UCSTPTR->NEXT=NULL;
 
 	m_ptr->UVARPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UVARPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UVARPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UVARPTR->IDTYPE=NULL;
 	m_ptr->UCSTPTR->NEXT = NULL;
 	m_ptr->UCSTPTR->VLEV = 0;
@@ -306,14 +272,14 @@ void COMPINIT::ENTUNDECL()
 	m_ptr->UCSTPTR->KLASS=ACTUALVARS;
 
 	m_ptr->UFLDPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UFLDPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UFLDPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFLDPTR->IDTYPE=NULL;
 	m_ptr->UFLDPTR->NEXT = NULL;
 	m_ptr->UFLDPTR->FLDADDR = 0;
 	m_ptr->UFLDPTR->KLASS=FIELD;
 
 	m_ptr->UPRCPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UPRCPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UPRCPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UPRCPTR->IDTYPE=NULL;
 	m_ptr->UPRCPTR->FORWDECL=false;
 	m_ptr->UPRCPTR->NEXT = NULL;
@@ -325,7 +291,7 @@ void COMPINIT::ENTUNDECL()
 	m_ptr->UPRCPTR->PFKIND=ACTUAL;
 
 	m_ptr->UFCTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->UFCTPTR->NAME,15,"        ");
+	strcpy_s(m_ptr->UFCTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFCTPTR->IDTYPE=NULL;
 	m_ptr->UFCTPTR->NEXT = NULL;
 	m_ptr->UFCTPTR->FORWDECL=false;
@@ -346,49 +312,49 @@ void COMPINIT::ENTSPCPROCS()
 	bool ISFUNC;
 	ALPHA	NA[44];
 //	WRITELN(OUTPUT,"COMPINIT::ENTSPCPROCS()");
-	strcpy_s(NA[ 1],15,"READ      ");
-	strcpy_s(NA[ 2],15,"READLN    ");
-	strcpy_s(NA[ 3],15,"WRITE     ");
-	strcpy_s(NA[ 4],15,"WRITELN   ");
-	strcpy_s(NA[ 5],15,"EOF       ");
-	strcpy_s(NA[ 6],15,"EOLN      ");
-	strcpy_s(NA[ 7],15,"PRED      ");
-	strcpy_s(NA[ 8],15,"SUCC      ");
-	strcpy_s(NA[ 9],15,"ORD       ");
-	strcpy_s(NA[10],15,"SQR       ");
-	strcpy_s(NA[11],15,"ABS       ");
-	strcpy_s(NA[12],15,"NEW       ");
-	strcpy_s(NA[13],15,"UNITREAD  ");
-	strcpy_s(NA[14],15,"UNITWRIT  ");
-	strcpy_s(NA[15],15,"CONCAT    ");
-	strcpy_s(NA[16],15,"LENGTH    ");
-	strcpy_s(NA[17],15,"INSERT    ");
-	strcpy_s(NA[18],15,"DELETE    ");
-	strcpy_s(NA[19],15,"COPY      ");
-	strcpy_s(NA[20],15,"POS       ");
-	strcpy_s(NA[21],15,"MOVELEFT  ");
-	strcpy_s(NA[22],15,"MOVERIGHT ");
-	strcpy_s(NA[23],15,"EXIT      ");
-	strcpy_s(NA[24],15,"IDSEARCH  ");
-	strcpy_s(NA[25],15,"TREESEARCH");
-	strcpy_s(NA[26],15,"TIME      ");
-	strcpy_s(NA[27],15,"FILLCHAR  ");
-	strcpy_s(NA[28],15,"OPENNEW   ");
-	strcpy_s(NA[29],15,"OPENOLD   ");
-	strcpy_s(NA[30],15,"REWRITE   ");
-	strcpy_s(NA[31],15,"CLOSE     ");
-	strcpy_s(NA[32],15,"SEEK      ");
-	strcpy_s(NA[33],15,"RESET     ");
-	strcpy_s(NA[34],15,"GET       ");
-	strcpy_s(NA[35],15,"PUT       ");
-	strcpy_s(NA[36],15,"SCAN      ");
-	strcpy_s(NA[37],15,"BLOCKREAD");
-	strcpy_s(NA[38],15,"BLOCKWRITE");
-	strcpy_s(NA[39],15,"TRUNC     ");
-	strcpy_s(NA[40],15,"PAGE      ");
-	strcpy_s(NA[41],15,"SIZEOF    ");
-	strcpy_s(NA[42],15,"STR       ");
-	strcpy_s(NA[43],15,"GOTOXY    ");
+	strcpy_s(NA[ 1],IDENTSIZE,"READ      ");
+	strcpy_s(NA[ 2],IDENTSIZE,"READLN    ");
+	strcpy_s(NA[ 3],IDENTSIZE,"WRITE     ");
+	strcpy_s(NA[ 4],IDENTSIZE,"WRITELN   ");
+	strcpy_s(NA[ 5],IDENTSIZE,"EOF       ");
+	strcpy_s(NA[ 6],IDENTSIZE,"EOLN      ");
+	strcpy_s(NA[ 7],IDENTSIZE,"PRED      ");
+	strcpy_s(NA[ 8],IDENTSIZE,"SUCC      ");
+	strcpy_s(NA[ 9],IDENTSIZE,"ORD       ");
+	strcpy_s(NA[10],IDENTSIZE,"SQR       ");
+	strcpy_s(NA[11],IDENTSIZE,"ABS       ");
+	strcpy_s(NA[12],IDENTSIZE,"NEW       ");
+	strcpy_s(NA[13],IDENTSIZE,"UNITREAD  ");
+	strcpy_s(NA[14],IDENTSIZE,"UNITWRIT  ");
+	strcpy_s(NA[15],IDENTSIZE,"CONCAT    ");
+	strcpy_s(NA[16],IDENTSIZE,"LENGTH    ");
+	strcpy_s(NA[17],IDENTSIZE,"INSERT    ");
+	strcpy_s(NA[18],IDENTSIZE,"DELETE    ");
+	strcpy_s(NA[19],IDENTSIZE,"COPY      ");
+	strcpy_s(NA[20],IDENTSIZE,"POS       ");
+	strcpy_s(NA[21],IDENTSIZE,"MOVELEFT  ");
+	strcpy_s(NA[22],IDENTSIZE,"MOVERIGHT ");
+	strcpy_s(NA[23],IDENTSIZE,"EXIT      ");
+	strcpy_s(NA[24],IDENTSIZE,"IDSEARCH  ");
+	strcpy_s(NA[25],IDENTSIZE,"TREESEARCH");
+	strcpy_s(NA[26],IDENTSIZE,"TIME      ");
+	strcpy_s(NA[27],IDENTSIZE,"FILLCHAR  ");
+	strcpy_s(NA[28],IDENTSIZE,"OPENNEW   ");
+	strcpy_s(NA[29],IDENTSIZE,"OPENOLD   ");
+	strcpy_s(NA[30],IDENTSIZE,"REWRITE   ");
+	strcpy_s(NA[31],IDENTSIZE,"CLOSE     ");
+	strcpy_s(NA[32],IDENTSIZE,"SEEK      ");
+	strcpy_s(NA[33],IDENTSIZE,"RESET     ");
+	strcpy_s(NA[34],IDENTSIZE,"GET       ");
+	strcpy_s(NA[35],IDENTSIZE,"PUT       ");
+	strcpy_s(NA[36],IDENTSIZE,"SCAN      ");
+	strcpy_s(NA[37],IDENTSIZE,"BLOCKREAD");
+	strcpy_s(NA[38],IDENTSIZE,"BLOCKWRITE");
+	strcpy_s(NA[39],IDENTSIZE,"TRUNC     ");
+	strcpy_s(NA[40],IDENTSIZE,"PAGE      ");
+	strcpy_s(NA[41],IDENTSIZE,"SIZEOF    ");
+	strcpy_s(NA[42],IDENTSIZE,"STR       ");
+	strcpy_s(NA[43],IDENTSIZE,"GOTOXY    ");
 	SET TSET = SET((15),2,7,8,10,13,17,18,19,20,32,34,35,40,42,43);
 	SET FSET = SET((17),5,6,7,8,9,10,11,15,16,19,20,25,36,37,38,39,41);
 	for (I=1;I<=43;I++)
@@ -399,7 +365,7 @@ void COMPINIT::ENTSPCPROCS()
 		ISFUNC= FSET.in(I);
 		LCP = (IDENTIFIER*) new IDENTIFIER;
 		LCP->PFDECKIND = SPECIAL;
-		strcpy_s(LCP->NAME,15,NA[I]);
+		strcpy_s(LCP->NAME,IDENTSIZE,NA[I]);
 		LCP->NEXT=NULL;
 		LCP->IDTYPE=NULL;
 		LCP->KEY=I;
@@ -420,26 +386,26 @@ void COMPINIT::ENTSTDPROCS()
 	ALPHA	NA[20];
 //	WRITELN(OUTPUT,"COMPINIT::ENTSTDPROCS()");
 	
-	const int SZ = 15;
-	strcpy_s(NA[ 1],SZ,"ODD     ");
-	strcpy_s(NA[ 2],SZ,"CHR     ");
-	strcpy_s(NA[ 3],SZ,"MEMAVAIL");
-	strcpy_s(NA[ 4],SZ,"ROUND   ");
-	strcpy_s(NA[ 5],SZ,"SIN     ");
-	strcpy_s(NA[ 6],SZ,"COS     ");
-	strcpy_s(NA[ 7],SZ,"LOG     ");
-	strcpy_s(NA[ 8],SZ,"ATAN    ");
-	strcpy_s(NA[ 9],SZ,"LN      ");
-	strcpy_s(NA[10],SZ,"EXP     ");
-	strcpy_s(NA[11],SZ,"SQRT    ");
-	strcpy_s(NA[12],SZ,"MARK    ");
-	strcpy_s(NA[13],SZ,"RELEASE ");
-	strcpy_s(NA[14],SZ,"IORESULT");
-	strcpy_s(NA[15],SZ,"UNITBUSY");
-	strcpy_s(NA[16],SZ,"PWROFTEN");
-	strcpy_s(NA[17],SZ,"UNITWAIT");
-	strcpy_s(NA[18],SZ,"UNITCLEA");
-	strcpy_s(NA[19],SZ,"HALT    ");
+	const int SZ = IDENTSIZE;
+	strcpy_s(NA[ 1],IDENTSIZE,"ODD     ");
+	strcpy_s(NA[ 2],IDENTSIZE,"CHR     ");
+	strcpy_s(NA[ 3],IDENTSIZE,"MEMAVAIL");
+	strcpy_s(NA[ 4],IDENTSIZE,"ROUND   ");
+	strcpy_s(NA[ 5],IDENTSIZE,"SIN     ");
+	strcpy_s(NA[ 6],IDENTSIZE,"COS     ");
+	strcpy_s(NA[ 7],IDENTSIZE,"LOG     ");
+	strcpy_s(NA[ 8],IDENTSIZE,"ATAN    ");
+	strcpy_s(NA[ 9],IDENTSIZE,"LN      ");
+	strcpy_s(NA[10],IDENTSIZE,"EXP     ");
+	strcpy_s(NA[11],IDENTSIZE,"SQRT    ");
+	strcpy_s(NA[12],IDENTSIZE,"MARK    ");
+	strcpy_s(NA[13],IDENTSIZE,"RELEASE ");
+	strcpy_s(NA[14],IDENTSIZE,"IORESULT");
+	strcpy_s(NA[15],IDENTSIZE,"UNITBUSY");
+	strcpy_s(NA[16],IDENTSIZE,"PWROFTEN");
+	strcpy_s(NA[17],IDENTSIZE,"UNITWAIT");
+	strcpy_s(NA[18],IDENTSIZE,"UNITCLEA");
+	strcpy_s(NA[19],IDENTSIZE,"HALT    ");
 
 	SET SYSCALLS = SET((5),12,13,17,18,19);
 
@@ -520,7 +486,7 @@ void COMPINIT::ENTSTDPROCS()
 		else
 			LCP = (IDENTIFIER*) new IDENTIFIER;
 		
-		strcpy_s(LCP->NAME,15,NA[i]);
+		strcpy_s(LCP->NAME,IDENTSIZE,NA[i]);
 		LCP->PFDECKIND=STANDARD;
 		LCP->CSPNUM=i + 20;
 		if (ISPROC)
@@ -554,7 +520,7 @@ void COMPINIT::INITSCALARS()
 	 {
 		m_ptr->SEGTABLE[m_ptr->SEG].DISKADDR=0;
 		m_ptr->SEGTABLE[m_ptr->SEG].CODELENGTH=0;
-		strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,15,"        ");
+		strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,IDENTSIZE,"        ");
 		m_ptr->SEGTABLE[m_ptr->SEG].SEGKIND=0;
 		m_ptr->SEGTABLE[m_ptr->SEG].TEXTADDR=0;
 	 }
@@ -689,7 +655,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 
 	m_ptr->OUTERBLOCK->NEXT=NULL;
 	m_ptr->OUTERBLOCK->LOCALLC=m_ptr->LC;
-    strcpy_s(m_ptr->OUTERBLOCK->NAME,15,"PROGRAM ");
+    strcpy_s(m_ptr->OUTERBLOCK->NAME,IDENTSIZE,"PROGRAM ");
 	m_ptr->OUTERBLOCK->IDTYPE=NULL;
 	m_ptr->OUTERBLOCK->PFLEV=0;
 	m_ptr->OUTERBLOCK->PFNAME=1;
@@ -721,25 +687,22 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 
 	   m_ptr->INSYMBOL();
 	   SETOFSYS SPECIAL;
-       if (m_ptr->SY==LPARENT) do
-	   { 
-		   m_ptr->INSYMBOL();
-		   SPECIAL = SET(2,RPARENT,SEMICOLON)+m_ptr->BLOCKBEGSYS;
+	   SPECIAL = SET(2,RPARENT,SEMICOLON)+m_ptr->BLOCKBEGSYS;
+	   if (m_ptr->SY==LPARENT)
+	   {
+			do
+				m_ptr->INSYMBOL();
+			while (!SPECIAL.in(m_ptr->SY));
+			if (m_ptr->SY==RPARENT)
+				m_ptr->INSYMBOL();
+			else
+				m_ptr->CERROR(4);
 	   }
-	   // FIXME!!
-	   while (!SPECIAL.in(m_ptr->SY));
-
-	   if (m_ptr->SY==RPARENT)
-		   m_ptr->INSYMBOL();
-	   else
-		   m_ptr->CERROR(4);
-   };
-
-   if (m_ptr->SY==SEMICOLON)
-	   m_ptr->INSYMBOL();
-   else
-	   m_ptr->CERROR(14);
-
+		if (m_ptr->SY==SEMICOLON)
+			m_ptr->INSYMBOL();
+		else
+			m_ptr->CERROR(14);
+   }
    MARK(m_ptr->MARKP);
    m_ptr->TOS = new LEXSTKREC;
 //   // WITH TOS^) {  /*MAKE LEXSTKREC for (OUTERBLOCK*/
@@ -1380,29 +1343,12 @@ fail:		{
 	FINISHSEG();
 }
 
-void PASCALSOURCE::DEBUG_SY ()
-{
-	if (SY==STRINGCONST)
-	{
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
-		WRITE (OUTPUT,"(\'",(char*)(&SCONST->SVAL[1]),"\')");
-	}
-	else if (SY==INTCONST)
-	{
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
-		WRITE (OUTPUT,'(',VAL.IVAL,')');
-	}
-	else if (SY!=IDENT)
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
-	else
-		WRITE (OUTPUT," \"",ID,"\"");
-}
-
 UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
 {
 	WRITELN(OUTPUT,"July ",4,", ",1776,"...");
 	PASCALCOMPILER	*p = (PASCALCOMPILER*) param;
 	p->PASCALCOMPILER::COMPINIT();
+	p->SYMBOL_DUMP (NULL);
 	p->COMPILER_MAIN(NULL);
 	return 0;
 }

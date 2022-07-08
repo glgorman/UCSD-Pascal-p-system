@@ -38,13 +38,14 @@ extern char *SYMBOL_NAMES2[];
 #define MAXSEG		15
 #define MAXPROCNUM	149
 #define MAXDIRLEN	40
+#define IDENTSIZE	16
 
 typedef	DWORD BITRANGE;
 struct IDENTIFIER;
 typedef IDENTIFIER* CTP;
 struct STRUCTURE;
 typedef STRUCTURE*	STP;
-typedef char ALPHA[16];
+typedef char ALPHA[IDENTSIZE];
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
 void PRINTTREE(const CTP &n1);
@@ -469,6 +470,17 @@ struct key_info
 	}
 };
 
+class PSYMBOL
+{
+public:
+	int index;
+	SYMBOL		SY;		/*SYMBOL FOUND BY INSYMBOL*/
+	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
+	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
+    VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
+	char		*str;
+};
+
 class PASCALCOMPILER;
 void WRITELINKERINFO(bool DECSTUFF);
 
@@ -506,7 +518,6 @@ protected:
 	CURSRANGE	PREVLINESTART;
     CURSRANGE	OLDLINESTART;
 	
-
 	bool		INMODULE,USING,INCLUDING,ININTERFACE;
 	bool		DP, NOISY, LIST, GETSTMTLEV,BPTONLINE;
 
@@ -526,7 +537,7 @@ protected:
 	void CHECK();
 	void NUMBER();
 	void STRING();
-	void DEBUG_SY();
+	void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p);
 	void CERROR(int ERRORNUM);
 	void WRITETEXT();
 	void GETNEXTPAGE();
@@ -637,8 +648,10 @@ friend class COMPINIT;
 protected:
 	// from INSYMBOL	
 	// from commenter
+
 	void COMMENTER(char STOPPER);
 	void INSYMBOL();
+	void GETSYMBOL();
 	
 protected:
 	void COMPINIT();
@@ -670,5 +683,6 @@ public:
 	static UINT THREAD_ENTRY (LPVOID param);
 
 public:
+	int SYMBOL_DUMP (LPVOID);
 	void SOURCE_DUMP ();
 };
