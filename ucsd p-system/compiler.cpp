@@ -741,50 +741,10 @@ void PASCALCOMPILER::UNITPART(SETOFSYS)
 }
 
 
-void PASCALSOURCE::PRINTLINE()
-{
-	char	DORLEV,STARORC;
-	int LENG;
-	char A[100];
-	STARORC=':';
-	if (DP)
-		DORLEV='D';
-	else
-		DORLEV=(char)((BEGSTMTLEV%10) + ORD('0'));
-
-   if (BPTONLINE)
-	   STARORC='*';
-   WRITE(OUTPUT,_LP._tmpfname,SCREENDOTS/*6**/,
-	   (int)SEG/*4*/,
-	   (int)CURPROC,/*5,*/
-	   STARORC,
-	   DORLEV,
-	   LINEINFO/*,6*/," ");
-
-   LENG=SYMCURSOR-LINESTART;
-   if (LENG>100)
-	   LENG=100;
-   MOVELEFT((const char*)&(SYMBUFP[LINESTART]),A,LENG);
-   if (A[0]==(char)(16/*DLE*/))
-   {
-       if (A[1]>' ')
-		   WRITE(OUTPUT,0,_LP._tmpfname," ",ORD(A[1])-ORD(' '));
-       LENG=LENG-2;
-       MOVELEFT((const char*)&A[2],A,LENG);
-   };
-   A[LENG-1]=char(EOL);
-   WRITE(OUTPUT,0,_LP._tmpfname,&A[0],LENG);
-   if ((USERINFO.ERRBLK==SYMBLK)&&(USERINFO.ERRSYM>LINESTART))
-	   WRITELN(OUTPUT,0,_LP._tmpfname,">>>>>> Error # ",USERINFO.ERRNUM);
-
-} /*PRINTLINE*/ ;
-
 void PASCALCOMPILER::ENTERID(CTP FCP)
 {
-#if 0
 	WRITELN(OUTPUT,"PASCALCOMPILER::ENTERID(CTP FCP)");
 	WRITELN(OUTPUT,"FCP->NAME = \"",FCP->NAME,'"');
-#endif
 
 	CTP LCP,LCP1;
 	int I;
@@ -835,7 +795,7 @@ void PASCALCOMPILER::SEARCHID(SETOFIDS FIDCLS, CTP &FCP)
 					goto found;
 				else
 				if (PRTERR)
-					PASCALCOMPILER::CERROR(103);
+					PASCALSOURCE::CERROR(103);
 				else LCP=NULL;
 			else LCP=NULL;
 		};
@@ -1349,6 +1309,7 @@ UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
 	PASCALCOMPILER	*p = (PASCALCOMPILER*) param;
 	p->PASCALCOMPILER::COMPINIT();
 	p->SYMBOL_DUMP (NULL);
+//	p->SOURCE_DUMP ();
 	p->COMPILER_MAIN(NULL);
 	return 0;
 }

@@ -1,7 +1,7 @@
 
 #include "stdafx.h"
 #include "stdafx.h"
-//#include <vector>
+#include <vector>
 //#include "../Frame Lisp/symbol_table.h"
 //#include "../Frame Lisp/btreetype.h"
 //#include "../Frame Lisp/node_list.h"
@@ -22,11 +22,11 @@ public:
 	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
 	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
     VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
-	char		*str;
+	char		*str;	// pointer to string constant
 };
 #endif
 
-void PASCALCOMPILER::SOURCE_DUMP ()
+void PASCALSOURCE::SOURCE_DUMP ()
 {
 	ELIZA eliza;
 	text_object source;
@@ -64,19 +64,40 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p)
 	float val;
 	static bool debug_real = false;
 	static bool debug_int = false;
-	static bool debug_string = false;
+	static bool debug_string = true;
 	static bool debug_ident = false;
 	static bool debug_key = false;
-	static bool symbol_numbers = false;
+	static bool symbol_numbers = true;
+	static bool line_breaks = false;
+	static bool print_stop = false;
 
 	const PSYMBOL &q = p;
-	if (q.SY==PROCSY)
+	SYMBOL	start, stop;
+	start = CASESY;
+	stop = ENDSY;
+
+#if 0
+	if (q.SY==start)
 	{
 		debug_key = true;
+		debug_string = true;
+		debug_int = true;
 		debug_ident = true;
 		symbol_numbers = true;
-
+		line_breaks = true;
 	}
+	if ((q.SY==stop)&&(print_stop==false))
+	{
+		debug_key = false;
+		debug_int = false;
+		debug_ident = false;
+		symbol_numbers = false;
+	}
+	if ((q.SY==RPARENT)&&(debug_key==true))
+	{
+		line_breaks = true;
+	}
+#endif
 	count = q.index;
 	
 	if ((SY==REALCONST)&&(debug_real==true))
@@ -98,8 +119,12 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p)
 			WRITELN (OUTPUT);
 			WRITE(OUTPUT,count,": ");
 		}
+		val = p.VAL.IVAL;
 		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
-		WRITE (OUTPUT,"(\"",p.str,"\")");
+		if (p.str!=NULL)
+			WRITE (OUTPUT,"(\"",p.str,"\")");
+		else
+			WRITE (OUTPUT,"(\"",char(val),"\")");
 //		WRITELN (OUTPUT);
 	}
 	else if ((SY==INTCONST)&&(debug_int==true))
@@ -132,22 +157,29 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p)
 		WRITE (OUTPUT,SYMBOL_NAMES2[p.SY]);
 		symbol_numbers = false;
 	}
-	if (q.SY==SEMICOLON)
+	if ((q.SY==SEMICOLON)&&(line_breaks==true))
+	{
+		WRITELN(OUTPUT);
+	}
+#if 0
+	if (q.SY==stop)
 	{
 		debug_key = false;
+		debug_int = false;
 		debug_ident = false;
+		symbol_numbers = false;
+		line_breaks = false;
 	}
+#endif
 }
 
-int PASCALCOMPILER::SYMBOL_DUMP (LPVOID)
+int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 {
 	bool busy = true;
 	PSYMBOL	p;
-	vector<PSYMBOL> symbols;
-	symbols.reserve(65536);
-	symbols.resize (65536);
+	m_symbols.resize (65536);
 	int sz = 0;
-	int max_symbol = 33800;
+	int max_symbol = 32768+4096;
 	while (busy)
 	{
 		INSYMBOL();
@@ -160,26 +192,28 @@ int PASCALCOMPILER::SYMBOL_DUMP (LPVOID)
 			memcpy(p.ID,ID,16);
 		else
 			memset(p.ID,0,16);
-		if (SY==STRINGCONST)
-		{
+		if ((SY==STRINGCONST)
+			&&(SCONST->SVAL[0]>0))
 			p.str = strdup(&SCONST->SVAL[1]);
-		}
-		else (p.str=NULL);
+		else
+			(p.str=NULL);
 		
-		memcpy(&symbols[sz],&p,sizeof(PSYMBOL));
+		memcpy(&m_symbols[sz],&p,sizeof(PSYMBOL));
 		sz++;
 		
 		if (sz%50==0)
 			WRITE(OUTPUT,".");
 		if (sz>max_symbol)
 			busy=false;
+		if (SY==OTHERSY)
+			break;
 	}
 	int i;
 	for (i=0;i<max_symbol;i++)
 	{
 //		ID = symbols[sz].ID;
 //		symbols[sz].index;
-		PSYMBOL *r = &(symbols[i]);
+		PSYMBOL *r = &(m_symbols[i]);
 		OP = r->OP;
 		SY = r->SY;
 		VAL = r->VAL;
@@ -188,7 +222,7 @@ int PASCALCOMPILER::SYMBOL_DUMP (LPVOID)
 			r->str[15]=0; // just in case
 			strcpy_s(ID,16,r->str);
 		}
-		DEBUG_SY(symbols[i]);
+		DEBUG_SY(m_symbols[i]);
 	}
 	WRITELN(OUTPUT);
 	WRITELN(OUTPUT,sz," decoded");
