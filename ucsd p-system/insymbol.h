@@ -187,7 +187,8 @@ private:
 	void CHECK();
 	void NUMBER();
 	void STRING();
-	void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p);
+	int CREATE_SYMLIST(LPVOID);
+	void DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop);
 	void SCANSTRING(char *STRG, int MAXLENG, char);
 	char PEEK();
 	char PEEK(int i);

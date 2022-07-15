@@ -26,6 +26,23 @@ public:
 };
 #endif
 
+int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
+{
+	size_t i;
+	SYMBOL begin, end;
+	begin = PROCSY;
+	end = SEMICOLON;
+	CREATE_SYMLIST(NULL);
+	size_t sz = m_symbols.size();
+	for (i=0;i<sz;i++)
+	{
+		DEBUG_SY(m_symbols[i],begin,end);
+	}
+	WRITELN(OUTPUT);
+	WRITELN(OUTPUT,(int)sz," decoded");
+	return 0;
+}
+
 void PASCALSOURCE::SOURCE_DUMP ()
 {
 	ELIZA eliza;
@@ -58,87 +75,82 @@ void PASCALSOURCE::SOURCE_DUMP ()
 	while (buff1!=NULL);
 }
 
-void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p)
+void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 {
 	int count;
-	float val;
-	static bool debug_real = false;
-	static bool debug_int = false;
-	static bool debug_string = true;
-	static bool debug_ident = false;
+	int ival;
+	float fval;
+	static bool symbol_numbers = false;
 	static bool debug_key = false;
-	static bool symbol_numbers = true;
+	static bool debug_ident = false;
+	static bool debug_int = false;
+	static bool debug_real = false;
+	static bool debug_string = false;
 	static bool line_breaks = false;
 	static bool print_stop = false;
 
-	const PSYMBOL &q = p;
-	SYMBOL	start, stop;
-	start = CASESY;
-	stop = ENDSY;
-
-#if 0
-	if (q.SY==start)
+	if (p.SY==start)
 	{
-		debug_key = true;
-		debug_string = true;
-		debug_int = true;
-		debug_ident = true;
 		symbol_numbers = true;
+		debug_key = true;
+		debug_ident = true;
+		debug_int = true;
+		debug_real = true;
+		debug_string = true;
 		line_breaks = true;
+		print_stop = true;
 	}
-	if ((q.SY==stop)&&(print_stop==false))
+	if ((p.SY==stop)&&(print_stop==false))
 	{
 		debug_key = false;
 		debug_int = false;
 		debug_ident = false;
 		symbol_numbers = false;
 	}
-	if ((q.SY==RPARENT)&&(debug_key==true))
+	if ((p.SY==RPARENT)&&(debug_key==true))
 	{
 		line_breaks = true;
 	}
-#endif
-	count = q.index;
-	
-	if ((SY==REALCONST)&&(debug_real==true))
+	count = p.index;
+	if ((p.SY==REALCONST)&&(debug_real==true))
 	{
 		if (symbol_numbers==true)
 		{
 			WRITELN (OUTPUT);
 			WRITE(OUTPUT,count,": ");
 		}
-		val = p.VAL.VALP->REEL; 
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
-		WRITE (OUTPUT,'(',val,')');
+		fval = p.VAL.VALP->REEL; 
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[p.SY]);
+		WRITE (OUTPUT,'(',fval,')');
 //		WRITELN (OUTPUT);
 	}
-	else if ((SY==STRINGCONST)&&(debug_string==true))
+	else if ((p.SY==STRINGCONST)&&(debug_string==true))
 	{
 		if (symbol_numbers==true)
 		{
 			WRITELN (OUTPUT);
 			WRITE(OUTPUT,count,": ");
 		}
-		val = p.VAL.IVAL;
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
+		ival = p.VAL.IVAL;
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[p.SY]);
 		if (p.str!=NULL)
 			WRITE (OUTPUT,"(\"",p.str,"\")");
 		else
-			WRITE (OUTPUT,"(\"",char(val),"\")");
+			WRITE (OUTPUT,"(\"",char(ival),"\")");
 //		WRITELN (OUTPUT);
 	}
-	else if ((SY==INTCONST)&&(debug_int==true))
+	else if ((p.SY==INTCONST)&&(debug_int==true))
 	{
 		if (symbol_numbers==true)
 		{
 			WRITELN (OUTPUT);
 			WRITE(OUTPUT,count,": ");
 		}
-		WRITE (OUTPUT,' ',SYMBOL_NAMES2[SY]);
+		WRITE (OUTPUT,' ',SYMBOL_NAMES2[p.SY]);
 		WRITE (OUTPUT,'(',p.VAL.IVAL,')');
 //		WRITELN (OUTPUT);
 	}
-	else if ((SY==IDENT)&&(debug_ident==true))
+	else if ((p.SY==IDENT)&&(debug_ident==true))
 	{
 		if (symbol_numbers==true)
 		{
@@ -155,36 +167,36 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p)
 			WRITE(OUTPUT,count,": ");
 		}
 		WRITE (OUTPUT,SYMBOL_NAMES2[p.SY]);
-		symbol_numbers = false;
+		if (stop!=OTHERSY)
+			symbol_numbers = false;
 	}
-	if ((q.SY==SEMICOLON)&&(line_breaks==true))
+	if ((p.SY==SEMICOLON)&&(line_breaks==true))
 	{
 		WRITELN(OUTPUT);
 	}
-#if 0
-	if (q.SY==stop)
+	if (p.SY==stop)
 	{
 		debug_key = false;
 		debug_int = false;
+		debug_real = false;
+		debug_string = false;
 		debug_ident = false;
 		symbol_numbers = false;
 		line_breaks = false;
 	}
-#endif
 }
 
-int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
+int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 {
-	bool busy = true;
 	PSYMBOL	p;
-	m_symbols.resize (65536);
-	int sz = 0;
-	int max_symbol = 32768+4096;
-	while (busy)
+	m_symbols.resize (1024);
+	size_t sz = 0;
+	size_t max_symbol = max_symbol = m_symbols.size()-1;
+	while (true)
 	{
 		INSYMBOL();
 		ASSERT((SY>=0)&&(SY<MAXSYMBOL));	
-		p.index = sz;
+		p.index = (int) sz;
 		p.SY = SY;
 		p.OP = OP;
 		p.VAL = VAL;
@@ -203,57 +215,17 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 		
 		if (sz%50==0)
 			WRITE(OUTPUT,".");
-		if (sz>max_symbol)
-			busy=false;
+		if (sz>max_symbol) {
+			m_symbols.resize (sz+1024);
+			max_symbol = m_symbols.size()-1;
+		}
 		if (SY==OTHERSY)
 			break;
 	}
-	int i;
-	for (i=0;i<max_symbol;i++)
-	{
-//		ID = symbols[sz].ID;
-//		symbols[sz].index;
-		PSYMBOL *r = &(m_symbols[i]);
-		OP = r->OP;
-		SY = r->SY;
-		VAL = r->VAL;
-		if (r->str!=NULL)
-		{
-			r->str[15]=0; // just in case
-			strcpy_s(ID,16,r->str);
-		}
-		DEBUG_SY(m_symbols[i]);
-	}
-	WRITELN(OUTPUT);
-	WRITELN(OUTPUT,sz," decoded");
-	return 0;
+	return (int) sz;
 }
 
-#if 0
-void BODYPART::LINKERREF(IDCLASS KLASS, int ID, int ADDR)
-{
-	int ioresult;
-	PASCALCOMPILER	*m_ptr;
-	FILE *file = &m_ptr->REFFILE;
-	REFARRAY *list = m_ptr->REFLIST;
-	const char *data = (const char*)(&list[0]);
-	if (m_ptr->NREFS>REFSPERBLK)/*WRITE BUFFER*/
-	{
-		ioresult = SYSCOMM::BLOCKWRITE(file,data,1,m_ptr->REFBLK);
-		if (ioresult!=1)
-			CERROR(402);
-		m_ptr->REFBLK++;
-		m_ptr->NREFS=1;
-	};
-	// with	(m_ptr->REFLIST[m_ptr->NREFS])
-	REFARRAY &ARR = m_ptr->REFLIST[m_ptr->NREFS];
-	if (VARS.in(KLASS))
-		ARR->KEY=ID+32;
-	else /*PROC*/
-		ARR->KEY=ID;
-	ARR->OFFSET=SEGINX+ADDR;
-	NREFS=NREFS+1;
-}
-#endif
+
+
 
 

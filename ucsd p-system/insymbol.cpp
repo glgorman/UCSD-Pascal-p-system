@@ -264,9 +264,9 @@ void PASCALSOURCE::CHECK()
 void PASCALSOURCE::COMMENTER(char STOPPER)
 {
 //	WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER()");
-	char CH,SW,DEL;
+	char CH,CH1,SW,DEL;
 	char LTITLE[64];
-	SYMCURSOR++;
+	CH1 = GETC();
 	if (PEEK()=='$')
 	if (PEEK(1)!=STOPPER)
 	do {
@@ -277,7 +277,7 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 		{
 			DEL=SW;
 			SW='+';
-			SYMCURSOR++;
+			CH1 = GETC();
 		};
 		switch (CH) {
 			case 'C':
@@ -402,10 +402,10 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 		}
 		while (PEEK()!=STOPPER);
 		CH = PEEK(1);
-		SYMCURSOR++;
+		CH1 = GETC();
 	}
 	while ((CH!=')')&&(STOPPER!='}'));
-	SYMCURSOR++;
+	CH1 = GETC();
 } /*COMMENTER*/
 
 void PASCALSOURCE::SCANSTRING(char *STRG, int MAXLENG, char STOPPER)
@@ -417,54 +417,6 @@ void PASCALSOURCE::SCANSTRING(char *STRG, int MAXLENG, char STOPPER)
 	MOVELEFT(&(*SYMBUFP[SYMCURSOR]),&(STRG[1]),LENG);
 	SYMCURSOR=SYMCURSOR+LENG+1;
 } /*SCANSTRING*/
-
-#if 0
-
- void STRING()
- {
-	char T[80];
-	int TP,NBLANKS,L;
-	bool DUPLE;
-	DUPLE = FALSE;
-	TP = 0;
-	do {
-		if (DUPLE)
-			SYMCURSOR++;
-
-		do {
-			SYMCURSOR++;
-			TP++;
-
-			if (PEEK()==CHR(EOL))
-			{
-				CERROR(202);
-				CHECK();
-				goto fail;
-			}
-			T[TP] = PEEK(0);
-		}
-		while (PEEK()!='\'';
-		DUPLE = TRUE;
-	}
-	while (PEEK(1)=='\'';
-	fail:
-		TP--;
- /* ADJUST */
-	SY = STRINGCONST;
-	OP = NOOP;
-	LGTH = TP;
- /* GROSS */
-	if (TP==1)
-		VAL.IVAL = ORD(T[1]);
-	else
-	{
-		SCONST->CCLASS = STRG;
-		SCONST->SLGTH = TP;
-		MOVELEFT (T[1], SVAL[1],TP);
-		VAL.VALP = SCONST
-	}
- } /* STRING */;
-#endif
 
 void PASCALSOURCE::STRING()
 {

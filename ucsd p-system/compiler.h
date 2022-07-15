@@ -3,11 +3,10 @@
 
 using namespace std;
 
-
 #define SEGMENT /**/
 #define	DISPLIMIT	12
 #define MAXLEVEL	8
-#define AXADDR		28000
+#define MAXADDR		65536
 #define INTSIZE		1
 #define REALSIZE	2
 #define BITSPERWD	16
@@ -174,61 +173,61 @@ typedef enum _IDKIND
 
 struct IDENTIFIER
 {
-	ALPHA		NAME;
-	CTP			LLINK;
-	CTP			RLINK;
-	STP			IDTYPE;
-	CTP			NEXT;
+	ALPHA NAME;
+	CTP LLINK;
+	CTP RLINK;
+	STP IDTYPE;
+	CTP NEXT;
 	struct
 	{
-		IDCLASS		KLASS;
-		union /*DECLKIND */  
+		IDCLASS KLASS;
+		union/*DECLKIND */
 		{
-			struct	/*KONST*/
+			struct/*KONST*/
 			{
-				VALU	VALUES;	
+				VALU VALUES;
 			};
-			struct /*FORMALVARS, ACTUALVARS*/
+			struct/*FORMALVARS, ACTUALVARS*/
 			{
-				LEVRANGE	VLEV;
-				ADDRRANGE	VADDR;
-				bool		PUBLIC;
+				LEVRANGE VLEV;
+				ADDRRANGE VADDR;
+				bool PUBLIC;
 			};
-			struct /*FIELD*/
+			struct/*FIELD*/
 			{
-				ADDRRANGE	FLDADDR;
-				bool		FISPACKED;
-				BITRANGE	FLDRBIT,FLDWIDTH;
+				ADDRRANGE FLDADDR;
+				bool FISPACKED;
+				BITRANGE FLDRBIT,FLDWIDTH;
 			};
-			struct  /*PROC FUNC*/
+			struct/*PROC FUNC*/
 			{
-				DECLKIND	PFDECKIND;
+				DECLKIND PFDECKIND;
 				union
 				{
-					struct	/*SPECIAL*/
+					struct/*SPECIAL*/
 					{
-						int	KEY;	
+						int KEY;
 					};
-					struct	/*STANDARD*/
+					struct/*STANDARD*/
 					{
-						int	CSPNUM;	
+						int CSPNUM;
 					};
-					struct	/*DECLARED*/
-					{
-						LEVRANGE	PFLEV;
-						PROCRANGE	PFNAME;
-						SEGRANGE	PFSEG;
-						IDKIND		PFKIND;
+					struct/*DECLARED*/
+					{ 
+						LEVRANGE PFLEV;
+						PROCRANGE PFNAME;
+						SEGRANGE PFSEG;
+						IDKIND PFKIND;
 						union
 						{
-							ADDRRANGE	LOCALLC;
-							bool		FORWDECL;
-							bool		EXTURNAL;
-							bool		INSCOPE;
-							bool		IMPORTED;
+							ADDRRANGE LOCALLC;
+							bool FORWDECL;
+							bool EXTURNAL;
+							bool INSCOPE;
+							bool IMPORTED;
 						};
 					};
-					int			SEGID;//MODULE;
+					int SEGID;//MODULE;
 				};
 			};
 		};};
@@ -260,28 +259,29 @@ typedef enum _VACCESS
 
 //SETOFIDS==SET OF IDCLASS;
 
-typedef union _ATTR //(TYPTR: STP)
+struct ATTR
 {
-  union //(KIND: ATTRKIND)
-  {
+	STP TYPTR;
+	union //(KIND: ATTRKIND)
+	{
 //	CST:   (CVAL: VALU);
 //	VARBL: (union (ACCESS: VACCESS)
 //	DRCT:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
 //	INDRCT: (IDPLMT: ADDRRANGE))
-	VALU	CST;
-	union // (ACCESS: VACCESS)
-	{
+		VALU	CVAL;
+		union // (ACCESS: VACCESS)
+		{
 //	:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
 //	INDRCT: (IDPLMT: ADDRRANGE))
-		struct _DRCT
-		{
-			LEVRANGE VLEVEL;
-			ADDRRANGE DPLMT;
-		} DRCT;
-		ADDRRANGE	INDRCT;
+			struct _DRCT
+			{
+				LEVRANGE VLEVEL;
+				ADDRRANGE DPLMT;
+			}	DRCT;
+			ADDRRANGE	INDRCT;
+		};
 	};
-  };
-} ATTR;
+};
 
 struct TESTPOINTER;
 typedef TESTPOINTER* TESTP;
@@ -365,7 +365,7 @@ struct LEXSTKREC
 	LEXSTKREC	*PREVLEXSTACKP;
 };
 
-class COMPILERDATA: protected PASCALSOURCE
+class COMPILERDATA: public PASCALSOURCE
 {
 protected:
 /*	PASCALCOMPILER member variables */
