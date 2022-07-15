@@ -27,10 +27,7 @@ public:
 		int i, j;
 		i = s>>5;
 		j = s&0x1f;
-		if ((bits[i])&(0x01<<j))
-			result = true;
-		else
-			result = false;
+		result = (((bits[i])&(0x01<<j))!=0?true:false);
 		return result;
 	};
 	virtual SET &UNION(const SET&);
