@@ -146,10 +146,13 @@ protected:
 	CSP			SCONST;			/*INSYMBOL STRING RESULTS*/
 
 protected:
+struct _options 
+{
 	bool	INMODULE,USING,INCLUDING,ININTERFACE;
 	bool	DP,NOISY,LIST,GETSTMTLEV,BPTONLINE;
 	bool	NOSWAP,GOTOOK,DEBUGGING,IOCHECK;
 	bool	TINY,RANGECHECK,SYSCOMP,LIBNOTOPEN;
+} options;
 
 	int		LGTH;
 	int		STARTDOTS;
@@ -192,9 +195,12 @@ private:
 	void SCANSTRING(char *STRG, int MAXLENG, char);
 	char PEEK();
 	char PEEK(int i);
-	char GETC();
+	void GETSYMBOL();
+	void GETIDENT();
+	bool GETOPERATOR();
 
 protected:
+	char GETC();
 	void CERROR(int ERRORNUM);
 	void PRINTLINE();
 	void WRITETEXT();
@@ -203,7 +209,6 @@ protected:
 public:
 	void COMMENTER(char STOPPER);
 	void INSYMBOL();
-	void GETSYMBOL();
 	int SYMBOL_DUMP (LPVOID);
 	void SOURCE_DUMP ();
 };
