@@ -81,9 +81,9 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 			CH='E';
 		else
 		{
-			if (NOISY)
+			if (options.NOISY)
 				WRITELN(OUTPUT);
-			else if (LIST&&(ERRORNUM<=400))
+			else if (options.LIST&&(ERRORNUM<=400))
 				return;
 			if (LINESTART==0)
 				WRITE(OUTPUT,*SYMBUFP,(int)SYMCURSOR);
@@ -101,7 +101,7 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 			};
 			WRITELN(OUTPUT," <<<<");
 			WRITE(OUTPUT,"Line ",SCREENDOTS,", error ",ERRORNUM,":");
-			if (NOISY)
+			if (options.NOISY)
 				WRITE(OUTPUT," <sp>(continue), <esc>(terminate), E(dit");
 			char param[] = ":";
 			WRITE(OUTPUT,param);
@@ -128,7 +128,7 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 #endif
 	};
 	WRITELN(OUTPUT);
-	if (NOISY)
+	if (options.NOISY)
 		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
 
 } /*CERROR*/ ;
@@ -139,40 +139,40 @@ void PASCALSOURCE::GETNEXTPAGE()
 	SYMCURSOR=0;
 	LINESTART=0;
 	int read;
-	if (USING) {
+	if (options.USING) {
 		if (USEFILE==WORKCODE) {
 			read = SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*SYMBUFP,2,SYMBLK);
 			if (read!=2)
-				USING=false; }
+				options.USING=false; }
 		else if (USEFILE==SYSLIBRARY) {
 			read = SYSCOMM::BLOCKREAD(&LIBRARY,*SYMBUFP,2,SYMBLK);
 			if (read!=2)
-				USING=false; }			
-		if (!USING) {
+				options.USING=false; }			
+		if (!options.USING) {
 			SYMBLK=PREVSYMBLK;
 			SYMCURSOR=PREVSYMCURSOR;
 			LINESTART=PREVLINESTART; }
 	}
-	if (!USING)
+	if (!options.USING)
 	{
-		if (INCLUDING) {
+		if (options.INCLUDING) {
 			read = SYSCOMM::BLOCKREAD(&INCLFILE,*SYMBUFP,2,SYMBLK);
 			if (read!=2) {
 				SYSCOMM::CLOSE((FILE*)(&INCLFILE));
-				INCLUDING=false;
+				options.INCLUDING=false;
 				SYMBLK=OLDSYMBLK;
 				SYMCURSOR=OLDSYMCURSOR;
 				LINESTART=OLDLINESTART; } }
 	}
-	if (!(INCLUDING||USING)) {
+	if (!(options.INCLUDING||options.USING)) {
 		read = SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*SYMBUFP,2,SYMBLK);
 		if (read!=2)
 			CERROR(401);
 	}
 	if (SYMCURSOR==0)
 	{
-		if (INMODULE)
-			if (ININTERFACE&&!USING)
+		if (options.INMODULE)
+			if (options.ININTERFACE&&!options.USING)
 				WRITETEXT();
 		if ((*SYMBUFP)[0]==(char)(16))
 			SYMCURSOR=2;
@@ -186,12 +186,12 @@ void PASCALSOURCE::PRINTLINE()
 	int LENG;
 	char A[100];
 	STARORC=':';
-	if (DP)
+	if (options.DP)
 		DORLEV='D';
 	else
 		DORLEV=(char)((BEGSTMTLEV%10) + ORD('0'));
 
-   if (BPTONLINE)
+   if (options.BPTONLINE)
 	   STARORC='*';
    WRITE(OUTPUT,_LP._tmpfname,SCREENDOTS/*6**/,
 	   (int)SEG/*4*/,
@@ -222,10 +222,10 @@ void PASCALSOURCE::CHECK()
 {
 //	WRITELN(OUTPUT,"PASCALCOMPILER::CHECK()");
 	/* CHECKS FOR THE END OF THE PAGE */
-	char ch;
+	char CH;
 	SCREENDOTS++;
-	SYMCURSOR++;
-	if (NOISY)
+	CH = GETC();
+	if (options.NOISY)
 	{
 		WRITE(OUTPUT,".");
 		if ((SCREENDOTS-STARTDOTS)%50==0)
@@ -234,28 +234,28 @@ void PASCALSOURCE::CHECK()
 			WRITE(OUTPUT,"<",SCREENDOTS,">");
 		}
 	}
-	if (LIST)
+	if (options.LIST)
 		PRINTLINE();
-	BPTONLINE=false;
+	options.BPTONLINE=false;
 	if (PEEK()=='\0')
 		GETNEXTPAGE();
 	else
 		LINESTART=SYMCURSOR;
 	if (PEEK()==12/*FF*/)
-		SYMCURSOR++;
+		CH = GETC();
 	if (PEEK()==16/*DLE*/)
 		SYMCURSOR=SYMCURSOR+2;
 	
 	bool skip=true;
+	CH=PEEK();
 	while(skip)
 	{
-		ch=PEEK();
-		if (chartype::whitespace.in(ch))
-			SYMCURSOR++;
+		if (chartype::whitespace.in(CH))
+			CH=GETC();
 		else
 			skip=false;
 	}	
-	if (DP)
+	if (options.DP)
 		LINEINFO=LC;
 	else
 		LINEINFO=IC;
@@ -289,28 +289,28 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			break;
 
 			case 'D':
-				DEBUGGING=(SW=='+');
+				options.DEBUGGING=(SW=='+');
 				break;
 				
 			case 'G':
-				GOTOOK=(SW=='+');
+				options.GOTOOK=(SW=='+');
 				break;
 
 			case 'I':
 				if ((SW=='+')||(SW=='-'))
-					IOCHECK=(SW=='+');
+					options.IOCHECK=(SW=='+');
 				else
 				{
 					SCANSTRING(LTITLE,40,STOPPER);
 					if (STOPPER=='*')
-						SYMCURSOR++;
-					if (LIST)
+						CH1 = GETC();
+					if (options.LIST)
 					{
-						SYMCURSOR++;
+						CH = GETC();
 						PRINTLINE();
 						SYMCURSOR--;
 					};
-					if (INCLUDING||INMODULE&&ININTERFACE)
+					if (options.INCLUDING||options.INMODULE&&options.ININTERFACE)
 					{
 						PASCALSOURCE::CERROR(406);
 						return;
@@ -323,7 +323,7 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 						if (SYSCOMM::IORESULT()!=0)
 							PASCALSOURCE::CERROR(403);
 					};
-					INCLUDING=true;
+					options.INCLUDING=true;
 					OLDSYMCURSOR=SYMCURSOR;
 					OLDLINESTART=LINESTART;
 					OLDSYMBLK=SYMBLK-2;
@@ -338,21 +338,21 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			case 'L':
 				if ((SW=='+')||(SW=='-'))
 				{
-					LIST=(SW=='+');
-					if (LIST)
+					options.LIST=(SW=='+');
+					if (options.LIST)
 						SYSCOMM::OPENNEW(&_LP,"*SYSTEM.LST.TEXT");
 				}
 				else
 				{
 					SCANSTRING(LTITLE,40,STOPPER);
 					SYSCOMM::OPENNEW(&_LP,LTITLE);
-					LIST=SYSCOMM::IORESULT()==0;
+					options.LIST=SYSCOMM::IORESULT()==0;
 					return;
 				};
 				break;
 
 			case 'Q':
-				NOISY=(SW=='-');
+				options.NOISY=(SW=='-');
 				break;
 				
 			case 'P':
@@ -360,31 +360,31 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 				break;
 				
 			case 'R':
-				RANGECHECK=(SW=='+');
+				options.RANGECHECK=(SW=='+');
 				break;
 
 			case 'S':
-				NOSWAP = (SW=='-');
+				options.NOSWAP = (SW=='-');
 				break;
 
 			case 'T':
-				TINY=(SW=='+');
+				options.TINY=(SW=='+');
 				break;
 				
 			case 'U':
 				if ((SW=='+')||(SW=='-'))
 				{
-					SYSCOMP=(SW=='-');
-					RANGECHECK=!SYSCOMP;
-					IOCHECK=RANGECHECK;
-					GOTOOK=SYSCOMP;
+					options.SYSCOMP=(SW=='-');
+					options.RANGECHECK=!options.SYSCOMP;
+					options.IOCHECK=options.RANGECHECK;
+					options.GOTOOK=options.SYSCOMP;
 				}
 				else
-					if (!USING)
+					if (!options.USING)
 					{
 						SCANSTRING(SYSTEMLIB,40,STOPPER);
 						SYSCOMM::CLOSE(&LIBRARY);
-						LIBNOTOPEN=true;
+						options.LIBNOTOPEN=true;
 						return;
 					}
 				break;
@@ -420,7 +420,7 @@ void PASCALSOURCE::SCANSTRING(char *STRG, int MAXLENG, char STOPPER)
 
 void PASCALSOURCE::STRING()
 {
-	char ch;
+	char CH;
 	char T[80];
 	int TP;
 	bool	DUPLE;
@@ -433,26 +433,26 @@ void PASCALSOURCE::STRING()
 	do
 	{		
 		if (DUPLE)
-			SYMCURSOR++;
+			CH = GETC();
 		do
 		{
-			SYMCURSOR++;
 			TP++;
 			if (TP==80)
 				goto done;
+			CH = GETC();
 			if (PEEK()==char(EOL))
 			{ 
 				CERROR(202);
 				CHECK();
 				goto done;
 			}
-			T[TP]=ch=PEEK();
+			T[TP]=CH=PEEK();
 		}
-		while (ch!='\'');
-		ch=PEEK(1);
+		while (CH!='\'');
+		CH=PEEK(1);
 		DUPLE=true;
 	}
-	while (ch=='\'');
+	while (CH=='\'');
 
 done:
 	TP=TP-1; /* ADJUST */
@@ -480,7 +480,7 @@ void PASCALSOURCE::NUMBER()
 	float	RSUM;
 	bool	NOTLONG;
 	int K,J;
-	char CH;
+	char CH,CH1;
 
 /* TAKES A NUMBER&& DECIDES WHETHER IT"S REAL
 OR INTEGER AND CONVERTS IT; /*FIXME*/;
@@ -496,7 +496,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	IPART=SYMCURSOR; /* int PART STARTS HERE */
 	while (chartype::digits.in(PEEK()))
 	{
-		SYMCURSOR++;	
+		CH1 = GETC();	
 	}
 	ENDI=SYMCURSOR-1;
 
@@ -505,15 +505,15 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	if (PEEK()=='.')
 	{
 		CH = PEEK(1);
-		SYMCURSOR++;
+		CH1 = GETC();
 		if (CH!='.')  /* WATCH OUT for (".." */
 		{
 			TIPE=REALTIPE;
-			SYMCURSOR++;
+			CH1 = GETC();
 			FPART=SYMCURSOR; /* {NING) FPART */
 			while (chartype::digits.in(PEEK()))
 			{
-				SYMCURSOR++;
+				CH1 = GETC();
 				if (SYMCURSOR==FPART)
 					PASCALSOURCE::CERROR(201);
 			}
@@ -523,18 +523,18 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	if (PEEK()=='E')
 	{
 		TIPE=REALTIPE;
-		SYMCURSOR++;
+		CH1 = GETC();
 		if (PEEK()=='-')
 		{
-			SYMCURSOR++;
+			CH1 = GETC();
 			SIGN=-1;
 		}
 		else if (PEEK()=='+')
-			SYMCURSOR++;
+			CH1 = GETC();
 		EPART=SYMCURSOR; /* {NING) EXPONENT */
 		while (chartype::digits.in(PEEK()))
 		{
-			SYMCURSOR++;
+			CH1 = GETC();
 		}
 		ENDE=SYMCURSOR-1;
 		if (ENDE<EPART)
@@ -643,23 +643,189 @@ void PASCALSOURCE::WRITETEXT()
      CURBLK=CURBLK+2;
 } /*WRITETEXT*/
 
-void PASCALSOURCE::INSYMBOL()
+void PASCALSOURCE::GETIDENT()
 {
-	bool status = false;
-	CURSRANGE	old_position;
-	while (status==false)
+	char c;
+	size_t	len;
+	int index,i;
+	key_info *key;
+	int val = SYMCURSOR;
+	index = SEARCH::IDSEARCH(val,(char*&)(SYMBUFP));
+	if (index!=-1)
 	{
-		old_position = SYMCURSOR;
-		try
-		{
-			GETSYMBOL();
-			status = true;
-		}
-		catch (CURSRANGE c)
-		{
-			GETNEXTPAGE();
-		}
+		key = SEARCH::get_key_info (index);
+		ASSERT((key->SY>=0)&&(key->SY<MAXSYMBOL));
+		SY = key->SY;
+		OP = key->OP;
+		len = strlen(key->ID);
+		strcpy_s(ID,16,key->ID);
+ 		SYMCURSOR = SYMCURSOR+(int)len;
+#ifdef DEBUG_INSYMBOL
+		WRITELN(OUTPUT,"FOUND: \"",ID,"\" ");
+#endif
 	}
+	else
+	{
+		SY = IDENT;
+		OP = NOOP;
+	 	ID[0]=GETC();
+		for (i=1;i<16;i++)
+		{
+			c = GETC();
+			if (chartype::symbol.in(c))
+				ID[i]=c;
+			else
+				break;
+		}
+		ID[i]=0;
+		SYMCURSOR--;
+#ifdef DEBUG_INSYMBOL
+	WRITE(OUTPUT,"IDENTIFIER: \"",ID,"\" ");
+#endif
+	}
+}
+
+bool PASCALSOURCE::GETOPERATOR()
+{
+	bool retry = false;
+	char CH = PEEK();
+	switch (CH)
+	{
+	case '}':
+		SY=SEPARATSY;
+		break;
+
+	case ';':
+		SY=SEMICOLON;
+		break;
+	
+	case (int)'\'':
+#ifdef DEBUG_INSYMBOL
+	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
+#endif
+		STRING();
+		break;
+
+	case '^':
+		SY=ARROW;
+		break;
+
+	case '[':
+		SY=LBRACK;
+		break;
+			
+	case ']':
+		SY=RBRACK;
+		break;
+
+	case ')':
+		SY=RPARENT;
+		break;
+		
+	case ',':
+		SY=COMMA;
+		break;
+
+	case '{':
+		COMMENTER('}');
+		retry = true;
+		break;
+
+	case '(':
+		if (PEEK(1)=='*')
+		{
+			COMMENTER('*');
+			retry = true;
+			break;
+		}
+		else
+			SY=LPARENT;
+		break;
+
+	case '.':
+		if (PEEK(1)=='.')
+		{
+			CH = GETC();
+			SY=COLON;
+		}
+		else
+			SY=PERIOD;
+		break;
+		
+	case ':':
+		if (PEEK(1)=='=')
+		{
+			CH = GETC();
+			SY=BECOMES;
+		}
+		else
+			SY=COLON;
+		break;
+
+	case '=':
+		SY=RELOP;
+		OP=EQOP;
+		break;
+
+	case '*':
+		SY=MULOP;
+		OP=MUL;
+		break;
+
+	case '+':
+		SY=ADDOP;
+		OP=PLUS;
+		break;
+
+	case '-':
+		SY=ADDOP;
+		OP=MINUS;
+		break;
+
+	case '/':
+		SY=MULOP;
+		OP=RDIV;
+		break;
+
+	case '<':
+		SY=RELOP;
+		OP=LTOP;
+		switch (PEEK(1))
+		{
+			case '>':
+				CH = GETC();
+				OP=NEOP;
+				break;
+
+			case '=':
+				CH = GETC();
+				OP=LEOP;
+				break;
+
+			default:
+				break;
+		}
+		break;
+			
+	case '>':
+		SY=RELOP;
+		if (PEEK(1)=='=')
+		{
+			CH = GETC();
+			OP=GEOP;
+		}
+		else
+			OP=GTOP;
+		break;
+
+	default:
+		SY=OTHERSY;
+		break;	
+	}
+	if (retry==false)
+		CH = GETC();
+
+	return retry;
 }
 
 void PASCALSOURCE::GETSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
@@ -667,10 +833,10 @@ void PASCALSOURCE::GETSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
 #endif
-	if (GETSTMTLEV)
+	if (options.GETSTMTLEV)
 	{
 		BEGSTMTLEV=STMTLEV;
-		GETSTMTLEV=false;
+		options.GETSTMTLEV=false;
 	};
 	OP=NOOP;
 	goto start;
@@ -685,44 +851,7 @@ start:
 
 	if (chartype::alpha.in(CH)==true)
 	{
-		char c;
-		size_t	len;
-		int index,i;
-		key_info *key;
-		int val = SYMCURSOR;
-		index = SEARCH::IDSEARCH(val,(char*&)(SYMBUFP));
-		if (index!=-1)
-		{
-			key = SEARCH::get_key_info (index);
-			ASSERT((key->SY>=0)&&(key->SY<MAXSYMBOL));
-			SY = key->SY;
-			OP = key->OP;
-			len = strlen(key->ID);
-			strcpy_s(ID,16,key->ID);
- 			SYMCURSOR = SYMCURSOR+(int)len;
-#ifdef DEBUG_INSYMBOL
-			WRITELN(OUTPUT,"FOUND: \"",ID,"\" ");
-#endif
-		}
-		else
-		{
-			SY = IDENT;
-			OP = NOOP;
-	 		ID[0]=GETC();
-			for (i=1;i<16;i++)
-			{
-				c = GETC();
-				if (chartype::symbol.in(c))
-					ID[i]=c;
-				else
-					break;
-			}
-			ID[i]=0;
-			SYMCURSOR--;
-#ifdef DEBUG_INSYMBOL
-	WRITE(OUTPUT,"IDENTIFIER: \"",ID,"\" ");
-#endif
-		}
+		GETIDENT();
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
 #endif
@@ -737,138 +866,10 @@ start:
 	}
 	else
 	{
-		switch (CH)
-		{
-		case '}':
-			SY=SEPARATSY;
-			break;
-
-		case ';':
-			SY=SEMICOLON;
-			break;
-		
-		case (int)'\'':
-	#ifdef DEBUG_INSYMBOL
-		WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
-	#endif
-			STRING();
-			break;
-
-		case '^':
-			SY=ARROW;
-			break;
-
-		case '[':
-			SY=LBRACK;
-			break;
-				
-		case ']':
-			SY=RBRACK;
-			break;
-
-		case ')':
-			SY=RPARENT;
-			break;
-			
-		case ',':
-			SY=COMMA;
-			break;
-
-		case '{':
-			COMMENTER('}');
-			goto retry;
-			break;
-
-		case '(':
-			if (PEEK(1)=='*')
-			{
-				COMMENTER('*');
-				goto retry; /* GET ANOTHER TOKEN */
-			}
-			else
-				SY=LPARENT;
-			break;
-
-		case '.':
-			if (PEEK(1)=='.')
-			{
-				SYMCURSOR++;
-				SY=COLON;
-			}
-			else
-				SY=PERIOD;
-			break;
-			
-		case ':':
-			if (PEEK(1)=='=')
-			{
-				SYMCURSOR++;
-				SY=BECOMES;
-			}
-			else
-				SY=COLON;
-			break;
-
-		case '=':
-			SY=RELOP;
-			OP=EQOP;
-			break;
-
-		case '*':
-			SY=MULOP;
-			OP=MUL;
-			break;
-
-		case '+':
-			SY=ADDOP;
-			OP=PLUS;
-			break;
-
-		case '-':
-			SY=ADDOP;
-			OP=MINUS;
-			break;
-
-		case '/':
-			SY=MULOP;
-			OP=RDIV;
-			break;
-
-		case '<':
-			SY=RELOP;
-			OP=LTOP;
-				switch (PEEK(1))
-				{
-					case '>':
-						OP=NEOP;
-						SYMCURSOR++;
-						break;
-
-					case '=':
-						OP=LEOP;
-						SYMCURSOR++;
-						break;
-
-					default:
-						break;
-				}
-				
-		case '>':
-			SY=RELOP;
-			if (PEEK(1)=='=')
-			{
-				OP=GEOP;
-				SYMCURSOR++;
-			}
-			else
-				OP=GTOP;
-			break;
-
-		default:
-			SY=OTHERSY;
-			break;	
-		}
-		SYMCURSOR++;
+		bool result;
+		result = GETOPERATOR();
+		if (result==true)
+			goto retry;			
 		if (chartype::whitespace.in(CH)==true)
 			goto retry;
 	}
@@ -878,7 +879,7 @@ start:
 		if ((CH==(char)(EOL))||(CH==0x0a))
 		{
 			CHECK();
-			GETSTMTLEV=true;
+			options.GETSTMTLEV=true;
 			goto retry;
 		}
 		else
@@ -889,3 +890,23 @@ start:
 	WRITE(OUTPUT,"\nSYMCURSOR = ",(int)SYMCURSOR," SY = ",SYMBOL_NAMES1[SY]);
 #endif
 } /*INSYMBOL*/
+
+void PASCALSOURCE::INSYMBOL()
+{
+	bool status = false;
+	OLDSYMCURSOR = PREVSYMCURSOR;
+	PREVSYMCURSOR = SYMCURSOR;
+	while (status==false)
+	{
+		
+		try
+		{
+			GETSYMBOL();
+			status = true;
+		}
+		catch (CURSRANGE c)
+		{
+			GETNEXTPAGE();
+		}
+	}
+}
