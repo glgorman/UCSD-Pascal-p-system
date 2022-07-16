@@ -30,8 +30,8 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 {
 	size_t i;
 	SYMBOL begin, end;
-	begin = PROCSY;
-	end = SEMICOLON;
+	begin = FORSY;
+	end = DOSY;
 	CREATE_SYMLIST(NULL);
 	size_t sz = m_symbols.size();
 	for (i=0;i<sz;i++)
