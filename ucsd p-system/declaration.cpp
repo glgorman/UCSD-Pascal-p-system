@@ -7,13 +7,13 @@
 
 DECLARATIONPART::DECLARATIONPART(SETOFSYS FSYS)
 {
-	if ((NOSWAP)&& (STARTINGUP))
+	if ((options.NOSWAP)&& (STARTINGUP))
 	{
 		STARTINGUP = FALSE; /* ALL SEGMENTS ARE IN BY THIS TIME */
 		BLOCK(FSYS);
 		EXIT(DECLARATIONPART);
 	};
-	if (NOISY)
+	if (options.NOISY)
 		SYSCOMM::UNITWRITE(3,&DUMMYVAR[-1600],35); /*ADJUST DISPLAY STACK AND HEAP*/
 
 	do {
@@ -21,7 +21,7 @@ DECLARATIONPART::DECLARATIONPART(SETOFSYS FSYS)
 		if (USERINFO.STUPID)
 			if (!CODEINSEG)
 				if ((LEVEL==1)&& (NEXTSEG==10))
-					if (!(INMODULE||USING))
+					if (!(options.INMODULE||options.USING))
 						USESDECLARATION(true);
 		/*To get turtle graphics*/
 		if (SY==USESSY)
@@ -31,7 +31,7 @@ DECLARATIONPART::DECLARATIONPART(SETOFSYS FSYS)
 		};
 		if (SY==LABELSY)
 		{
-			if (INMODULE&& ININTERFACE)
+			if (options.INMODULE&&options.ININTERFACE)
 			{
 				CERROR(186);
 				SKIP(FSYS-LABELSY);
@@ -59,14 +59,14 @@ DECLARATIONPART::DECLARATIONPART(SETOFSYS FSYS)
 				GLEV=TOP;
 			if (SET(3,PROCSY,FUNCSY,PROGSY).in(SY))
 			{
-				if (INMODULE)
-					if (ININTERFACE&&!USING)
+				if (options.INMODULE)
+					if (options.ININTERFACE&&!options.USING)
 						PUBLICPROCS=true;
 					do {
 						LSY=SY;
 						INSYMBOL();
 						if (LSY==PROGSY)
-							if (INMODULE)
+							if (options.INMODULE)
 							{
 								CERROR(185 /*SEG DEC !ALLOWED IN UNIT*/);
 								PROCDECLARATION(PROCSY,false);
@@ -79,9 +79,9 @@ DECLARATIONPART::DECLARATIONPART(SETOFSYS FSYS)
 					while (SET(3,PROCSY,FUNCSY,PROGSY).in(SY));
 				}
 				if ((SY!=BEGINSY))
-					if (!((USING||INMODULE)&&(SET(IMPLESY,ENDSY).in(SY)))
+					if (!((options.USING||options.INMODULE)&&(SET(IMPLESY,ENDSY).in(SY)))
 						&& !(SET(SEPARATSY,UNITSY).in(SY)))
-						if ((!(INCLUDING||NOTDONE))
+						if ((!(options.INCLUDING||NOTDONE))
 							||(!BLOCKBEGSYS.in(SY)))
 						{
 							CERROR(18);
@@ -237,8 +237,8 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 						}
 								else
 									if (LSP->FORM==FILES)
-										if (INMODULE)
-											if (!ININTERFACE)
+										if (options.INMODULE)
+											if (!options.ININTERFACE)
 												CERROR(191); /*NO PRIVATE FILES*/
 						if (LSP!=NULL)
 							FSIZE=LSP->SIZE;
@@ -662,7 +662,7 @@ void DECLARATIONPART::TYP::POINTERTYPE()
 		else
 		{
 			if (LCP->IDTYPE!=NULL)
-				if ((LCP->IDTYPE->FORM!=FILES)||SYSCOMP)
+				if ((LCP->IDTYPE->FORM!=FILES)||options.SYSCOMP)
 					LSP->ELTYPE=LCP->IDTYPE;
 				else
 					CERROR(108);
@@ -699,7 +699,7 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 		else
 		{
 			FOUND=true;
-			if (LIBNOTOPEN)
+			if (options.LIBNOTOPEN)
 			{
 				SYSCOMM::RESET(&LIBRARY,SYSTEMLIB);
 				if (SYSCOMM::IORESULT()!=0)
@@ -722,7 +722,7 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 		}
 		if (FOUND)
 		{
-			LIBNOTOPEN=false;
+			options.LIBNOTOPEN=false;
 			SEGINDEX=0;
 			FOUND=false;
 			while ((SEGINDEX<=MAXSEG)&&(!FOUND))
@@ -756,7 +756,7 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 						SEGTABLE[SEG].DISKADDR=0;
 						SEGTABLE[SEG].CODELENGTH=0;
 						strcpy_s(SEGTABLE[SEG].SEGNAME,15,SEGDICT.SEGNAME[SEGINDEX]);
-						if (INMODULE||MAGIC)
+						if (options.INMODULE||MAGIC)
 							SEGTABLE[SEG].SEGKIND=0;
 						else
 							SEGTABLE[SEG].SEGKIND=SEGDICT.SEGKIND[SEGINDEX];
@@ -774,7 +774,7 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 		}
 		if (FOUND)
 		{
-			USING=true;
+			options.USING=true;
 			PREVSYMCURSOR=SYMCURSOR;
 			PREVLINESTART=LINESTART;
 			PREVSYMBLK=SYMBLK - 2;
@@ -791,17 +791,17 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(bool MAGIC)
 	/*USESDECLARATION*/
 	if (LEVEL!=1)
 		CERROR(189);
-	if (INMODULE&&!ININTERFACE)
+	if (options.INMODULE&&!options.ININTERFACE)
 		CERROR(192);
 	if (!MAGIC)
 		DLINKERINFO=true;
-	if (!USING)
+	if (!options.USING)
 		USINGLIST=NULL;
 	do
 	{
 		if ((!MAGIC)&&(SY!=IDENT))
 			CERROR(2);
-		else if (USING)
+		else if (options.USING)
 		{
 			LCP=USINGLIST;
 			while (LCP!=NULL)
@@ -886,12 +886,12 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(bool MAGIC)
 		SY=LSY;
 	OP=LOP;
 	strcpy_s(ID,15,LID);
-	if (!USING)
+	if (!options.USING)
 	{
-		if (INMODULE)
+		if (options.INMODULE)
 			USINGLIST=NULL;
 		SYSCOMM::CLOSE(&LIBRARY,LOCK);
-		LIBNOTOPEN=true;
+		options.LIBNOTOPEN=true;
 	}
 } /*USESDECLARATION*/
 
@@ -981,7 +981,7 @@ void DECLARATIONPART::CONSTDECLARATION()
 				}
 			}
 			else
-				if (!((SY==ENDSY)&&(INMODULE)))
+				if (!((SY==ENDSY)&&(options.INMODULE)))
 					CERROR(14);
 		}
 	} /*CONSTDECLARATION*/
@@ -1038,7 +1038,7 @@ void DECLARATIONPART::TYPEDECLARATION()
 					SKIP(FSYS+IDENT);
 				}
 			}
-			else if (!((SY==ENDSY)&& (INMODULE)))
+			else if (!((SY==ENDSY)&& (options.INMODULE)))
 					CERROR(14);
 		}
 		if (FWPTR!=NULL)
@@ -1072,8 +1072,8 @@ void DECLARATIONPART::VARDECLARATION()
 				LCP->KLASS=ACTUALVARS;
 				LCP->IDTYPE=NULL;
 				LCP->VLEV=LEVEL;
-				if (INMODULE)
-					if (ININTERFACE)
+				if (options.INMODULE)
+					if (options.ININTERFACE)
 						LCP->PUBLIC=true;
 					else
 						LCP->PUBLIC=false;
@@ -1123,7 +1123,7 @@ void DECLARATIONPART::VARDECLARATION()
 					SKIP(FSYS+IDENT);
 				}
 			}
-			else if (!((SY==ENDSY)&&(INMODULE)))
+			else if (!((SY==ENDSY)&&(options.INMODULE)))
 				CERROR(14);
 	}
 	while (!(SY!=IDENT)&&!(TYPEDELS.in(SY)));
@@ -1167,11 +1167,11 @@ DECLARATIONPART::PROCDECLARATION::PROCDECLARATION(SYMBOL FSY, bool SEGDEC)
 	if (FSY==FUNCSY)
 		LC=LC + REALSIZE;
 	LINEINFO=LC;
-	DP=true;
+	options.DP=true;
 	EXTONLY=false;
 	if (SY==IDENT)
 	{
-		if (USING||INMODULE&&ININTERFACE)
+		if (options.USING||options.INMODULE&&options.ININTERFACE)
 			FORW=false;
 		else
 		{
@@ -1195,13 +1195,13 @@ DECLARATIONPART::PROCDECLARATION::PROCDECLARATION(SYMBOL FSY, bool SEGDEC)
 		if (!FORW)
 		{
 			if (FSY==PROCSY)
-				if (INMODULE)
+				if (options.INMODULE)
 					LCP = (IDENTIFIER*) new (IDENTIFIER);
 //					NEW(LCP,PROC,DECLARED,ACTUAL,true);
 				else
 					LCP = (IDENTIFIER*) new (IDENTIFIER);
 //					NEW(LCP,PROC,DECLARED,ACTUAL,false);
-				else if (INMODULE)
+				else if (options.INMODULE)
 //					NEW(LCP,FUNC,DECLARED,ACTUAL,true)
 					LCP = (IDENTIFIER*) new (IDENTIFIER);
 			else
@@ -1218,10 +1218,10 @@ DECLARATIONPART::PROCDECLARATION::PROCDECLARATION(SYMBOL FSY, bool SEGDEC)
 			LCP->PFLEV=LEVEL;
 			LCP->PFNAME=NEXTPROC;
 			LCP->PFSEG=SEG;
-			if (USING)
+			if (options.USING)
 				PROCTABLE[NEXTPROC]=0;
-			if (INMODULE)
-				if (USING)
+			if (options.INMODULE)
+				if (options.USING)
 					LCP->IMPORTED=true;
 				else
 					LCP->IMPORTED=false;
@@ -1351,12 +1351,12 @@ DECLARATIONPART::PROCDECLARATION::PROCDECLARATION(SYMBOL FSY, bool SEGDEC)
 	else
 		CERROR(14);
 	LCP->EXTURNAL=false;
-	if ((SY==EXTERNLSY)||((USING)&& (LSEPPROC)))
+	if ((SY==EXTERNLSY)||((options.USING)&& (LSEPPROC)))
 	{
 		if (LEVEL!=2)
 			CERROR(183); /*EXTERNAL PROCS MUST BE IN OUTERMOST BLOCK*/;
-		if (INMODULE)
-			if (ININTERFACE&&!USING)
+		if (options.INMODULE)
+			if (options.ININTERFACE&&!options.USING)
 				CERROR(184); /*NO EXTERNAL DECL IN INTERFACE*/
 		if (SEGDEC)
 			CERROR(399);
@@ -1386,9 +1386,9 @@ DECLARATIONPART::PROCDECLARATION::PROCDECLARATION(SYMBOL FSY, bool SEGDEC)
 			}
 		}
 	}
-	else if (USING)
+	else if (options.USING)
 		LCP->FORWDECL=false;
-	else if ((SY==FORWARDSY)||INMODULE&& ININTERFACE)
+	else if ((SY==FORWARDSY)||options.INMODULE&& options.ININTERFACE)
 	{
 		if (FORW)
 			CERROR(161);
@@ -1821,8 +1821,8 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 			}
 			else if (SY==FILESY)
 			{
-				if (INMODULE)
-					if (!ININTERFACE)
+				if (options.INMODULE)
+					if (!options.ININTERFACE)
 						CERROR(191); /*NO PRIVATE FILES*/
 				INSYMBOL();
 				// NEW(LSP,FILES);
