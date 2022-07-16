@@ -359,7 +359,7 @@ void COMPINIT::ENTSPCPROCS()
 	SET FSET = SET((17),5,6,7,8,9,10,11,15,16,19,20,25,36,37,38,39,41);
 	for (I=1;I<=43;I++)
 	{
-		if (m_ptr->TINY)
+		if (m_ptr->options.TINY)
 			if (TSET.in(I))
                continue;
 		ISFUNC= FSET.in(I);
@@ -512,7 +512,7 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->GLOBTESTP=NULL;
      m_ptr->LINESTART=0;
 	 m_ptr->LINEINFO=LCAFTERMARKSTACK;
-	 m_ptr->LIST=false;
+	 m_ptr->options.LIST=false;
      m_ptr->SYMBLK=2;
 	 m_ptr->SCREENDOTS=0;
 	 m_ptr->STARTDOTS=0;
@@ -531,8 +531,8 @@ void COMPINIT::INITSCALARS()
 		strcpy_s(m_ptr->SYSTEMLIB,MAXDIRLEN,"*SYSTEM.LIBRARY");
 
      m_ptr->LC=LCAFTERMARKSTACK;
-	 m_ptr->IOCHECK=true;
-	 m_ptr->DP=true;
+	 m_ptr->options.IOCHECK=true;
+	 m_ptr->options.DP=true;
      m_ptr->SEGINX=0;
 	 m_ptr->NEXTJTAB=1;
 	 m_ptr->NEXTPROC=2;
@@ -551,20 +551,20 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->CURBYTE=0;
 	 m_ptr->LSEPPROC=false;
      m_ptr->STARTINGUP=true;
-	 m_ptr->NOISY=!m_ptr->USERINFO.SLOWTERM;
+	 m_ptr->options.NOISY=!m_ptr->USERINFO.SLOWTERM;
 	 m_ptr->SEPPROC=false;
-     m_ptr->NOSWAP=true;
-	 m_ptr->DEBUGGING=false;
-	 m_ptr->BPTONLINE=false;
-	 m_ptr->INMODULE=false;
-     m_ptr->GOTOOK=false;
-	 m_ptr->RANGECHECK=true;
-	 m_ptr->SYSCOMP=false;
-	 m_ptr->TINY=false;
+     m_ptr->options.NOSWAP=true;
+	 m_ptr->options.DEBUGGING=false;
+	 m_ptr->options.BPTONLINE=false;
+	 m_ptr->options.INMODULE=false;
+     m_ptr->options.GOTOOK=false;
+	 m_ptr->options.RANGECHECK=true;
+	 m_ptr->options.SYSCOMP=false;
+	 m_ptr->options.TINY=false;
      m_ptr->CODEINSEG=false;
 	 m_ptr->PRTERR=true;
-	 m_ptr->INCLUDING=false;
-	 m_ptr->USING=false;
+	 m_ptr->options.INCLUDING=false;
+	 m_ptr->options.USING=false;
 	 I=SEEK;
 	 while (I<=DECOPS)
 	 {
@@ -572,8 +572,8 @@ void COMPINIT::INITSCALARS()
 		 I = (NONRESIDENT)(I+1);
 	 }
 	 m_ptr->COMMENT=NULL;
-	 m_ptr->LIBNOTOPEN=true;
-	 m_ptr->GETSTMTLEV=true;
+	 m_ptr->options.LIBNOTOPEN=true;
+	 m_ptr->options.GETSTMTLEV=true;
 	 m_ptr->BEGSTMTLEV=0;
 	 m_ptr->STMTLEV=0;
 	 /*INITSCALARS*/ ;
@@ -605,7 +605,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	INITSETS();
 	m_ptr->LEVEL=0;
 	m_ptr->TOP=0;
-	if (m_ptr->NOISY)
+	if (m_ptr->options.NOISY)
 	{
        for (I=1;I<=7;I++)
 	   { 
@@ -629,7 +629,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	ENTSPCPROCS();
 	ENTSTDPROCS();
 
-	if (m_ptr->SYSCOMP)
+	if (m_ptr->options.SYSCOMP)
 	{
 		 m_ptr->OUTERBLOCK=NULL;
 		 m_ptr->SEG=0;
@@ -1182,12 +1182,12 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 	SETOFSYS S2;
 	S2 = S2 + (SETOFSYS)SET((4),UNITSY,INTERSY,IMPLESY,ENDSY);
 	bool BFSYFOUND;
-	if ((NOSWAP)&&(STARTINGUP))
+	if ((options.NOSWAP)&&(STARTINGUP))
 	{
 		BODYPART(FSYS,NULL);
 		return;
 	}
-	if ((S1.in(SY))&&(!INMODULE))
+	if ((S1.in(SY))&&(!options.INMODULE))
 	{
 		UNITPART(FSYS+S2);
 		if (SY==PERIOD)
@@ -1197,13 +1197,13 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 	do {
 		if (!NEWBLOCK)
 		{
-			DP=false;
+			options.DP=false;
 			STMTLEV=0;
 			IC=0;
 			LINEINFO=0;
-			if ((!SYSCOMP)||(LEVEL>1))
+			if ((!options.SYSCOMP)||(LEVEL>1))
 				FINDFORW(DISPLAY[TOP].FNAME);
-			if (INMODULE)
+			if (options.INMODULE)
 				if ((TOS->PREVLEXSTACKP)->DFPROCP==OUTERBLOCK)
 					if (SY==ENDSY)
 					{
@@ -1223,7 +1223,7 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 			do
 			{
 				BODYPART(FSYS + CASESY - ENDSY, TOS->DFPROCP);
-				BFSYFOUND=(BEGINSY==TOS->BFSY)||(INMODULE&&(SY==ENDSY));
+				BFSYFOUND=(BEGINSY==TOS->BFSY)||(options.INMODULE&&(SY==ENDSY));
 				if (!BFSYFOUND)
 				{
 					if (TOS->BFSY==SEMICOLON)
@@ -1231,7 +1231,7 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 					else
 						CERROR(6);  /* PERIOD EXPECTED */
 					SKIP(FSYS+TOS->BFSY);
-					BFSYFOUND=(SY==TOS->BFSY)||(INMODULE&& (SY==ENDSY));
+					BFSYFOUND=(SY==TOS->BFSY)||(options.INMODULE&& (SY==ENDSY));
 				}
 			}
 			while (!(BFSYFOUND)||BLOCKBEGSYS.in(SY));
@@ -1249,7 +1249,7 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 					INSYMBOL();
 				if (!(SET((4),BEGINSY,PROCSY,FUNCSY,PROGSY).in(SY))&&
 				(TOS->BFSY==SEMICOLON))
-				if (!(INMODULE&&(SY==ENDSY)))
+				if (!(options.INMODULE&&(SY==ENDSY)))
 				{
 					CERROR(6);
 					SKIP(FSYS);
@@ -1317,18 +1317,18 @@ UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
 int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 {
 	/* PASCALCOMPILER */
-	
+	char CH;
 	int	LGTH = 0;
 	TIME(LGTH,LOWTIME);
 	BLOCK(BLOCKBEGSYS+STATBEGSYS-SET(1,CASESY));
 
 	if (SY!=PERIOD)
 		CERROR(21);
-	if (LIST)
+	if (options.LIST)
 	{
 		SCREENDOTS++;
 		(*SYMBUFP)[SYMCURSOR]=(char)(EOL);
-		SYMCURSOR++;
+		CH = GETC();
 		PRINTLINE();
 	};
 	USERINFO.ERRBLK=0;
@@ -1341,7 +1341,7 @@ int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 		WRITELINKERINFO(true);
 	};
 	SYSCOMM::CLOSE(&_LP,LOCK);
-	if (NOISY)
+	if (options.NOISY)
 		WRITELN(OUTPUT);
 	
 	WRITE(OUTPUT,SCREENDOTS," lines");
@@ -1350,7 +1350,7 @@ int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 		WRITE(OUTPUT,", ",(LOWTIME+30)/60," secs, ",
          ROUND((3600.0/LOWTIME)*SCREENDOTS)," lines/min");
 #endif	
-	if (NOISY)
+	if (options.NOISY)
 	{
 	   WRITELN(OUTPUT);
 	   char nbuf[16];
