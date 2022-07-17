@@ -261,14 +261,10 @@ void PASCALSOURCE::CHECK()
 		LINEINFO=IC;
 }
 
-void PASCALSOURCE::COMMENTER(char STOPPER)
+void PASCALSOURCE::PARSEOPTION(char STOPPER)
 {
-//	WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER()");
 	char CH,CH1,SW,DEL;
 	char LTITLE[64];
-	CH1 = GETC();
-	if (PEEK()=='$')
-	if (PEEK(1)!=STOPPER)
 	do {
 		CH = PEEK(1);
 		SW = PEEK(2);
@@ -279,6 +275,7 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			SW='+';
 			CH1 = GETC();
 		};
+WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER() - PARSING OPTION ",CH);
 		switch (CH) {
 			case 'C':
 				if (LEVEL>1)
@@ -297,6 +294,7 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 				break;
 
 			case 'I':
+#if 0
 				if ((SW=='+')||(SW=='-'))
 					options.IOCHECK=(SW=='+');
 				else
@@ -330,9 +328,9 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 					SYMBLK=2;
 					GETNEXTPAGE();
 					INSYMBOL();
-	//						EXIT(INSYMBOL);
-					throw (this);
+					throw (SYMCURSOR);
 				}
+#endif
 				break;
 
 			case 'L':
@@ -395,8 +393,22 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			SYMCURSOR=SYMCURSOR+3;
 	}
 	while (DEL==',');
+}
+
+void PASCALSOURCE::COMMENTER(char STOPPER)
+{
+#if 0
+	WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER()");
+#endif
+	char CH, CH1;
+	CH1 = GETC();
+	if (PEEK()=='$')
+	if (PEEK(1)!=STOPPER)
+		PARSEOPTION(STOPPER);
+
 	do {
-		do {		
+		do
+		{		
 			while (GETC()==(char)(EOL))
 				CHECK();
 		}
@@ -468,6 +480,7 @@ done:
 		MOVELEFT(&T[1],&(SCONST->SVAL[1]),TP);
 		VAL.VALP=SCONST;
 	}
+	CH=GETC();
 }
 /*STRING*/;
 
@@ -632,6 +645,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		LVP->RVAL=RSUM;
 		VAL.VALP=LVP;
 	} /*NUMBER*/
+	SYMCURSOR++;
 }
 
 void PASCALSOURCE::WRITETEXT()
@@ -648,7 +662,7 @@ void PASCALSOURCE::GETIDENT()
 	char c;
 	size_t	len;
 	int index,i;
-	key_info *key;
+	pascal0::key_info *key;
 	int val = SYMCURSOR;
 	index = SEARCH::IDSEARCH(val,(char*&)(SYMBUFP));
 	if (index!=-1)
@@ -687,145 +701,45 @@ void PASCALSOURCE::GETIDENT()
 
 bool PASCALSOURCE::GETOPERATOR()
 {
-	bool retry = false;
-	char CH = PEEK();
-	switch (CH)
+	pascal0::key_info *key;
+	bool found = false;
+	bool digram = false;
+	char ch0, ch1, ch2, ch3;
+	ch0 = PEEK();
+	if (ch0=='\'')
 	{
-	case '}':
-		SY=SEPARATSY;
-		break;
-
-	case ';':
-		SY=SEMICOLON;
-		break;
-	
-	case (int)'\'':
-#ifdef DEBUG_INSYMBOL
-	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
-#endif
-		STRING();
-		break;
-
-	case '^':
-		SY=ARROW;
-		break;
-
-	case '[':
-		SY=LBRACK;
-		break;
-			
-	case ']':
-		SY=RBRACK;
-		break;
-
-	case ')':
-		SY=RPARENT;
-		break;
-		
-	case ',':
-		SY=COMMA;
-		break;
-
-	case '{':
-		COMMENTER('}');
-		retry = true;
-		break;
-
-	case '(':
-		if (PEEK(1)=='*')
+		SY = STRINGCONST;
+		OP = NOOP;
+		return found;
+	}
+	ch0 = GETC();
+	ch1 = PEEK();
+	SY=OTHERSY;
+	OP=NOOP;
+	int index = 0;
+	for(index=0;;index++) {
+		key = &(pascal0::operators[index]);
+		SY=key->SY;
+		OP=key->OP;
+		if (key->SY==OTHERSY)
+			break;
+		ch2 = key->ID[0];
+		ch3 = key->ID[1];
+		if (ch0!=ch2)
+			continue;
+		if ((ch3==0)||(ch1==ch3))
 		{
-			COMMENTER('*');
-			retry = true;
+			found = true;
+			strcpy_s (ID,16,key->ID);
+#ifdef DEBUG_INSYMBOL
+			WRITELN (OUTPUT,"GETOPERATOR () - found SY = ",SYMBOL_NAMES1[SY]," \"",ID,"\"");
+#endif
 			break;
 		}
-		else
-			SY=LPARENT;
-		break;
-
-	case '.':
-		if (PEEK(1)=='.')
-		{
-			CH = GETC();
-			SY=COLON;
-		}
-		else
-			SY=PERIOD;
-		break;
-		
-	case ':':
-		if (PEEK(1)=='=')
-		{
-			CH = GETC();
-			SY=BECOMES;
-		}
-		else
-			SY=COLON;
-		break;
-
-	case '=':
-		SY=RELOP;
-		OP=EQOP;
-		break;
-
-	case '*':
-		SY=MULOP;
-		OP=MUL;
-		break;
-
-	case '+':
-		SY=ADDOP;
-		OP=PLUS;
-		break;
-
-	case '-':
-		SY=ADDOP;
-		OP=MINUS;
-		break;
-
-	case '/':
-		SY=MULOP;
-		OP=RDIV;
-		break;
-
-	case '<':
-		SY=RELOP;
-		OP=LTOP;
-		switch (PEEK(1))
-		{
-			case '>':
-				CH = GETC();
-				OP=NEOP;
-				break;
-
-			case '=':
-				CH = GETC();
-				OP=LEOP;
-				break;
-
-			default:
-				break;
-		}
-		break;
-			
-	case '>':
-		SY=RELOP;
-		if (PEEK(1)=='=')
-		{
-			CH = GETC();
-			OP=GEOP;
-		}
-		else
-			OP=GTOP;
-		break;
-
-	default:
-		SY=OTHERSY;
-		break;	
 	}
-	if (retry==false)
-		CH = GETC();
-
-	return retry;
+	if ((found==true)&&(ch1==ch3))
+		ch0 = GETC();
+	return found;
 }
 
 void PASCALSOURCE::GETSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
@@ -848,7 +762,6 @@ start:
 
 	SY=(SYMBOL)-1; /* if (NO CASES EXERCISED BLOW UP */
 	char CH = PEEK();
-
 	if (chartype::alpha.in(CH)==true)
 	{
 		GETIDENT();
@@ -862,16 +775,29 @@ start:
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
 #endif
 		NUMBER();
-		SYMCURSOR++;
+	}
+	else if (CH=='\'')
+	{
+		STRING();
 	}
 	else
 	{
 		bool result;
 		result = GETOPERATOR();
-		if (result==true)
-			goto retry;			
-		if (chartype::whitespace.in(CH)==true)
-			goto retry;
+		if (result==false)
+			SY=OTHERSY;
+	}
+	if (SY==COMMENTSY)
+	{
+		COMMENTER('*');
+		goto retry;
+	}
+	if (chartype::whitespace.in(CH)==true)
+	{
+#ifdef DEBUG_INSYMBOL
+	WRITELN(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," CH= \'",CH,"\'");
+#endif
+		goto retry;
 	}
 	if (SY==OTHERSY)
 	{
@@ -897,8 +823,7 @@ void PASCALSOURCE::INSYMBOL()
 	OLDSYMCURSOR = PREVSYMCURSOR;
 	PREVSYMCURSOR = SYMCURSOR;
 	while (status==false)
-	{
-		
+	{	
 		try
 		{
 			GETSYMBOL();

@@ -35,21 +35,65 @@ typedef enum _OPERATOR
 	GEOP,GTOP,NEOP,EQOP,INOP,NOOP,MAXOPERATOR,
 } OPERATOR;	
 */
-/*
-struct key_info
-{
-	ALPHA		ID;
-	SYMBOL		SY;
-	OPERATOR	OP;
-	key_info() { };
-	key_info(char *STR, SYMBOL _SY, OPERATOR _OP)
-	{
-		strcpy_s(ID,16,STR);
-		SY = _SY;
-		OP = _OP;
+
+#if 0
+	case (int)'\'':
+#ifdef DEBUG_INSYMBOL
+	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
+#endif
+		STRING();
+		break;
+
+	case '{':
+		COMMENTER('}');
+		retry = true;
+		break;
+
+	case '(':
+		if (PEEK(1)=='*')
+		{
+			COMMENTER('*');
+			retry = true;
+			break;
+		}
+	default:
+		SY=OTHERSY;
+		break;	
 	}
+#endif
+
+namespace pascal0
+{
+key_info operators[] = 
+{
+	key_info(":=",BECOMES,NOOP),
+	key_info("(*",COMMENTSY,NOOP),
+	key_info("{",COMMENTSY,NOOP),
+	key_info("*)",SEPARATSY,NOOP),
+	key_info("}",SEPARATSY,NOOP),
+	key_info("<>",RELOP,NEOP),
+	key_info(">=",RELOP,GEOP),
+	key_info("<=",RELOP,LEOP),
+	key_info("..",COLON,NOOP),
+	key_info(".",PERIOD,NOOP),
+	key_info(":",COLON,NOOP),
+	key_info(";",SEMICOLON,NOOP),
+	key_info("^",ARROW,NOOP),
+	key_info("[",LBRACK,NOOP),
+	key_info("]",RBRACK,NOOP),
+	key_info("(",LPARENT,NOOP),
+	key_info(")",RPARENT,NOOP),
+	key_info(",",COMMA,NOOP),
+	key_info("+",ADDOP,PLUS),
+	key_info("-",ADDOP,MINUS),
+	key_info("*",MULOP,MUL),
+	key_info("/",MULOP,RDIV),
+	key_info("=",RELOP,EQOP),
+	key_info(">",RELOP,GTOP),	
+	key_info("<",RELOP,LTOP),
+	key_info("\'",STRINGCONST,NOOP),
+	key_info("",OTHERSY,NOOP),
 };
-*/
 
 key_info key_map[] =
 {
@@ -96,6 +140,7 @@ key_info key_map[] =
 	key_info("FOR",FORSY,NOOP),
 	key_info("OR",RELOP,OROP),
 };
+};
 
 namespace SEARCH
 {
@@ -116,7 +161,7 @@ namespace SEARCH
 	};
 	frame m_pFrame;
 	symbol_table *m_keywords;
-	key_info *get_key_info (int index);
+	pascal0::key_info *get_key_info (int index);
 	void RESET_SYMBOLS();
 	int IDSEARCH(int pos, char *&str);
 //	SYMBOL SY(token *t);
@@ -130,12 +175,11 @@ void SEARCH::RESET_SYMBOLS()
  	m_keywords = t;
 }
 
-key_info *SEARCH::get_key_info (int index)
+pascal0::key_info *SEARCH::get_key_info (int index)
 {
-	key_info *result;
+	pascal0::key_info *result;
 	ASSERT((index>=0)&&(index<=42));
-
-	result = &key_map[index];
+	result = &pascal0::key_map[index];
 	return result;
 }
 
@@ -149,8 +193,8 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 	size_t i, len, sz;
 	bool found = false;
 	int syid = -1;
-	key_info result;
-	key_info *kp = key_map;
+	pascal0::key_info result;
+	pascal0::key_info *kp = pascal0::key_map;
 	char c1, buf[32];
 	char *str1=str+pos;
 	for (len=0;len<32;len++)

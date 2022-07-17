@@ -19,6 +19,12 @@ using namespace std;
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
 
+namespace pascal0
+{
+struct key_info;
+extern key_info operators[];
+};
+
 typedef	DWORD BITRANGE;
 struct IDENTIFIER;
 typedef IDENTIFIER* CTP;
@@ -40,7 +46,7 @@ typedef enum _SYMBOL
 	FUNCSY,PROGSY,FORWARDSY,INTCONST,REALCONST,STRINGCONST,
 	NOTSY,MULOP,ADDOP,RELOP,SETSY,PACKEDSY,ARRAYSY,RECORDSY,
 	FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
-	EXTERNLSY,SEPARATSY,MAXSYMBOL
+	EXTERNLSY,SEPARATSY,COMMENTSY,MAXSYMBOL
 }	SYMBOL;
 
 typedef enum _OPERATOR
@@ -75,7 +81,7 @@ struct CONSTREC
 	{
 		char	SLGTH;
 		int		LONG;
-		int		*LONGVAL;
+		int		LONGVAL[10];
 //		int		TRIX[8];
 		float	REEL;
 		float	RVAL;
@@ -104,6 +110,8 @@ public:
 class PASCALCOMPILER;
 void WRITELINKERINFO(bool DECSTUFF);
 
+namespace pascal0
+{
 struct key_info
 {
 	ALPHA		ID;
@@ -116,6 +124,7 @@ struct key_info
 		SY = _SY;
 		OP = _OP;
 	}
+};
 };
 
 class INFOREC
@@ -205,6 +214,7 @@ protected:
 	void PRINTLINE();
 	void WRITETEXT();
 	void GETNEXTPAGE();
+	void PARSEOPTION(char);
 
 public:
 	void COMMENTER(char STOPPER);

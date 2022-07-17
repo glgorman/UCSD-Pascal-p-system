@@ -30,10 +30,29 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 {
 	size_t i;
 	SYMBOL begin, end;
-	begin = FORSY;
-	end = DOSY;
+//	begin = FORSY;
+//	end = DOSY;
+//	begin = STRINGCONST;
+//	end = STRINGCONST;
+//	begin = LPARENT;
+//	end = RPARENT;
+//	begin = IFSY;
+//	end = THENSY;
+//	begin = WITHSY;
+//	end = DOSY;
+	begin = PROCSY;
+	end = SEMICOLON;
+
+	DWORD t0, t1;
+	t0 = GetTickCount();
 	CREATE_SYMLIST(NULL);
+	t1 = GetTickCount();
 	size_t sz = m_symbols.size();
+	float throughput;
+	throughput = sz*60000.0/(1+t1-t0);
+	WRITELN(OUTPUT);
+	WRITELN(OUTPUT,"CREATE_SYMLIST took ",int(t1-t0)," msec.");
+	WRITELN(OUTPUT,(int)sz," symbools = (",throughput,"/min.)");
 	for (i=0;i<sz;i++)
 	{
 		DEBUG_SY(m_symbols[i],begin,end);
@@ -211,6 +230,7 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 			(p.str=NULL);
 		
 		memcpy(&m_symbols[sz],&p,sizeof(PSYMBOL));
+//		WRITELN(OUTPUT,p.index,": SY=",SYMBOL_NAMES2[SY]," ",p.ID);
 		sz++;
 		
 		if (sz%50==0)
@@ -220,6 +240,8 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 			max_symbol = m_symbols.size()-1;
 		}
 		if (SY==OTHERSY)
+			break;
+		if (sz>32000)
 			break;
 	}
 	return (int) sz;
