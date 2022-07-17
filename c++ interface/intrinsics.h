@@ -7,6 +7,7 @@
 
 #define KEYBOARD (1)
 #define OUTPUT	 (1)
+#define CONSOLE  (2)
 #define LOCK   (false)
 #define YES		(1)
 #define HAS_CONSOLE		(YES)
@@ -41,11 +42,14 @@ public:
 	debug_param (size_t arg);
 };
 
+namespace pascal0
+{
 struct key_info;
+};
 
 namespace SEARCH
 {
-	key_info *get_key_info (int index);
+	pascal0::key_info *get_key_info (int index);
 	void RESET_SYMBOLS();
 	int IDSEARCH(int pos, char *&str);
 };
@@ -68,12 +72,13 @@ using namespace std;
 	int CLOSE(FILE*,bool lock=false);
 	int UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK=0, DWORD MODE=0);
 	int BLOCKWRITE(FILE* param1, const char *param2, int param3,int param4=0);
-	void BLOCKREAD(FILE* param1, char *param2, int param3,int &param4);
+	int BLOCKREAD(FILE* param1, char *param2, int param3,int &param4);
 	void OutputDebugString (const char *str);
 };
 
-void _WRITE(int uid, size_t argc, ...);
+void READLN(int uid, char *(&));
 
+void _WRITE(int uid, size_t argc, ...);
 void WRITE(int uid, const debug_param &);
 void WRITE(int uid, const debug_param &,const debug_param &);
 void WRITE(int uid, const debug_param &,const debug_param &,const debug_param &);
