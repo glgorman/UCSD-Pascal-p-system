@@ -8,15 +8,24 @@
 DECLARATIONPART::DECLARATIONPART()
 {
 	size_t sz = sizeof(COMPILERDATA);
-	memset(this,0,sz);
+//	bad magic - use the allocators
+//	memset(this,0,sz);
 }
 
-DECLARATIONPART::DECLARATIONPART(COMPILERDATA *ptr)
+DECLARATIONPART::DECLARATIONPART(PASCALCOMPILER *ptr)
 {
-	size_t sz = sizeof(COMPILERDATA);
-	COMPILERDATA *ptr2;
-	ptr2 = (COMPILERDATA*)this;
+//	just copy the data from the base class
+//	over 
+	size_t sz = sizeof(PASCALCOMPILER);
+	PASCALCOMPILER *ptr2;
+	ptr2 = (PASCALCOMPILER*)this;
 	memcpy(ptr2,ptr,sz);
+
+}
+
+DECLARATIONPART::~DECLARATIONPART()
+{
+	
 }
 
 void DECLARATIONPART::MAIN (SETOFSYS FSYS)
@@ -70,38 +79,38 @@ void DECLARATIONPART::MAIN (SETOFSYS FSYS)
 			INSYMBOL();
 			VARDECLARATION();
 		};
-			if (LEVEL==1)
-				GLEV=TOP;
-			if (SET(3,PROCSY,FUNCSY,PROGSY).in(SY))
-			{
-				if (options.INMODULE)
-					if (options.ININTERFACE&&!options.USING)
-						PUBLICPROCS=true;
-					do {
-						LSY=SY;
-						INSYMBOL();
-						if (LSY==PROGSY)
-							if (options.INMODULE)
-							{
-								CERROR(185 /*SEG DEC !ALLOWED IN UNIT*/);
-								PROCDECLARATION(PROCSY,false);
-							}
-							else 
-								PROCDECLARATION(LSY,true);
-						else
-							PROCDECLARATION(LSY,false);
-					}
-					while (SET(3,PROCSY,FUNCSY,PROGSY).in(SY));
-				}
-				if ((SY!=BEGINSY))
-					if (!((options.USING||options.INMODULE)&&(SET(IMPLESY,ENDSY).in(SY)))
-						&& !(SET(2,SEPARATSY,UNITSY).in(SY)))
-						if ((!(options.INCLUDING||NOTDONE))
-							||(!BLOCKBEGSYS.in(SY)))
+		if (LEVEL==1)
+			GLEV=TOP;
+		if (SET(3,PROCSY,FUNCSY,PROGSY).in(SY))
+		{
+			if (options.INMODULE)
+				if (options.ININTERFACE&&!options.USING)
+					PUBLICPROCS=true;
+				do {
+					LSY=SY;
+					INSYMBOL();
+					if (LSY==PROGSY)
+						if (options.INMODULE)
 						{
-							CERROR(18);
-							SKIP(FSYS - SET(2,UNITSY,INTERSY));
+							CERROR(185 /*SEG DEC !ALLOWED IN UNIT*/);
+							PROCDECLARATION(PROCSY,false);
 						}
+						else 
+							PROCDECLARATION(LSY,true);
+					else
+						PROCDECLARATION(LSY,false);
+				}
+				while (SET(3,PROCSY,FUNCSY,PROGSY).in(SY));
+			}
+			if ((SY!=BEGINSY))
+				if (!((options.USING||options.INMODULE)&&(SET(IMPLESY,ENDSY).in(SY)))
+					&& !(SET(2,SEPARATSY,UNITSY).in(SY)))
+					if ((!(options.INCLUDING||NOTDONE))
+						||(!BLOCKBEGSYS.in(SY)))
+					{
+						CERROR(18);
+						SKIP(FSYS - SET(2,UNITSY,INTERSY));
+					}
 	}
  	while (!((STATBEGSYS+SEPARATSY+UNITSY+IMPLESY+ENDSY).in(SY)));
 	NEWBLOCK = FALSE;
@@ -790,8 +799,8 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 		if (FOUND)
 		{
 			options.USING=true;
-			PREVSYMCURSOR=SYMCURSOR;
-			PREVLINESTART=LINESTART;
+			m_src.PREVSYMCURSOR=m_src.SYMCURSOR;
+			m_src.PREVLINESTART=m_src.LINESTART;
 			PREVSYMBLK=SYMBLK - 2;
 			SYMBLK=BEGADDR;
 			GETNEXTPAGE();

@@ -365,19 +365,20 @@ struct LEXSTKREC
 	LEXSTKREC	*PREVLEXSTACKP;
 };
 
-class COMPILERDATA: public PASCALSOURCE
+class COMPILERDATA
 {
-protected:
-/*	PASCALCOMPILER member variables */
-	
-    ATTR		GATTR;			/*DESCRIBES CURRENT EXPRESSION*/
+public:
+	static void *allocate(void*);
+	ATTR		GATTR;			/*DESCRIBES CURRENT EXPRESSION*/
 	DISPRANGE	TOP;			/*TOP) DISPLAY*/
-	bool		TEST;
 	DISPRANGE	DISX;			/*LEVEL THEN LAST ID SEARCHED*/
 	ADDRRANGE	LCMAX;			/*TEMPORARIES LOCATION COUNTER*/
 
+protected:
+/*	PASCALCOMPILER member variables */
 /*SWITCHES:*/
 
+	bool	TEST;
 	bool	PRTERR;
     bool	CODEINSEG;
     bool	CLINKERINFO,DLINKERINFO,LSEPPROC;
@@ -456,14 +457,15 @@ public:
 	void INIT(PASCALCOMPILER*);
 };
 
-class PASCALCOMPILER: public virtual COMPILERDATA
+class PASCALCOMPILER:
+	public virtual PASCALSOURCE,
+	public virtual COMPILERDATA
 {
 friend class COMPINIT;
 
 protected:
-	void COMPINIT();
 	void DECLARATIONS(SETOFSYS FSYS);
-	void BODYPART(SETOFSYS FSYS, CTP FPROCP);
+	void BODY(SETOFSYS FSYS, CTP FPROCP);
 	void WRITELINKERINFO(bool);
 	void UNITPART(SETOFSYS);
 	void ENTERID(CTP FCP);
@@ -484,8 +486,11 @@ protected:
 	void FINDFORW(CTP FCP);
 	
 public:
+	void *operator new [](size_t);
+	static void *allocate (void *);
 	PASCALCOMPILER();
 	PASCALCOMPILER(INFOREC &);
+	void COMPINIT();
 	int COMPILER_MAIN (LPVOID param);
 	static UINT THREAD_ENTRY (LPVOID param);
 };
