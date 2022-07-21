@@ -29,7 +29,7 @@ public:
 int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 {
 	size_t i;
-	SYMBOL begin, end;
+	SYMBOLS::SYMBOL begin, end;
 //	begin = FORSY;
 //	end = DOSY;
 //	begin = STRINGCONST;
@@ -40,8 +40,8 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 //	end = THENSY;
 //	begin = WITHSY;
 //	end = DOSY;
-	begin = PROCSY;
-	end = SEMICOLON;
+	begin = SYMBOLS::PROCSY;
+	end = SYMBOLS::SEMICOLON;
 
 	DWORD t0, t1;
 	t0 = GetTickCount();
@@ -94,7 +94,7 @@ void PASCALSOURCE::SOURCE_DUMP ()
 	while (buff1!=NULL);
 }
 
-void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
+void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::SYMBOL stop)
 {
 	int count;
 	int ival;
@@ -126,12 +126,12 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 		debug_ident = false;
 		symbol_numbers = false;
 	}
-	if ((p.SY==RPARENT)&&(debug_key==true))
+	if ((p.SY==SYMBOLS::RPARENT)&&(debug_key==true))
 	{
 		line_breaks = true;
 	}
 	count = p.index;
-	if ((p.SY==REALCONST)&&(debug_real==true))
+	if ((p.SY==SYMBOLS::REALCONST)&&(debug_real==true))
 	{
 		if (symbol_numbers==true)
 		{
@@ -143,7 +143,7 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 		WRITE (OUTPUT,'(',fval,')');
 //		WRITELN (OUTPUT);
 	}
-	else if ((p.SY==STRINGCONST)&&(debug_string==true))
+	else if ((p.SY==SYMBOLS::STRINGCONST)&&(debug_string==true))
 	{
 		if (symbol_numbers==true)
 		{
@@ -158,7 +158,7 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 			WRITE (OUTPUT,"(\"",char(ival),"\")");
 //		WRITELN (OUTPUT);
 	}
-	else if ((p.SY==INTCONST)&&(debug_int==true))
+	else if ((p.SY==SYMBOLS::INTCONST)&&(debug_int==true))
 	{
 		if (symbol_numbers==true)
 		{
@@ -169,7 +169,7 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 		WRITE (OUTPUT,'(',p.VAL.IVAL,')');
 //		WRITELN (OUTPUT);
 	}
-	else if ((p.SY==IDENT)&&(debug_ident==true))
+	else if ((p.SY==SYMBOLS::IDENT)&&(debug_ident==true))
 	{
 		if (symbol_numbers==true)
 		{
@@ -186,10 +186,10 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop)
 			WRITE(OUTPUT,count,": ");
 		}
 		WRITE (OUTPUT,SYMBOL_NAMES2[p.SY]);
-		if (stop!=OTHERSY)
+		if (stop!=SYMBOLS::OTHERSY)
 			symbol_numbers = false;
 	}
-	if ((p.SY==SEMICOLON)&&(line_breaks==true))
+	if ((p.SY==SYMBOLS::SEMICOLON)&&(line_breaks==true))
 	{
 		WRITELN(OUTPUT);
 	}
@@ -210,20 +210,21 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 	PSYMBOL	p;
 	m_symbols.resize (1024);
 	size_t sz = 0;
-	size_t max_symbol = max_symbol = m_symbols.size()-1;
-	while (true)
+	size_t max_symbol;
+	max_symbol = m_symbols.size()-1;
+	do
 	{
 		INSYMBOL();
-		ASSERT((SY>=0)&&(SY<MAXSYMBOL));	
-		p.index = (int) sz;
+		ASSERT((SY>=0)&&(SY<SYMBOLS::MAXSYMBOL));
 		p.SY = SY;
 		p.OP = OP;
 		p.VAL = VAL;
-		if (SY==IDENT)
+		p.index = (int) sz;
+		if (SY==SYMBOLS::IDENT)
 			memcpy(p.ID,ID,16);
 		else
 			memset(p.ID,0,16);
-		if ((SY==STRINGCONST)
+		if ((SY==SYMBOLS::STRINGCONST)
 			&&(SCONST->SVAL[0]>0))
 			p.str = strdup(&SCONST->SVAL[1]);
 		else
@@ -239,11 +240,10 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 			m_symbols.resize (sz+1024);
 			max_symbol = m_symbols.size()-1;
 		}
-		if (SY==OTHERSY)
-			break;
-		if (sz>32000)
-			break;
+//		if (sz>34000)
+//			break;
 	}
+	while (SY!=SYMBOLS::OTHERSY);
 	return (int) sz;
 }
 

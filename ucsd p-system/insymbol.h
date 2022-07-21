@@ -1,5 +1,7 @@
 
 #include "stdafx.h"
+#include "new.h"
+#include <memory>
 #include <vector>
 #include "../Frame Lisp/intrinsics.h"
 #include "../Frame Lisp/range.h"
@@ -37,6 +39,8 @@ typedef char CODEARRAY[MAXCODE+1];
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
 void PRINTTREE(const CTP &n1);
 
+namespace SYMBOLS
+{
 typedef enum _SYMBOL
 {
 	IDENT,COMMA,COLON,SEMICOLON,LPARENT,RPARENT,DOSY,TOSY,
@@ -48,6 +52,7 @@ typedef enum _SYMBOL
 	FILESY,OTHERSY,LONGCONST,USESSY,UNITSY,INTERSY,IMPLESY,
 	EXTERNLSY,SEPARATSY,COMMENTSY,MAXSYMBOL
 }	SYMBOL;
+};
 
 typedef enum _OPERATOR
 {
@@ -100,7 +105,7 @@ class PSYMBOL
 {
 public:
 	int index;
-	SYMBOL		SY;		/*SYMBOL FOUND BY INSYMBOL*/
+	SYMBOLS::SYMBOL	SY;		/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
 	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
     VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
@@ -115,10 +120,10 @@ namespace pascal0
 struct key_info
 {
 	ALPHA		ID;
-	SYMBOL		SY;
+	SYMBOLS::SYMBOL		SY;
 	OPERATOR	OP;
 	key_info() { };
-	key_info(char *STR, SYMBOL _SY, OPERATOR _OP)
+	key_info(char *STR, SYMBOLS::SYMBOL _SY, OPERATOR _OP)
 	{
 		strcpy_s(ID,16,STR);
 		SY = _SY;
@@ -147,7 +152,7 @@ public:
 
 struct // for eventual refactoring
 {
-	SYMBOL		SY;				/*SYMBOL FOUND BY INSYMBOL*/
+	SYMBOLS::SYMBOL		SY;				/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;				/*CLASSIFICATION LAST SYMBOL*/
 	ALPHA		ID;				/*LAST IDENTIFIER FOUND*/			
     VALU		VAL;			/*VALUE THEN LAST CONSTANT*/
@@ -186,7 +191,7 @@ struct // _options
 	int		OLDSYMBLK;
 	int		PREVSYMBLK;
 	int		CURBLK;
-	
+	 
 	char		SYSTEMLIB[MAXDIRLEN];
 	char		*COMMENT;
 	FILE		_LP;
@@ -206,7 +211,7 @@ private:
 	void NUMBER();
 	void STRING();
 	int CREATE_SYMLIST(LPVOID);
-	void DEBUG_SY (const PSYMBOL &p, SYMBOL start, SYMBOL stop);
+	void DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::SYMBOL stop);
 	void SCANSTRING(char *STRG, int MAXLENG, char);
 	char PEEK();
 	char PEEK(int i);

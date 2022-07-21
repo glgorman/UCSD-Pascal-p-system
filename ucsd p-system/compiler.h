@@ -358,7 +358,7 @@ struct LEXSTKREC
 	PROCRANGE	POLDPROC,SOLDPROC;
 	SEGRANGE	DOLDSEG;
 	ADDRRANGE	DLLC;
-    SYMBOL		BFSY;
+    SYMBOLS::SYMBOL		BFSY;
     CTP			DFPROCP;
 	void		*DMARKP;
 	bool		ISSEGMENT;
@@ -486,7 +486,7 @@ protected:
 	void FINDFORW(CTP FCP);
 	
 public:
-	void *operator new [](size_t);
+//	void *operator new (size_t,void*);
 	static void *allocate (void *);
 	PASCALCOMPILER();
 	PASCALCOMPILER(INFOREC &);

@@ -13,7 +13,9 @@ vector<PSYMBOL> PASCALSOURCE::m_symbols;
 char PASCALSOURCE::PEEK()
 {
 	if (m_src.SYMCURSOR>1023)
-		GETNEXTPAGE();
+		return 0;
+
+//		GETNEXTPAGE();
 
 	ASSERT(m_src.SYMCURSOR>=0);
 	char c = (*m_src.SYMBUFP)[m_src.SYMCURSOR];
@@ -34,7 +36,9 @@ char PASCALSOURCE::PEEK(int i)
 	CURSRANGE POS;
 	POS = m_src.SYMCURSOR+i;
 	if (POS>1023)
-		throw (m_src.SYMCURSOR);
+		return 0;
+
+//		throw (m_src.SYMCURSOR);
 
 	char c = (*m_src.SYMBUFP)[POS];
 
@@ -52,7 +56,8 @@ char PASCALSOURCE::GETC()
 {
 	if (m_src.SYMCURSOR>1023)
 		throw (m_src.SYMCURSOR);
-
+//		GETNEXTPAGE();
+		
 	char c = (*m_src.SYMBUFP)[m_src.SYMCURSOR];
 
 #ifdef DEBUG_GETC
@@ -292,9 +297,9 @@ WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER() - PARSING OPTION ",CH);
 				break;
 
 			case 'I':
-#if 0
 				if ((SW=='+')||(SW=='-'))
 					options.IOCHECK=(SW=='+');
+#if 0			
 				else
 				{
 					SCANSTRING(LTITLE,40,STOPPER);
@@ -466,7 +471,7 @@ void PASCALSOURCE::STRING()
 
 done:
 	TP=TP-1; /* ADJUST */
-	SY=STRINGCONST;
+	SY=SYMBOLS::STRINGCONST;
 	OP=NOOP;
 	LGTH=TP; /* GROSS */
 	if (TP==1) /* SINGLE CHARACTER CONSTANT */
@@ -572,7 +577,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		}
 		if (NOTLONG)
 		{
-			SY=INTCONST;
+			SY=SYMBOLS::INTCONST;
 			OP=NOOP;
 			VAL.IVAL=ISUM;
 		}
@@ -607,7 +612,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 				LVP->LLENG++;
 				LVP->LONGVAL[LVP->LLENG]=ISUM;
 			};
-			SY=LONGCONST;
+			SY=SYMBOLS::LONGCONST;
 			OP=NOOP;
 			LGTH=ENDI-IPART+1;
 			VAL.VALP=LVP;
@@ -620,7 +625,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		LVP->CCLASS=REEL;
 
 		RSUM=0;
-		SY=REALCONST; 
+		SY=SYMBOLS::REALCONST; 
 		OP=NOOP;
 		for (J=IPART;J<=ENDI;J++)
 		{
@@ -666,7 +671,7 @@ void PASCALSOURCE::GETIDENT()
 	if (index!=-1)
 	{
 		key = SEARCH::get_key_info (index);
-		ASSERT((key->SY>=0)&&(key->SY<MAXSYMBOL));
+		ASSERT((key->SY>=0)&&(key->SY<SYMBOLS::MAXSYMBOL));
 		SY = key->SY;
 		OP = key->OP;
 		len = strlen(key->ID);
@@ -678,7 +683,7 @@ void PASCALSOURCE::GETIDENT()
 	}
 	else
 	{
-		SY = IDENT;
+		SY = SYMBOLS::IDENT;
 		OP = NOOP;
 	 	ID[0]=GETC();
 		for (i=1;i<16;i++)
@@ -706,20 +711,20 @@ bool PASCALSOURCE::GETOPERATOR()
 	ch0 = PEEK();
 	if (ch0=='\'')
 	{
-		SY = STRINGCONST;
+		SY = SYMBOLS::STRINGCONST;
 		OP = NOOP;
 		return found;
 	}
 	ch0 = GETC();
 	ch1 = PEEK();
-	SY=OTHERSY;
+	SY=SYMBOLS::OTHERSY;
 	OP=NOOP;
 	int index = 0;
 	for(index=0;;index++) {
 		key = &(pascal0::operators[index]);
 		SY=key->SY;
 		OP=key->OP;
-		if (key->SY==OTHERSY)
+		if (key->SY==SYMBOLS::OTHERSY)
 			break;
 		ch2 = key->ID[0];
 		ch3 = key->ID[1];
@@ -748,7 +753,7 @@ void PASCALSOURCE::GETSYMBOL() /* COMPILER VERSION 3.4 06-NOV-76 */
 	}
 
 retry:
-	SY=(SYMBOL)-1;
+	SY=(SYMBOLS::SYMBOL)-1;
 	OP=NOOP;
 	char CH = PEEK();
 	if (chartype::alpha.in(CH))
@@ -765,13 +770,13 @@ retry:
 		bool result;
 		result = GETOPERATOR();
 		if (result==false)
-			SY=OTHERSY;
-		if (SY==COMMENTSY) {
+			SY=SYMBOLS::OTHERSY;
+		if (SY==SYMBOLS::COMMENTSY) {
 			COMMENTER('*');
 			goto retry;
 		}
 	}
-	if (SY==OTHERSY) {
+	if (SY==SYMBOLS::OTHERSY) {
 		CH = PEEK();
 		if ((CH==(char)(EOL))||(CH==0x0a))
 		{
@@ -870,8 +875,10 @@ void PASCALSOURCE::INSYMBOL()
 	{	
 		try
 		{
-			GETSYMBOL();
-			status = true;
+ 			GETSYMBOL();
+			if (SY!=SYMBOLS::SEPARATSY)
+				status = true;
+
 		}
 		catch (CURSRANGE c)
 		{
@@ -888,7 +895,7 @@ void PASCALSOURCE::INSYMBOL()
 //	CERROR wants us to do an
 //	EXIT(PASCALCOMPILER) 
 			status = true;
-			SY = OTHERSY;
+			SY = SYMBOLS::OTHERSY;
 		}
 	}
 }
