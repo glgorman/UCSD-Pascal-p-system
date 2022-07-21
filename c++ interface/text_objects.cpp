@@ -20,6 +20,30 @@ bool isNum (char theChar)
 }
 #endif
 
+pstring &pstring::operator = (char *ptr)
+{
+	if (ptr!=NULL)
+		strcpy_s(str,256,ptr);
+	else
+		memset (str,0,256);
+	return (*this);
+}
+
+void *pstring::operator new (size_t sz1,void* ptr2)
+{
+	size_t sz2;
+	sz2 = sizeof(pstring);
+	pstring *ptr;
+	if (ptr2==NULL)
+	{
+		ptr = (pstring*) malloc (sz2);
+	}
+	else
+		ptr = (pstring*) ptr2;
+	memcpy (ptr->str,0,256);
+	return (void*) ptr;
+}
+
 text_object::text_object ()
 {	
 	m_code_page = 437;

@@ -19,12 +19,17 @@ public:
 	RANGE(int min, int max);
 #endif
 
-	RANGE &operator = (const int arg);
-	RANGE operator + (const int arg);
+	RANGE &operator = (int);
+	RANGE operator + (int);
+	RANGE operator - (int);
 	RANGE &operator ++ (int);
-	operator int ();
-	bool operator == (int arg);
-	bool operator <= (int arg);
+	RANGE &operator -- (int);
+	inline operator int ()
+	{
+		return val;
+	}
+	bool operator == (int);
+	bool operator <= (int);
 };
 
 class OPRANGE: public RANGE
@@ -33,7 +38,10 @@ protected:
 	static int min, max;
 
 public:
-	OPRANGE &operator = (const int &OPRANGE);
+	OPRANGE ();
+	OPRANGE (int);
+	OPRANGE &operator = (int);
+	OPRANGE operator + (int);
 };
 
 class CURSRANGE: public RANGE
@@ -42,7 +50,7 @@ protected:
 	static int min, max;
 
 public:
-	CURSRANGE &operator = (const int &CURSRANGE);
+	CURSRANGE &operator = (int);
 };
 
 class JTABRANGE: public RANGE
@@ -51,7 +59,7 @@ protected:
 	static int min, max;
 
 public:
-	JTABRANGE &operator = (const int &JTABRANGE);
+	JTABRANGE &operator = (int);
 };
 
 class DISPRANGE: public RANGE
@@ -60,7 +68,7 @@ protected:
 	static int min, max;
 
 public:
-	RANGE &operator = (const int &arg);
+	RANGE &operator = (int);
 	RANGE &operator --(int)
 	{
 		val--;
@@ -74,7 +82,7 @@ protected:
 	static int min, max;
 
 public:
-	ADDRRANGE &operator = (const int &ADDRRANGE);
+	ADDRRANGE &operator = (int);
 };
 
 class PROCRANGE: public RANGE
@@ -83,7 +91,7 @@ protected:
 	static int min, max;
 
 public:
-	RANGE &operator = (const int &arg);
+	RANGE &operator = (int);
 };
 
 class SEGRANGE: public RANGE
@@ -92,7 +100,7 @@ protected:
 	static int min, max;
 
 public:
-	SEGRANGE &operator = (const int &SEGRANGE);
+	SEGRANGE &operator = (int);
 };
 
 class LEVRANGE: public RANGE
@@ -101,5 +109,5 @@ protected:
 	static int min, max;
 
 public:
-	RANGE &operator = (const int &arg);
+	RANGE &operator = (int);
 };

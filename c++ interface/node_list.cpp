@@ -126,7 +126,7 @@ node_list<char*>::node_list<char*> (char* str)
 			position++;
 			c = str[position];
 		}	
-		while (chartype::symbol.in(c));
+		while (chartype::ident.in(c));
 
 //	else tokenize numeric
 		else if (chartype::digits.in(c)) do {
@@ -142,7 +142,7 @@ node_list<char*>::node_list<char*> (char* str)
 			position++;
 			c = str[position];
 		}
-		while ((c!=0)&&(!chartype::symbol.in(c))
+		while ((c!=0)&&(!chartype::ident.in(c))
 			&&(!chartype::whitespace.in(c)));
 
 		buffer [n]=0;

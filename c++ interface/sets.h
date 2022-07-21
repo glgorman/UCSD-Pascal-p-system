@@ -40,7 +40,7 @@ public:
 
 namespace chartype
 {
-	extern SET symbol;
+	extern SET ident;
 	extern SET digits;
 	extern	SET whitespace;
 	extern	SET alpha;

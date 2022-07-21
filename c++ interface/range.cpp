@@ -23,18 +23,12 @@ RANGE::RANGE(int min=0, int max=0x7FFFFFFF)
 }
 #endif
 
-RANGE::operator int()
-{
-	return val;
-}
-
-RANGE &RANGE::operator = (const int arg)
+RANGE &RANGE::operator = (int arg)
 {
 	val = arg;
 	ASSERT(val>=0);
 	return (*this);
 }
-
 
 RANGE &RANGE::operator ++ (int)
 {
@@ -42,10 +36,24 @@ RANGE &RANGE::operator ++ (int)
 	return (*this);
 }
 
+RANGE &RANGE::operator -- (int)
+{
+	ASSERT(val>0);
+	val--;
+	return (*this);
+}
+
 RANGE RANGE::operator + (int arg)
 {
 	RANGE result;
 	result.val=val+arg;
+	return result;
+}
+
+RANGE RANGE::operator - (int arg)
+{
+	RANGE result;
+	result.val=val-arg;
 	return result;
 }
 
@@ -69,44 +77,70 @@ bool RANGE::operator<=(int arg)
 	return result;
 }
 
-JTABRANGE &JTABRANGE::operator = (const int &arg)
+JTABRANGE &JTABRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-CURSRANGE &CURSRANGE::operator = (const int &arg)
+CURSRANGE &CURSRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-RANGE &DISPRANGE::operator = (const int &arg)
+RANGE &DISPRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-ADDRRANGE &ADDRRANGE::operator = (const int &arg)
+ADDRRANGE &ADDRRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-RANGE &PROCRANGE::operator = (const int &arg)
+RANGE &PROCRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-SEGRANGE &SEGRANGE::operator = (const int &arg)
+SEGRANGE &SEGRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
 }
 
-RANGE &LEVRANGE::operator = (const int &arg)
+RANGE &LEVRANGE::operator = (int arg)
 {
 	val = arg;
 	return (*this);
+}
+
+
+OPRANGE::OPRANGE ()
+{
+
+}
+
+OPRANGE::OPRANGE (int)
+{
+
+}
+
+OPRANGE &OPRANGE::operator = (int arg)
+{
+	val = arg;
+	return *this;
+}
+
+OPRANGE OPRANGE::operator + (int arg)
+{
+	int result0;
+	result0 = val+arg;
+	OPRANGE result;
+	result.val = result0;
+	return result;
 }
