@@ -40,7 +40,7 @@ void *pstring::operator new (size_t sz1,void* ptr2)
 	}
 	else
 		ptr = (pstring*) ptr2;
-	memcpy (ptr->str,0,256);
+	memset (ptr->str,0,256);
 	return (void*) ptr;
 }
 
