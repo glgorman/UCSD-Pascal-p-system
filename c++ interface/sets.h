@@ -30,10 +30,10 @@ public:
 		result = (((bits[i])&(0x01<<j))!=0?true:false);
 		return result;
 	};
-	virtual SET &UNION(const SET&);
-	virtual SET &INTERSECT(const SET&);
-	virtual SET &operator + (const SET &);
-	virtual SET &operator - (const SET &);
+	virtual SET UNION(const SET&);
+	virtual SET INTERSECT(const SET&);
+	virtual SET operator + (const SET &);
+	virtual SET operator - (const SET &);
 	SET();
 	SET(int,...);
 };
@@ -51,8 +51,9 @@ namespace chartype
 class SETOFSYS: public SET 
 {
 public:
-	SETOFSYS &operator + (const int&);
-	SETOFSYS &operator + (const SETOFSYS&);
+	SETOFSYS operator + (int);
+	SETOFSYS operator + (const SETOFSYS&);
+	SETOFSYS &operator += (int);
 	SETOFSYS &operator = (const SET&);
 	SETOFSYS();
 	SETOFSYS(const SET&);
@@ -61,6 +62,8 @@ public:
 class SETOFIDS: public SET 
 {
 public:
+	SETOFIDS operator + (int);
+	SETOFSYS &operator += (int);
 	SETOFIDS &operator = (const SET &);
 	SETOFIDS();
 	SETOFIDS(int,...);

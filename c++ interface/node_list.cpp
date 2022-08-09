@@ -112,15 +112,24 @@ node_list<char*>::node_list<char*> (char* str)
 //	skip leading spaces, linefeeds, tabs
 //	and returns;
 		if (ignore_whitespace==true)
-		while (chartype::whitespace.in(c))
 		{
+			while (chartype::whitespace.in(c))
+			{
+				position++;
+				c = str[position];
+			}
+			start = position;
+		}
+		else if (chartype::whitespace.in(c))
+		do {
+			buffer [n++] = c;
 			position++;
 			c = str[position];
-		}
-		start = position;
+		}	
+		while (chartype::whitespace.in(c));
 
 //	tokenize if alphanumeric	
-		if (chartype::alpha.in(c))
+		else if (chartype::alpha.in(c))
 		do {
 			buffer [n++] = c;
 			position++;
@@ -262,12 +271,17 @@ void node_list<nodeType>::attachWord (s_node<nodeType,enum language> *theWord)
 
 node<char*> &node_list<char *>::operator >> (char *(&ptr))
 {
+	size_t	sz1;
+	bool add_separator = false;
 	int created, needed;
 	node<char*> *nodeptr = m_nBegin;
 	char *buffer = NULL;
+	char *separator = " ";
 	needed = 0;
 	while (nodeptr!=NULL) {
-		int sz1 = strlen (nodeptr->m_pData)+1;
+		sz1 = strlen (nodeptr->m_pData);
+		if (add_separator==true)
+			sz1++;
 		needed = needed+sz1;
 		nodeptr = nodeptr->m_pNext;
 	}
@@ -276,9 +290,10 @@ node<char*> &node_list<char *>::operator >> (char *(&ptr))
 	nodeptr = m_nBegin;
 	while (nodeptr!=0) {
 //		if (nodeptr->check (nodeptr->m_pData)!=delimiter)
-		strcat (buffer," ");
-		strcat (buffer,nodeptr->m_pData);
+		strcat (buffer,nodeptr->m_pData);		
 		nodeptr = nodeptr->m_pNext;
+		if (add_separator==true)
+			strcat (buffer,separator);
 	}
 	created = strlen (buffer);
 	ptr = buffer;

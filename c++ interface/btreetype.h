@@ -186,9 +186,11 @@ void bTreeType<X>::delTree (bTreeType<X> *theTree)
 template<class X>
 bTreeType<X>::~bTreeType<X> (void)
 {
-	if (m_pData!=NULL) {
-		delete [] m_pData;
-		m_pData=NULL; }
+//	if (m_pData!=NULL)
+//	{
+//	delete [] m_pData;
+//		m_pData=NULL;
+//	}
 	if (branch1!=NULL) {
 		delete branch1;
 		branch1=NULL; }
