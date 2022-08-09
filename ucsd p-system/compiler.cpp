@@ -1,5 +1,11 @@
 
 #include "stdafx.h"
+
+//#include "../Frame Lisp/symbol_table.h"
+#include "../Frame Lisp/btreetype.h"
+//#include "../Frame Lisp/node_list.h"
+//#include "../Frame Lisp/text_object.h"
+
 #include "compiler.h"
 #include "unitpart.h"
 #include "declarationpart.h"

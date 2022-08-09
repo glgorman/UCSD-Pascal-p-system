@@ -3,6 +3,12 @@
 #include "new.h"
 #include <memory>
 #include <vector>
+
+//#include "../Frame Lisp/symbol_table.h"
+//#include "../Frame Lisp/btreetype.h"
+//#include "../Frame Lisp/node_list.h"
+//#include "../Frame Lisp/text_object.h"
+
 #include "../Frame Lisp/intrinsics.h"
 #include "../Frame Lisp/range.h"
 #include "../Frame Lisp/sets.h"
@@ -87,7 +93,7 @@ struct CONSTREC
 		char	SLGTH;
 		int		LONG;
 		int		LONGVAL[10];
-//		int		TRIX[8];
+		int		CSTVAL[8];
 		float	REEL;
 		float	RVAL;
 //				PSET;
@@ -105,11 +111,14 @@ class PSYMBOL
 {
 public:
 	int index;
-	SYMBOLS::SYMBOL	SY;		/*SYMBOL FOUND BY INSYMBOL*/
+	SYMBOLS::SYMBOL	SY;	/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
 	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
     VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
 	char		*str;
+
+	PSYMBOL();
+	PSYMBOL &operator = (int);
 };
 
 class PASCALCOMPILER;
@@ -144,9 +153,11 @@ public:
 class PASCALSOURCE
 {
 private:
-	static vector<PSYMBOL> m_symbols;
+	vector<PSYMBOL> m_symbols;
 	
 public:
+	bTreeType<PSYMBOL> *m_ptree;
+
 	/*SCANNER GLOBALS...NEXT FOUR VARS*/
 	/*MUST BE IN THIS ORDER FOR IDSEARCH*/
 
@@ -230,6 +241,7 @@ protected:
 
 public:
 	static void *allocate(void*);
+	void build_tree ();
 	void COMMENTER(char STOPPER);
 	void INSYMBOL();
 	int SYMBOL_DUMP (LPVOID);

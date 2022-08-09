@@ -2,14 +2,11 @@
 #include "stdafx.h"
 #include "stdafx.h"
 #include <vector>
-//#include "../Frame Lisp/symbol_table.h"
-//#include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
 #include "../eliza/eliza.h"
-
 #include "compiler.h"
 #include "bodypart.h"
+
+bTreeType<PSYMBOL> *p_symbols;
 
 extern subst pascal2c [];
 
@@ -25,6 +22,18 @@ public:
 	char		*str;	// pointer to string constant
 };
 #endif
+
+PSYMBOL::PSYMBOL()
+{
+	memset(this,0,sizeof(PSYMBOL));
+}
+
+PSYMBOL &PSYMBOL::operator = (int arg)
+{
+	memset(this,0,sizeof(PSYMBOL));
+	SY = (SYMBOLS::SYMBOL) arg;
+	return *this;
+}
 
 int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 {
@@ -55,7 +64,7 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 	WRITELN(OUTPUT,(int)sz," symbools = (",throughput,"/min.)");
 	for (i=0;i<sz;i++)
 	{
-		DEBUG_SY(m_symbols[i],begin,end);
+		DEBUG_SY(m_ptree[i].m_pData,begin,end);
 	}
 	WRITELN(OUTPUT);
 	WRITELN(OUTPUT,(int)sz," decoded");
@@ -66,7 +75,7 @@ void PASCALSOURCE::SOURCE_DUMP ()
 {
 	ELIZA eliza;
 	text_object source;
-	char *buff1, *buf2;
+	char *buff1, *buff2;
 	int line;
 	line = 0;
 	if (SYSCOMM::m_source==NULL)
@@ -83,12 +92,14 @@ void PASCALSOURCE::SOURCE_DUMP ()
 	{
 		buff1 = (*SYSCOMM::m_source)[line];
 		source = buff1;
-		buf2;
+//		buf2=buff1;
 		eliza.process = source;
 		eliza.pre_process (pascal2c);
-		eliza.process >> buf2;
-		WRITE(OUTPUT,buf2);
-		delete buf2;
+		eliza.process >> buff2;
+//		source >> buf2;
+//		buf2=buff1;
+		WRITE(OUTPUT,buff2);
+		delete buff2;
 		line++;
 	}
 	while (buff1!=NULL);
@@ -205,9 +216,16 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::S
 	}
 }
 
+void PASCALSOURCE::build_tree ()
+{
+
+
+}
+
 int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 {
 	PSYMBOL	p;
+	m_ptree = new bTreeType<PSYMBOL> [65536];
 	m_symbols.resize (1024);
 	size_t sz = 0;
 	size_t max_symbol;
@@ -231,6 +249,8 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 			(p.str=NULL);
 		
 		memcpy(&m_symbols[sz],&p,sizeof(PSYMBOL));
+		m_ptree[sz].m_pData = m_symbols[sz];
+
 //		WRITELN(OUTPUT,p.index,": SY=",SYMBOL_NAMES2[SY]," ",p.ID);
 		sz++;
 		

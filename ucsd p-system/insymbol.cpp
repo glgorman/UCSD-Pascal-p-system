@@ -1,5 +1,11 @@
 
 #include "stdafx.h"
+
+//#include "../Frame Lisp/symbol_table.h"
+#include "../Frame Lisp/btreetype.h"
+//#include "../Frame Lisp/node_list.h"
+//#include "../Frame Lisp/text_object.h"
+
 #include "insymbol.h"
 
 //#define DEBUG_INSYMBOL	1
@@ -8,7 +14,7 @@
 //#define DEBUG_PEEK1	1
 //#define DEBUG_GETC	
 
-vector<PSYMBOL> PASCALSOURCE::m_symbols;
+//vector<PSYMBOL> PASCALSOURCE::m_symbols;
 
 char PASCALSOURCE::PEEK()
 {
