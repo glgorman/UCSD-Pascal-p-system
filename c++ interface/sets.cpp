@@ -51,51 +51,44 @@ SET::SET(int n, ...)
 	va_end(vl);
 }
 
-SET &SET::operator + (const SET &x)
+SET SET::operator + (const SET &x)
 {
+	SET result;
+	result = *this;
 	int i;
 	for (i=0;i<SETSZ;i++)
-		bits[i]|=x.bits[i];
-	return (*this);
-}
-
-SET &SET::operator - (const SET &x)
-{
-	int i;
-	for (i=0;i<SETSZ;i++)
-		bits[i]&=(!x.bits[i]);
-	return (*this);
-}
-
-#if 0
-bool SET::in(int s)
-{
-	bool result;
-	int i, j;
-	i = s>>5;
-	j = s&0x1f;
-	if ((bits[i])&(0x01<<j))
-		result = true;
-	else
-		result = false;
+		result.bits[i]|=x.bits[i];
 	return result;
 }
-#endif
 
-SET &SET::UNION(const SET&S)
+SET SET::operator - (const SET &x)
 {
+	SET result;
+	result = *this;
 	int i;
 	for (i=0;i<SETSZ;i++)
-		bits[i]|=S.bits[i];
-	return (*this);
+		result.bits[i]&=(!x.bits[i]);
+	return result;
 }
 
-SET &SET::INTERSECT(const SET&S)
+SET SET::UNION(const SET&S)
 {
+	SET result;
+	result = *this;
 	int i;
 	for (i=0;i<SETSZ;i++)
-		bits[i]&=S.bits[i];
-	return (*this);
+		result.bits[i]|=S.bits[i];
+	return result;
+}
+
+SET SET::INTERSECT(const SET&S)
+{
+	SET result;
+	result = *this;
+	int i;
+	for (i=0;i<SETSZ;i++)
+		result.bits[i]&=S.bits[i];
+	return result;
 }
 
 SETOFSYS::SETOFSYS()
@@ -109,21 +102,25 @@ SETOFSYS::SETOFSYS(const SET &x)
 		bits[i]=x.bits[i];
 }
 
-SETOFSYS &SETOFSYS::operator + (const SETOFSYS &x)
+SETOFSYS SETOFSYS::operator + (const SETOFSYS &x)
 {
+	SETOFSYS result;
+	result = *this;
 	int i;
 	for (i=0;i<SETSZ;i++)
-		bits[i]|=x.bits[i];
+		result.bits[i]|=x.bits[i];
 	return (*this);
 }
 
-SETOFSYS &SETOFSYS::operator + (const int &val)
+SETOFSYS SETOFSYS::operator + (int val)
 {
+	SETOFSYS result;
+	result = *this;
 	int j, k;
 	j = val>>5;
 	k = val&0x1f;
-	bits[j]|=(1<<k);
-	return (*this);
+	result.bits[j]|=(1<<k);
+	return result;
 }
 
 SETOFSYS &SETOFSYS::operator = (const SET &x)
@@ -153,6 +150,17 @@ SETOFIDS::SETOFIDS(int n,...)
 		bits[j]|=(1<<k);
 	}
 	va_end(vl);
+}
+
+SETOFIDS SETOFIDS::operator + (int val)
+{
+	SETOFIDS result;
+	result = *this;
+	int j, k;
+	j = val>>5;
+	k = val&0x1f;
+	result.bits[j]|=(1<<k);
+	return result;
 }
 
 SETOFIDS &SETOFIDS::operator = (const SET &x)
