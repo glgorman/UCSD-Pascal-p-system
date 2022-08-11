@@ -1,26 +1,22 @@
 
 class _CALL
 {
-public:
-//	void VARIABLE();
-//	void STRGVAR();
-//	void ROUTINE();
-//	void NEWSTMT();
-	void MOVE();
-	void _EXIT();
-	void _UNITIO();
-	void CONCAT();
-	void COPYDELETE();	
-	void STR();
-	void _CLOSE();
-	void _GETPUTETC();
-	void SCAN();
-	void BLOCKIO();
+protected:
+	void VARIABLE(const SETOFSYS &);
+	void STRGVAR(const SETOFSYS &, bool);
+	void ROUTINE(const SETOFSYS &, int);
+		void NEWSTMT(const SETOFSYS &);
+	void MOVE(const SETOFSYS &, int);
+	void EXIT0();
+	void UNITIO(const SETOFSYS &, int);
+	void CONCAT(const SETOFSYS &);
+	void COPYDELETE(const SETOFSYS &, int);	
+	void STR(const SETOFSYS &);
+	void CLOSE(const SETOFSYS &);
+	void GETPUTETC(const SETOFSYS &, int);
+	void SCAN(const SETOFSYS &FSYS);
+	void BLOCKIO(const SETOFSYS &FSYS, int);
 	void SIZEOF();
-	void LOADIDADDR();
-	void READ();
-	void WRITE();
-	void CALLNONSPECIAL();
 };
 
 class BODYPART:
@@ -30,13 +26,7 @@ class BODYPART:
 {
 public:
 	static void *allocate (void *);
-	void MAIN(SETOFSYS FSYS, CTP FPROCP);
-	void BODY1();
-
-private:
-//	void INSYMBOL();
-//	void CERROR(int);  // suppress compiler errors!
-//	void GENBYTE(INT_PTR);
+	void MAIN(const SETOFSYS &FSYS, CTP FPROCP);
 
 protected:
 	void LINKERREF(IDCLASS KLASS, int ID, int ADDR);
@@ -54,48 +44,51 @@ protected:
 	void LOAD();
 	void STORE(ATTR &FATTR);
 	void LOADADDRESS();
-	void SELECTOR(SETOFSYS FSYS, CTP FCP);
+	void SELECTOR(const SETOFSYS &FSYS, CTP FCP);
 
-	void CALL(SETOFSYS &, CTP);
-		void VARIABLE(SETOFSYS &);
-		void STRGVAR(SETOFSYS &, bool);
-		void ROUTINE(SETOFSYS &, int);
-			void EXIT0();
-			void NEWSTMT(SETOFSYS &);
-			void MOVE(SETOFSYS &, int);
-			void UNITIO(SETOFSYS &, int);
-			void CONCAT(SETOFSYS &);
-			void COPYDELETE(SETOFSYS &, int);	
-			void STR(SETOFSYS &);
-			void CLOSE(SETOFSYS &);
-			void GETPUTETC(SETOFSYS &, int);
-			void SCAN(SETOFSYS &FSYS);
-			void BLOCKIO(SETOFSYS &FSYS, int);
-			void SIZEOF();
-			void LOADIDADDR(CTP);
-			void READ(SETOFSYS &, int);
-			void WRITE(SETOFSYS &, int);
-			void CALLNONSPECIAL(SETOFSYS &,CTP);
+	void CALL(const SETOFSYS &, CTP);
+//	nested procedures within call
+		void VARIABLE(const SETOFSYS &);
+		void STRGVAR(const SETOFSYS &, bool);
+		void ROUTINE(const SETOFSYS &, int);
+			void NEWSTMT(const SETOFSYS &);
+		void MOVE(const SETOFSYS &, int);
+		void EXIT0();
+		void UNITIO(const SETOFSYS &, int);
+		void CONCAT(const SETOFSYS &);
+		void COPYDELETE(const SETOFSYS &, int);	
+		void STR(const SETOFSYS &);
+		void CLOSE(const SETOFSYS &);
+		void GETPUTETC(const SETOFSYS &, int);
+		void SCAN(const SETOFSYS &FSYS);
+		void BLOCKIO(const SETOFSYS &FSYS, int);
+		void SIZEOF();
+	
+	void LOADIDADDR(CTP);
+	void READ(const SETOFSYS &, int);
+	void WRITE(const SETOFSYS &, int);
+	void CALLNONSPECIAL(const SETOFSYS &,CTP);
 
-	void EXPRESSION(SETOFSYS FSYS);
+	void EXPRESSION(const SETOFSYS &);
+//	nested procedures within expression
 		void FLOATIT(STP &, bool);
 		void STRETCHIT(STP &);
-		void SIMPLEEXPRESSION(SETOFSYS &);
-		void TERM(SETOFSYS &);
-		void FACTOR(SETOFSYS &);
+		void SIMPLEEXPRESSION(const SETOFSYS &);
+		void TERM(const SETOFSYS &);
+		void FACTOR(const SETOFSYS &);
 		void MAKEPA(STP &STRGFSP, STP);
 
-	void STATEMENT(SETOFSYS FSYS);
+	void STATEMENT(const SETOFSYS FSYS);
 //	called from statement
-		void ASSIGNMENT(CTP);
+		void ASSIGNMENT(const SETOFSYS &, CTP);
 		void GOTOSTATEMENT();
-		void COMPOUNDSTATEMENT(SETOFSYS &);
-		void IFSTATEMENT(SETOFSYS &);
-		void CASESTATEMENT(SETOFSYS &FSYS);
-		void REPEATSTATEMENT(SETOFSYS &);
-		void WHILESTATEMENT(SETOFSYS &);
-		void FORSTATEMENT(SETOFSYS &, CTP &);
-		void WITHSTATEMENT(SETOFSYS &);
+		void COMPOUNDSTATEMENT(const SETOFSYS &);
+		void IFSTATEMENT(const SETOFSYS &);
+		void CASESTATEMENT(const SETOFSYS &FSYS);
+		void REPEATSTATEMENT(const SETOFSYS &);
+		void WHILESTATEMENT(const SETOFSYS &);
+		void FORSTATEMENT(const SETOFSYS &, CTP &);
+		void WITHSTATEMENT(const SETOFSYS &);
 };
 
 class EXPRESSION: public BODYPART

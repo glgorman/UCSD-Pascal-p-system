@@ -25,6 +25,19 @@ using namespace std;
 #define MAXSEG		15
 #define MAXPROCNUM	149
 
+class EXIT_CODE
+{
+public:
+	int	 *err;
+	char *m_str;
+
+public:
+	EXIT_CODE(char*str)
+	{
+		m_str = str;
+	}
+};
+
 class USERPROGRAM
 {
 public:
