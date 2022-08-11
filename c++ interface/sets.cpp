@@ -8,8 +8,12 @@
 
 #include "stdafx.h"
 #include <stdarg.h>
+#include <vector>
+#include "intrinsics.h"
 #include "range.h"
 #include "sets.h"
+
+extern char *SYMBOL_NAMES1[];
 
 namespace chartype
 {
@@ -51,7 +55,33 @@ SET::SET(int n, ...)
 	va_end(vl);
 }
 
-SET SET::operator + (const SET &x)
+bool SET::operator == (const SET &x) const
+{
+	bool result = true;
+	int i;
+	for (i=0;i<SETSZ;i++)
+	if (bits[i]!=x.bits[i])
+	{
+		result=false;
+		break;
+	}
+	return result;
+}
+
+bool SET::operator != (const SET &x) const
+{
+	bool result = false;
+	int i;
+	for (i=0;i<SETSZ;i++)
+	if (bits[i]!=x.bits[i])
+	{
+		result=true;
+		break;
+	}
+	return result;
+}
+
+SET SET::operator + (const SET &x) const
 {
 	SET result;
 	result = *this;
@@ -61,17 +91,21 @@ SET SET::operator + (const SET &x)
 	return result;
 }
 
-SET SET::operator - (const SET &x)
+SET SET::operator - (const SET &x) const
 {
 	SET result;
-	result = *this;
 	int i;
+	DWORD s1, s2;
 	for (i=0;i<SETSZ;i++)
-		result.bits[i]&=(!x.bits[i]);
+	{
+		s1 = bits[i];
+		s2 = ~(x.bits[i]);
+		result.bits[i]=s1&s2;
+	}
 	return result;
 }
 
-SET SET::UNION(const SET&S)
+SET SET::UNION(const SET&S) const
 {
 	SET result;
 	result = *this;
@@ -81,7 +115,7 @@ SET SET::UNION(const SET&S)
 	return result;
 }
 
-SET SET::INTERSECT(const SET&S)
+SET SET::INTERSECT(const SET&S) const
 {
 	SET result;
 	result = *this;
@@ -102,17 +136,17 @@ SETOFSYS::SETOFSYS(const SET &x)
 		bits[i]=x.bits[i];
 }
 
-SETOFSYS SETOFSYS::operator + (const SETOFSYS &x)
+SETOFSYS SETOFSYS::operator + (const SETOFSYS &x) const
 {
 	SETOFSYS result;
 	result = *this;
 	int i;
 	for (i=0;i<SETSZ;i++)
 		result.bits[i]|=x.bits[i];
-	return (*this);
+	return result;
 }
 
-SETOFSYS SETOFSYS::operator + (int val)
+SETOFSYS SETOFSYS::operator + (int val) const
 {
 	SETOFSYS result;
 	result = *this;
@@ -129,6 +163,21 @@ SETOFSYS &SETOFSYS::operator = (const SET &x)
 	for (i=0;i<SETSZ;i++)
 		bits[i]=x.bits[i];
 	return (*this);
+}
+
+void SETOFSYS::debug_list (char *str1) const
+{
+	int n;
+	char *str2;
+	size_t sz = SETSZ*sizeof(DWORD)*8; 
+	WRITE(OUTPUT,"SET ",str1,": (");
+	for (n=0;n<sz;n++)
+	if (in(n))
+	{
+		str2 = SYMBOL_NAMES1[n];
+		WRITE (OUTPUT,str2,",");
+	}
+	WRITELN(OUTPUT,")");
 }
 
 SETOFIDS::SETOFIDS()
@@ -152,7 +201,7 @@ SETOFIDS::SETOFIDS(int n,...)
 	va_end(vl);
 }
 
-SETOFIDS SETOFIDS::operator + (int val)
+SETOFIDS SETOFIDS::operator + (int val) const
 {
 	SETOFIDS result;
 	result = *this;

@@ -21,7 +21,7 @@ protected:
 	DWORD bits[SETSZ];
 
 public:
-	inline bool in(int s)
+	inline bool in(int s) const
 	{
 		bool result;
 		int i, j;
@@ -30,10 +30,12 @@ public:
 		result = (((bits[i])&(0x01<<j))!=0?true:false);
 		return result;
 	};
-	virtual SET UNION(const SET&);
-	virtual SET INTERSECT(const SET&);
-	virtual SET operator + (const SET &);
-	virtual SET operator - (const SET &);
+	bool operator == (const SET &) const;
+	bool operator != (const SET &) const;
+	virtual SET UNION(const SET&) const;
+	virtual SET INTERSECT(const SET&) const;
+	virtual SET operator + (const SET &) const;
+	virtual SET operator - (const SET &) const;
 	SET();
 	SET(int,...);
 };
@@ -51,18 +53,19 @@ namespace chartype
 class SETOFSYS: public SET 
 {
 public:
-	SETOFSYS operator + (int);
-	SETOFSYS operator + (const SETOFSYS&);
+	SETOFSYS operator + (int) const;
+	SETOFSYS operator + (const SETOFSYS&) const;
 	SETOFSYS &operator += (int);
 	SETOFSYS &operator = (const SET&);
 	SETOFSYS();
 	SETOFSYS(const SET&);
+	void debug_list (char *str="") const;
 };
 
 class SETOFIDS: public SET 
 {
 public:
-	SETOFIDS operator + (int);
+	SETOFIDS operator + (int) const;
 	SETOFSYS &operator += (int);
 	SETOFIDS &operator = (const SET &);
 	SETOFIDS();
