@@ -98,6 +98,7 @@ struct CONSTREC
 		float	RVAL;
 //				PSET;
 		char	SVAL[STRGLGTH];
+		int		PVAL[4]; // should be SET[0..127];
 	};
 };
 
