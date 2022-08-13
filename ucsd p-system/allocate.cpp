@@ -8,10 +8,11 @@
 //#include "../Frame Lisp/node_list.h"
 //#include "../Frame Lisp/text_object.h"
 
-#include "compiler.h"
-#include "unitpart.h"
+#include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
+#include "compiler.h"
+#include "unitpart.h"
 
 using namespace std;
 

@@ -6,7 +6,8 @@
 //#include "../Frame Lisp/node_list.h"
 //#include "../Frame Lisp/text_object.h"
 
-#include "insymbol.h"
+//#include "insymbol.h"
+#include "compilerdata.h"
 
 //#define DEBUG_INSYMBOL	1
 //#define DEBUG_RETRY		1
@@ -15,6 +16,7 @@
 //#define DEBUG_GETC	
 
 //vector<PSYMBOL> PASCALSOURCE::m_symbols;
+
 
 char PASCALSOURCE::PEEK()
 {
@@ -25,7 +27,9 @@ char PASCALSOURCE::PEEK()
 
 	ASSERT(m_src.SYMCURSOR>=0);
 	char c = (*m_src.SYMBUFP)[m_src.SYMCURSOR];
-	ASSERT(c>=0);
+//	ASSERT(c>=0);
+	if (c<0)
+		c=0;
 
 #ifdef DEBUG_PEEK0
 	if (c>=32)

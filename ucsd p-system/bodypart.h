@@ -1,28 +1,6 @@
 
-class _CALL
-{
-protected:
-	void VARIABLE(const SETOFSYS &);
-	void STRGVAR(const SETOFSYS &, bool);
-	void ROUTINE(const SETOFSYS &, int);
-		void NEWSTMT(const SETOFSYS &);
-	void MOVE(const SETOFSYS &, int);
-	void EXIT0();
-	void UNITIO(const SETOFSYS &, int);
-	void CONCAT(const SETOFSYS &);
-	void COPYDELETE(const SETOFSYS &, int);	
-	void STR(const SETOFSYS &);
-	void CLOSE(const SETOFSYS &);
-	void GETPUTETC(const SETOFSYS &, int);
-	void SCAN(const SETOFSYS &FSYS);
-	void BLOCKIO(const SETOFSYS &FSYS, int);
-	void SIZEOF();
-};
-
 class BODYPART:
-	public virtual PASCALSOURCE,
-	public virtual COMPILERDATA,
-	public virtual PASCALCOMPILER
+	public DECLARATIONPART
 {
 public:
 	static void *allocate (void *);
@@ -91,6 +69,27 @@ protected:
 		void WITHSTATEMENT(const SETOFSYS &);
 };
 
+#if 0
+class _CALL
+{
+protected:
+	void VARIABLE(const SETOFSYS &);
+	void STRGVAR(const SETOFSYS &, bool);
+	void ROUTINE(const SETOFSYS &, int);
+		void NEWSTMT(const SETOFSYS &);
+	void MOVE(const SETOFSYS &, int);
+	void EXIT0();
+	void UNITIO(const SETOFSYS &, int);
+	void CONCAT(const SETOFSYS &);
+	void COPYDELETE(const SETOFSYS &, int);	
+	void STR(const SETOFSYS &);
+	void CLOSE(const SETOFSYS &);
+	void GETPUTETC(const SETOFSYS &, int);
+	void SCAN(const SETOFSYS &FSYS);
+	void BLOCKIO(const SETOFSYS &FSYS, int);
+	void SIZEOF();
+};
+
 class EXPRESSION: public BODYPART
 {
 public:
@@ -115,3 +114,4 @@ public:
 	void FORSTATEMENT();
 	void WITHSTATEMENT();
 };
+#endif

@@ -6,9 +6,10 @@
 //#include "../Frame Lisp/node_list.h"
 //#include "../Frame Lisp/text_object.h"
 
-#include "compiler.h"
+#include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
+#include "compiler.h"
 
 struct pcode
 {
@@ -79,9 +80,11 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
     if ((options.NOSWAP)&&(STARTINGUP))
     {
         /* BRING IN DECLARATIONPART */
+#if 0
         PASCALCOMPILER *ptr1 = reinterpret_cast<PASCALCOMPILER *>(this);
         DECLARATIONPART decl = DECLARATIONPART(ptr1);
-        decl.MAIN(FSYS);
+#endif
+		DECLARATIONPART::MAIN(FSYS);
 		EXIT_CODE E("BODYPART");
         throw(E);
     };
@@ -179,9 +182,9 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
         do
 		{
 			STATEMENT(FSYS+SYMBOLS::SEMICOLON+SYMBOLS::ENDSY);
-//			ASSERT(0);
+//			ASSERT(false);
 		}
-        while (STATBEGSYS.in(SY));
+		while (BNF::STATBEGSYS.in(SY));
         TEST = SY!=SYMBOLS::SEMICOLON;
         if (!TEST)
             INSYMBOL();
@@ -259,10 +262,10 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
     GENBYTE(LEVEL-1);
     if (!CODEINSEG)
     {
-        CODEINSEG = TRUE;
+        CODEINSEG = true;
         SEGTABLE[SEG].DISKADDR = CURBLK;
     }
-    WRITECODE(FALSE);
+    WRITECODE(false);
     SEGINX = SEGINX + IC;
     PROCTABLE[CURPROC] = SEGINX - 2;
 }
@@ -270,7 +273,11 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
 void BODYPART::LINKERREF(IDCLASS KLASS, int ID, int ADDR)
 {
     int ioresult;
-    PASCALCOMPILER	*m_ptr;
+#if 0
+    PASCALCOMPILER	*m_ptr = (PASCALCOMPILER*) this;
+#endif
+	PASCALCOMPILER	*m_ptr = reinterpret_cast<PASCALCOMPILER*>(this);
+
     FILE *file = &m_ptr->REFFILE;
     REFARRAY *list = m_ptr->REFLIST;
     const char *data = (const char*)(&list[0]);
@@ -284,7 +291,7 @@ void BODYPART::LINKERREF(IDCLASS KLASS, int ID, int ADDR)
     }
     // with	(m_ptr->REFLIST[m_ptr->NREFS])
     REFARRAY &ARR = m_ptr->REFLIST[m_ptr->NREFS];
-    if (VARS.in(KLASS))
+	if (BNF::VARS.in(KLASS))
         ARR->KEY=ID+32;
     else /*PROC*/
         ARR->KEY=ID;
@@ -333,7 +340,6 @@ void BODYPART::GEN0(OPRANGE FOP)
 
 void BODYPART::GEN1(OPRANGE FOP, int FP2)
 {
-    int FP;
     int	I,J;
     GENBYTE(FOP+128);
     if (FOP==51/*LDC*/)
@@ -356,7 +362,7 @@ void BODYPART::GEN1(OPRANGE FOP, int FP2)
                 GENBYTE(I);
                 for(J=I;J>=1;J--)
                 {
-                    PASCALCOMPILER::GENWORD(GATTR.CVAL.VALP->CSTVAL[J]);
+                    GENWORD(GATTR.CVAL.VALP->CSTVAL[J]);
 //					GENWORD(GATTR.CST.VALP->CSTVAL[J]);
                 }
             }
@@ -371,7 +377,7 @@ void BODYPART::GEN1(OPRANGE FOP, int FP2)
     else if (SET(11, 30/*CSP*/,32/*ADJ*/,45/*RNP*/,
         46/*CIP*/,60/*LDM*/,61/*STM*/,
         65/*RBP*/,66/*CBP*/,78/*CLP*/,
-        42/*SAS*/,79/*CGP*/).in(FP))
+        42/*SAS*/,79/*CGP*/).in(FOP))
         GENBYTE(FP2);
     else if (options.INMODULE&&(SET(3,37/*LAO*/,39/*LDO*/,43/*SRO*/).in(FOP)))
     {
@@ -779,13 +785,13 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
             GATTR.ACCESS=MULTI;
         }
 
-        if (!SET(SELECTSYS+FSYS).in(SY))
+		if (!SET(BNF::SELECTSYS+FSYS).in(SY))
         {
             CERROR(59);
-            SKIP(SELECTSYS+FSYS);
+            SKIP(BNF::SELECTSYS+FSYS);
         }
 
-        while(SELECTSYS.in(SY))
+        while(BNF::SELECTSYS.in(SY))
         {
             if (SY==SYMBOLS::LBRACK)
                 do {
@@ -965,10 +971,10 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
                     CERROR(141);
                 INSYMBOL();
             }
-            if (!(SET(2,FSYS,SELECTSYS).in(SY)))
+            if (!(SET(2,FSYS,BNF::SELECTSYS).in(SY)))
             {
                 CERROR(6);
-                SKIP(FSYS+SELECTSYS);
+                SKIP(FSYS+BNF::SELECTSYS);
             }
     } /*while /*/
 } /*SELECTOR*/
@@ -1308,13 +1314,13 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
     int HIGHVAL,LOWVAL,LIC,LOP;
     SET CSTPART;
     
-    if (!(FACBEGSYS.in(SY)))
+    if (!(BNF::FACBEGSYS.in(SY)))
     {
         CERROR(58);
-        SKIP(FSYS+FACBEGSYS);
+        SKIP(FSYS+BNF::FACBEGSYS);
         GATTR.TYPTR=NULL;
     }
-    while(FACBEGSYS.in(SY))
+    while(BNF::FACBEGSYS.in(SY))
     {
          switch (SY)
          {
@@ -1476,7 +1482,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                              {
                                 IC=LIC;
                                  /*FORGET FIRST CONST*/
-                                ASSERT(0);
+                                ASSERT(false);
                                 // fixme - add fill range fucntion to sets
 #if 0
                                CSTPART=CSTPART+[LOWVAL..HIGHVAL];
@@ -1518,7 +1524,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                }
              else
                {
-                   ASSERT(0);
+                  ASSERT(false);
 //                 SCONST->PVAL=CSTPART;
                  SCONST->CCLASS=PSET;
                  GATTR.CVAL.VALP=SCONST;
@@ -1533,7 +1539,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
        if (!(FSYS.in(SY)))
        {
            CERROR(6);
-           SKIP(FSYS+FACBEGSYS);
+           SKIP(FSYS+BNF::FACBEGSYS);
        }
      } /*while /*/
 } /*FACTOR*/
@@ -1631,7 +1637,7 @@ void BODYPART::TERM(const SETOFSYS &FSYS)
 #if 0
 void BODYPART::SIMPLEEXPRESSION(SETOFSYS &FSYS)
 {
-    ASSERT(0);
+    ASSERT(false);
 }
 #endif
 
@@ -1946,7 +1952,7 @@ fubar:			INSYMBOL();
             SKIP(FSYS);
         }
     }
-    if ((STATBEGSYS+SYMBOLS::IDENT).in(SY))
+    if ((BNF::STATBEGSYS+SYMBOLS::IDENT).in(SY))
     {
 #if 0
         MARK(HEAP); /*for(LABEL CLEANUP*/
@@ -1954,7 +1960,7 @@ fubar:			INSYMBOL();
         switch (SY)
         {
             case SYMBOLS::IDENT:
-                SEARCHID((SETOFIDS)(VARS+FIELD+FUNC+PROC1),LCP);
+                SEARCHID((SETOFIDS)(BNF::VARS+FIELD+FUNC+PROC1),LCP);
                 INSYMBOL();
                 if (LCP->KLASS==PROC1)
                     CALL(FSYS,LCP);
@@ -2324,7 +2330,7 @@ void BODYPART::VARIABLE(const SETOFSYS &FSYS)
     CTP LCP;
     if (SY==SYMBOLS::IDENT)
     {
-        SEARCHID(VARS+FIELD,LCP);
+        SEARCHID(BNF::VARS+FIELD,LCP);
         INSYMBOL();
     }
     else {
@@ -2704,7 +2710,7 @@ void BODYPART::SIZEOF()
     CTP LCP;
     if (SY==SYMBOLS::IDENT)
     {
-        SEARCHID(VARS+TYPES+FIELD,LCP);
+        SEARCHID(BNF::VARS+TYPES+FIELD,LCP);
         INSYMBOL();
         if (LCP->IDTYPE!=NULL)
             GENLDC(LCP->IDTYPE->SIZE*CHRSPERWD);
@@ -2735,7 +2741,7 @@ void BODYPART::READ(const SETOFSYS &FSYS, int LKEY)
     FILEPTR=INPUTPTR;
     if ((SY==SYMBOLS::IDENT)&&WASLPARENT)
     {
-        SEARCHID(VARS+FIELD,LCP);
+        SEARCHID(BNF::VARS+FIELD,LCP);
         if (LCP->IDTYPE!=NULL)
             if (LCP->IDTYPE->FORM==FILES)
                 if (LCP->IDTYPE->FILTYPE==CHARPTR)
@@ -2805,7 +2811,7 @@ void BODYPART::WRITE(const SETOFSYS &FSYS, int LKEY)
     FILEPTR=OUTPUTPTR;
     if ((SY==SYMBOLS::IDENT)&&WASLPARENT)
     {
-        SEARCHID(VARS+FIELD+KONST+FUNC,LCP);
+        SEARCHID(BNF::VARS+FIELD+KONST+FUNC,LCP);
         if (LCP->IDTYPE!=NULL)
             if (LCP->IDTYPE->FORM==FILES)
                 if (LCP->IDTYPE->FILTYPE==CHARPTR)
@@ -3118,7 +3124,7 @@ void BODYPART::COMPOUNDSTATEMENT(const SETOFSYS &FSYS)
     do	{
         do
             STATEMENT(FSYS+SYMBOLS::SEMICOLON+SYMBOLS::ENDSY);
-        while(STATBEGSYS.in(SY));
+        while(BNF::STATBEGSYS.in(SY));
         TEST=SY!=SYMBOLS::SEMICOLON;
         if (!TEST)
             INSYMBOL();
@@ -3279,7 +3285,7 @@ retry:       //  NEW(LPT3);
                 CERROR(5);
             do
             STATEMENT(FSYS+SYMBOLS::SEMICOLON);
-            while(STATBEGSYS.in(SY));
+            while(BNF::STATBEGSYS.in(SY));
 
             if (LPT3!=NULL)
                 GENJMP(57/*UJP*/,LADDR);
@@ -3346,7 +3352,7 @@ void BODYPART::REPEATSTATEMENT(const SETOFSYS &FSYS)
     do {
         do
             STATEMENT(FSYS+SYMBOLS::SEMICOLON+SYMBOLS::UNTILSY);
-        while(STATBEGSYS.in(SY));
+        while(BNF::STATBEGSYS.in(SY));
         TEST=(SY!=SYMBOLS::SEMICOLON);
         if (!TEST)
             INSYMBOL();
@@ -3399,12 +3405,12 @@ void BODYPART::FORSTATEMENT()
 void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
 {
     ATTR LATTR;
-    SYMBOLS::SYMBOL LSY;
+    SYMBOLS::SYMBOL LSY1;
     LBP LCIX, LADDR;
 
     if (SY==SYMBOLS::IDENT)
     {
-        SEARCHID(VARS,LCP);
+        SEARCHID(BNF::VARS,LCP);
         // with LCP^, LATTR
         {
             LATTR.TYPTR=LCP->IDTYPE;
@@ -3465,7 +3471,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
     GENLABEL(&LADDR);
     if (SET(2,SYMBOLS::TOSY,SYMBOLS::DOWNTOSY).in(SY))
     {
-        LSY=SY;
+        LSY1=SY;
         INSYMBOL();
         EXPRESSION(FSYS+SYMBOLS::DOSY);
         if (GATTR.TYPTR!=NULL)
@@ -3488,7 +3494,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
                     LC=LC+INTSIZE;
                     if (LC>LCMAX)
                         LCMAX=LC;
-                    if (LSY==SYMBOLS::TOSY)
+                    if (LSY1==SYMBOLS::TOSY)
                         GEN2(52/*LEQ*/,0,INTSIZE);
                     else
                         GEN2(48/*GEQ*/,0,INTSIZE);
@@ -3511,7 +3517,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
     GATTR=LATTR;
     LOAD();
     GENLDC(1);
-    if (LSY==SYMBOLS::TOSY)
+    if (LSY1==SYMBOLS::TOSY)
         GEN0(2/*ADI*/);
     else
         GEN0(21/*SBI*/);
@@ -3536,7 +3542,7 @@ void BODYPART::WITHSTATEMENT(const SETOFSYS &FSYS)
     do {
         if (SY==SYMBOLS::IDENT)
         {
-            SEARCHID(VARS+FIELD,LCP);
+            SEARCHID(BNF::VARS+FIELD,LCP);
             INSYMBOL();
         }
         else

@@ -3,8 +3,11 @@
 #include "stdafx.h"
 #include <vector>
 #include "../eliza/eliza.h"
-#include "compiler.h"
+
+#include "compilerdata.h"
+#include "declarationpart.h"
 #include "bodypart.h"
+#include "compiler.h"
 
 bTreeType<PSYMBOL> *p_symbols;
 

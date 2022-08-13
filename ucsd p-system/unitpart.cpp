@@ -5,8 +5,12 @@
 //#include "../Frame Lisp/node_list.h"
 //#include "../Frame Lisp/text_object.h"
 
+#include "compilerdata.h"
+#include "declarationpart.h"
+#include "bodypart.h"
 #include "compiler.h"
 #include "unitpart.h"
+
 
 void LINKERINFO::GETNEXTBLOCK()
 {
@@ -158,6 +162,11 @@ void LINKERINFO::WRITELINKERINFO(bool DECSTUFF)
    }
 } /*WRITELINKERINFO*/;
 
+void UNITPART::GENWORD(int w)
+{
+	PASCALCOMPILER::GENWORD(w);
+}
+
 void UNITPART::OPENREFFILE()
 {
 	SYSCOMM::REWRITE(&REFFILE,"*SYSTEM.INFO[*]");
@@ -289,7 +298,7 @@ UNITPART::UNITPART(SETOFSYS FSYS)
 			if (SY!=SYMBOLS::IMPLESY)
 			{
 				CERROR(23);
-				SKIP(FSYS-STATBEGSYS);
+				SKIP(FSYS-BNF::STATBEGSYS);
 			}
 			else
 				INSYMBOL();
