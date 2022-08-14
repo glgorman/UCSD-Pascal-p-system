@@ -34,10 +34,10 @@ extern key_info operators[];
 };
 
 typedef	DWORD BITRANGE;
-struct IDENTIFIER;
-typedef IDENTIFIER* CTP;
-struct STRUCTURE;
-typedef STRUCTURE*	STP;
+class identifier;
+typedef identifier* CTP;
+class structure;
+typedef structure*	STP;
 typedef char ALPHA[IDENTSIZE];
 typedef char SYMBUFARRAY[MAXCURSOR+1];
 typedef char CODEARRAY[MAXCODE+1];
@@ -68,6 +68,7 @@ typedef enum _OPERATOR
 
 typedef enum _CSTCLASS
 {
+	VOID2,
 	REEL,
 	PSET,
 	STRG,
@@ -82,10 +83,17 @@ typedef enum _UNITFILE
 	SYSLIBRARY,
 } UNITFILE;
 
-struct CONSTREC;
+class CONSTREC;
 typedef CONSTREC*	CSP;
-struct CONSTREC
+class CONSTREC
 {
+public:
+	CONSTREC (CSTCLASS);
+
+private:
+	CONSTREC();
+
+public:
 	CSTCLASS	CCLASS;
 	int	 LLENG,LLAST;
 	union
@@ -114,7 +122,7 @@ public:
 	int index;
 	SYMBOLS::SYMBOL	SY;	/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
-	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
+	ALPHA		ID;		/*LAST identifier FOUND*/			
     VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
 	char		*str;
 
@@ -135,7 +143,7 @@ struct key_info
 	key_info() { };
 	key_info(char *STR, SYMBOLS::SYMBOL _SY, OPERATOR _OP)
 	{
-		strcpy_s(ID,16,STR);
+		strcpy_s(ID,IDENTSIZE,STR);
 		SY = _SY;
 		OP = _OP;
 	}
@@ -166,7 +174,7 @@ struct // for eventual refactoring
 {
 	SYMBOLS::SYMBOL	SY;			/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;				/*CLASSIFICATION LAST SYMBOL*/
-	ALPHA		ID;				/*LAST IDENTIFIER FOUND*/			
+	ALPHA		ID;				/*LAST identifier FOUND*/			
     VALU		VAL;			/*VALUE THEN LAST CONSTANT*/
 };
 

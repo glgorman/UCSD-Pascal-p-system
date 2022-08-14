@@ -95,32 +95,32 @@ void LINKERINFO::WRITELINKERINFO(bool DECSTUFF)
 		switch (I)
 		{
 		case SEEK:
-			strcpy_s(LIREC.LINAME,15,"FSEEK   ");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"FSEEK   ");
 			LIREC.NPARAMS=2;
 			break;
 
 		case FREADREAL:
-			strcpy_s(LIREC.LINAME,15,"FREADREA");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"FREADREA");
 			LIREC.NPARAMS=2;
 			break;
 
 		case FWRITEREAL:
-			strcpy_s(LIREC.LINAME,15,"FWRITERE");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"FWRITERE");
 			LIREC.NPARAMS=5;
 			break;
 
 		case FREADDEC:
-			strcpy_s(LIREC.LINAME,15,"FREADDEC");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"FREADDEC");
 			LIREC.NPARAMS=3;
 			break;
 
 		case FWRITEDEC:
-			strcpy_s(LIREC.LINAME,15,"FWRITEDE");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"FWRITEDE");
 			LIREC.NPARAMS=10;
 			break;
 
 		case DECOPS:
-			strcpy_s(LIREC.LINAME,15,"DECOPS  ");
+			strcpy_s(LIREC.LINAME,IDENTSIZE,"DECOPS  ");
 			LIREC.NPARAMS=0;
 
 		default:
@@ -221,13 +221,8 @@ void UNITPART::UNITDECLARATION(SETOFSYS FSYS, TESTP &UMARKP)
 			};
 			if (!FOUND)
 			{
-//				NEW(LCP,MODULE);
-// WITH LCP^ //
-				LCP = new (IDENTIFIER);
-				strcpy_s(LCP->NAME,15,ID);
-				LCP->IDTYPE=NULL;
+				LCP = new identifier(ID,MODULE,NULL);
 				LCP->NEXT=MODPTR;
-				LCP->KLASS=MODULE;
 				LCP->SEGID=SEG;
 				MODPTR=LCP;
 			};

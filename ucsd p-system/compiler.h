@@ -23,10 +23,11 @@ class PASCALCOMPILER: public BODYPART
 {
 friend class COMPILERDATA;
 friend class COMPINIT;
+friend class DECLARATIONPART;
 
 protected:
 	void DECLARATIONS(SETOFSYS FSYS);
-	void BODY(SETOFSYS FSYS, CTP FPROCP);
+	void BODY(const SETOFSYS &FSYS, CTP FPROCP);
 	void WRITELINKERINFO(bool);
 	void UNITPART(SETOFSYS);
 //	void SEARCHSECTION(CTP FCP, CTP &FCP1);
@@ -43,9 +44,9 @@ protected:
 	void FINISHSEG();
 //	void CERROR(int ERRORNUM);
 
-public:
+protected:
 	void ENTERID(CTP FCP);
-	void BLOCK(SETOFSYS FSYS);
+	void BLOCK(const SETOFSYS &FSYS);
 	void FINDFORW(CTP FCP);
 	bool PAOFCHAR(STP FSP);
 	
@@ -59,6 +60,8 @@ public:
 	static UINT THREAD_ENTRY (LPVOID param);
 };
 
+
+
 class DECLARATIONPART::TYP:
 	public PASCALCOMPILER
 {
@@ -66,37 +69,64 @@ public:
 class FIELDLIST;
 
 protected:
+#if 0
+union
+{
+  struct /*locals*/
+  {
 	STP			FSP;
 	STP			LSP,LSP1,LSP2;
 	DISPRANGE	OLDTOP;
 	CTP			LCP;
-    ADDRRANGE	LSIZE,DISPL;
+	ADDRRANGE	LSIZE,DISPL;
 	int			LMIN,LMAX;
 	bool		PACKING;
 	BITRANGE	NEXTBIT,NUMBITS;
+  };
+  char fp[sizeof(stack_frame)];
+};
+#endif
+
+protected:
+	static void debug_stack (stack_frame *ptr);
 
 public:
-	TYP();
-	TYP(SETOFSYS, STP&, ADDRRANGE &);
-	void TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE);
-	void ALLOCATE(CTP FCP);
-	void VARIANTLIST();
-	void SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE);
-	void FIELDLIST(SETOFSYS FSYS, STP &FRECVAR);
-	bool PACKABLE(STP FSP);	
-	void POINTERTYPE();
+//	TYP(DECLARATIONPART *);
+//	TYP(SETOFSYS, STP&, ADDRRANGE &);
+//	void TYP1(const SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE);
+//	void ALLOCATE(CTP FCP);
+//	void VARIANTLIST();
+//	void SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE);
+//	void FIELDLIST(SETOFSYS FSYS, STP &FRECVAR);
+//	bool PACKABLE(STP FSP);	
+//	void POINTERTYPE();
 };
-
+#if 0
 class DECLARATIONPART::TYP::FIELDLIST:
 	public DECLARATIONPART::TYP
 {
 protected:
+union
+{
+  struct stack_frame
+  {
 	CTP LCP,LCP1,NXT,NXT1,LAST;
 	STP LSP,LSP1,LSP2,LSP3,LSP4;
 	ADDRRANGE MINSIZE,MAXSIZE,LSIZE;
 	VALU LVALU1;
 	BITRANGE MAXBIT,MINBIT;
 	STP	FRECVAR; //passed into constructor 
+  } fp;
+  struct
+  {
+	CTP LCP,LCP1,NXT,NXT1,LAST;
+	STP LSP,LSP1,LSP2,LSP3,LSP4;
+	ADDRRANGE MINSIZE,MAXSIZE,LSIZE;
+	VALU LVALU1;
+	BITRANGE MAXBIT,MINBIT;
+	STP	FRECVAR; //passed into constructor 
+  };
+};
 
 protected:
 	void ALLOCATE(CTP FCP);
@@ -105,6 +135,7 @@ protected:
 public:
 	FIELDLIST(SETOFSYS FSYS, STP &FRECVAR);
 };
+#endif
 
 typedef struct _DCREC_
 {
@@ -119,14 +150,14 @@ protected:
 	struct _SEGDICT_
 	{
 		DCREC DANDC[MAXSEG];
-        ALPHA SEGNAME[MAXSEG];
-        int   SEGKIND[MAXSEG];
-        int	  TEXTADDR[MAXSEG];
-        int   FILLER[128];
+		ALPHA SEGNAME[MAXSEG];
+		int   SEGKIND[MAXSEG];
+		int	  TEXTADDR[MAXSEG];
+		int   FILLER[128];
 	} SEGDICT;
 	bool		FOUND;
 	int			BEGADDR;
-    CTP			LCP;
+	CTP			LCP;
 	LEXSTKREC	LLEXSTK;
 	ALPHA		LNAME;
 	OPERATOR	LOP;
@@ -138,20 +169,22 @@ protected:
 	void GETTEXT(bool &FOUND);
 };
 
+#if 0
 class DECLARATIONPART::PROCDECLARATION:
 	public DECLARATIONPART
 {
 protected:
-#if 0
+
 	SYMBOLS::SYMBOL	LSY2;
 	CTP			LCP,LCP1;
 	STP			LSP;
 	bool		EXTONLY,FORW;
 	ADDRRANGE	LCM;
 	LEXSTKREC	LLEXSTK;
-#endif
+
 
 protected:
 	PROCDECLARATION(const SETOFSYS&,SYMBOLS::SYMBOL FSY, bool SEGDEC, bool &NOTDONE);
 	void PARAMETERLIST(SETOFSYS, SYMBOLS::SYMBOL, CTP &, CTP);
 };
+#endif

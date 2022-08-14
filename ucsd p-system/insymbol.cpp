@@ -1,12 +1,7 @@
 
 #include "stdafx.h"
-
-//#include "../Frame Lisp/symbol_table.h"
+#include <vector>
 #include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
-//#include "insymbol.h"
 #include "compilerdata.h"
 
 //#define DEBUG_INSYMBOL	1
@@ -92,59 +87,62 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 		USERINFO.ERRBLK=SYMBLK;
 		USERINFO.ERRSYM=m_src.SYMCURSOR;
 		USERINFO.ERRNUM=ERRORNUM;
-		if (USERINFO.STUPID)
-			CH='E';
+	
+		if (options.NOISY)
+			WRITELN(OUTPUT);
+		else if (options.LIST&&(ERRORNUM<=400))
+			return;
+		WRITELN(OUTPUT," >>>>");
+		if (m_src.LINESTART==0)
+		{
+			char *str1 = (char*)m_src.SYMBUFP;
+			char *str2 = &(str1[m_src.SYMCURSOR]);
+			WRITE(OUTPUT,str2);
+		}
 		else
 		{
-			if (options.NOISY)
-				WRITELN(OUTPUT);
-			else if (options.LIST&&(ERRORNUM<=400))
-				return;
-			if (m_src.LINESTART==0)
-				WRITE(OUTPUT,*m_src.SYMBUFP,(int)m_src.SYMCURSOR);
-			else
-			{
 #if 0
-				ERRSTART=SCAN(
-					-(LINESTART-1),true,
-					char(EOL),*(&(SYMBUFP[LINESTART-2])+ (size_t)(LINESTART)-1));
-				if (ERRSTART<0)
-					ERRSTART=0;
-				MOVELEFT(&(*SYMBUFP[ERRSTART]),&A[0],SYMCURSOR-ERRSTART);
-				WRITE(OUTPUT,A /*SYMCURSOR-ERRSTART*/ );
+			ERRSTART=SCAN(
+				-(LINESTART-1),true,
+				char(EOL),*(&(SYMBUFP[LINESTART-2])+ (size_t)(LINESTART)-1));
+			if (ERRSTART<0)
+				ERRSTART=0;
+			MOVELEFT(&(*SYMBUFP[ERRSTART]),&A[0],SYMCURSOR-ERRSTART);
+			WRITE(OUTPUT,A /*SYMCURSOR-ERRSTART*/ );
 #endif
-			};
-			WRITELN(OUTPUT," <<<<");
-			WRITE(OUTPUT,"Line ",SCREENDOTS,", error ",ERRORNUM,":");
-			if (options.NOISY)
-				WRITE(OUTPUT," <sp>(continue), <esc>(terminate), E(dit");
-			char param[] = ":";
-			WRITE(OUTPUT,param);
-		}
+		};
+		WRITELN(OUTPUT," <<<<");
+		WRITELN(OUTPUT,"Line ",SCREENDOTS,", error ",ERRORNUM,":");
+	}
+	if (USERINFO.STUPID)
+		CH='E';
+
+	else if (options.NOISY)
+	{
+		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
+		WRITELN(OUTPUT," <sp>(continue), <esc>(terminate), E(dit");
+		WRITE(OUTPUT,":");
 		do
 		{
 			SYSCOMM::READ(KEYBOARD,CH);
+			WRITE(OUTPUT,CH);
 		}
-		while (!
-			((CH==' ')||(CH=='E')||(CH=='e')
-			||(CH==USERINFO.ALTMODE))
-			);
-	};
+		while (!((CH==' ')||(CH=='E')||(CH=='e')||(CH==USERINFO.ALTMODE)));
+		WRITELN(OUTPUT);
+	}
 	if ((CH=='E')||(CH=='e'))
 	{
+		EXIT_CODE E(ERRORNUM,true);
 		USERINFO.ERRBLK=SYMBLK-2;
-		throw(this);
-	};
+		throw(E);
+	}
 	if ((ERRORNUM>400)||(CH==(char)(27)))
 	{
+		EXIT_CODE E(ERRORNUM,false);
 		USERINFO.ERRBLK=0;
-		throw(this);
-	};
-	WRITELN(OUTPUT);
-	if (options.NOISY)
-		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
-
-} /*CERROR*/ ;
+		throw(E);
+	}
+} /*CERROR*/
 
 void PASCALSOURCE::GETNEXTPAGE()
 {
@@ -599,8 +597,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 				IPART=ENDI;
 				K=ENDI;
 			}
-			LVP = new CONSTREC; //LVP,LONG1); 
-			LVP->CCLASS=LONG1;
+			LVP = new CONSTREC(LONG1); //LVP,LONG1); 
 			J=4;
 			LVP->LLENG=0;
 			while (K<=ENDI)
@@ -631,9 +628,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	}
 	else
 	{ /* REAL NUMBER HERE */
-		LVP = new CONSTREC;
-		LVP->CCLASS=REEL;
-
+		LVP = new CONSTREC(REEL);
 		RSUM=0;
 		SY=SYMBOLS::REALCONST; 
 		OP=NOOP;
@@ -685,7 +680,7 @@ void PASCALSOURCE::GETIDENT()
 		SY = key->SY;
 		OP = key->OP;
 		len = strlen(key->ID);
-		strcpy_s(ID,16,key->ID);
+		strcpy_s(ID,IDENTSIZE,key->ID);
  		m_src.SYMCURSOR = m_src.SYMCURSOR+(int)len;
 #ifdef DEBUG_INSYMBOL
 		WRITELN(OUTPUT,"FOUND: \"",ID,"\" ");
@@ -695,6 +690,7 @@ void PASCALSOURCE::GETIDENT()
 	{
 		SY = SYMBOLS::IDENT;
 		OP = NOOP;
+		memset(ID,0,IDENTSIZE);
 	 	ID[0]=GETC();
 		for (i=1;i<16;i++)
 		{
@@ -704,10 +700,9 @@ void PASCALSOURCE::GETIDENT()
 			else
 				break;
 		}
-		ID[i]=0;
 		m_src.SYMCURSOR--;
 #ifdef DEBUG_INSYMBOL
-	WRITE(OUTPUT,"IDENTIFIER: \"",ID,"\" ");
+	WRITE(OUTPUT,"identifier: \"",ID,"\" ");
 #endif
 	}
 }
@@ -743,7 +738,7 @@ bool PASCALSOURCE::GETOPERATOR()
 		if ((ch3==0)||(ch1==ch3))
 		{
 			found = true;
-			strcpy_s (ID,16,key->ID);
+			strcpy_s (ID,IDENTSIZE,key->ID);
 #ifdef DEBUG_INSYMBOL
 			WRITELN (OUTPUT,"GETOPERATOR () - found SY = ",SYMBOL_NAMES1[SY]," \"",ID,"\"");
 #endif
@@ -900,12 +895,9 @@ void PASCALSOURCE::INSYMBOL()
 // node_list<char*>
 			GETNEXTPAGE();
 		}
-		catch (PASCALSOURCE *p)
+		catch (EXIT_CODE E)
 		{
-//	CERROR wants us to do an
-//	EXIT(PASCALCOMPILER) 
-			status = true;
-			SY = SYMBOLS::OTHERSY;
+			ASSERT(false);
 		}
 	}
 }

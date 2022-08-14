@@ -689,7 +689,7 @@ void BODYPART::LOADADDRESS()
 } /*LOADADDRESS*/ ;
 
 #if 0
-void BODYPART::SELECTOR(SETOFSYS,IDENTIFIER *)
+void BODYPART::SELECTOR(SETOFSYS,identifier *)
 {
     ASSERT(false);
 }
@@ -1190,7 +1190,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
                         GENLDC(1);
                     GENLDC(0);
                     GEN2(77/*CXP*/,0/*SYS*/,5/*FOPEN*/);
-                };
+                }
                 if (options.IOCHECK)
                     GEN1(30/*CSP*/,0/*IOC*/);
                 /*OPEN*/
@@ -1200,7 +1200,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
                 {
                     GEN0(10/*FLT*/);
                     GATTR.TYPTR=REALPTR;
-                };
+                }
                 if (GATTR.TYPTR!=NULL)
                     if (GATTR.TYPTR==REALPTR)
                         GEN1(30/*CSP*/,23/*TRUNC*/); /*** TEMPORARY --
@@ -1368,7 +1368,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                 GATTR.TYPTR=CHARPTR;
             else
             {
-                LSP = new (STRUCTURE);
+                LSP = new structure(ARRAYS);
 //				NEW(LSP,ARRAYS,true,true);
                 *LSP=*STRGPTR;
                 LSP->MAXLENG=LGTH;
@@ -1382,7 +1382,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
          case SYMBOLS::LONGCONST:
              // with GATTR
 //			NEW(LSP,LONGINT);
-             LSP = new (STRUCTURE);
+             LSP = new structure(LONGINT);
             *LSP=*LONGINTPTR;
             LSP->SIZE=DECSIZE(LGTH);
             GATTR.TYPTR=LSP;
@@ -1423,11 +1423,10 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             CSTPART=SET(0);
             VARPART=false;
  //           NEW(LSP,POWER);
-            LSP = new (STRUCTURE);
+            LSP = new structure(POWER);
              // with LSP^
             LSP->ELSET=NULL;
             LSP->SIZE=0;
-            LSP->FORM=POWER;
             if (SY==SYMBOLS::RBRACK)
             {
                  // with GATTR
@@ -1908,7 +1907,7 @@ retry:					TYPIND=2;
     } /*SY==RELOP*/
 } /*EXPRESSION*/
 
-void BODYPART::STATEMENT(SETOFSYS FSYS)
+void BODYPART::STATEMENT(const SETOFSYS &FSYS)
 {
     CTP	LCP;
     DISPRANGE TTOP;
@@ -1923,7 +1922,8 @@ void BODYPART::STATEMENT(SETOFSYS FSYS)
         {
             TTOP=TTOP-1;
             LLP=DISPLAY[TTOP].BLCK.FLABEL;
-            while(LLP!=NULL){
+            while(LLP!=NULL)
+			{
    // with LLP^
                 if (LLP->LABVAL==VAL.IVAL)
                 {
@@ -1940,17 +1940,18 @@ fubar:			INSYMBOL();
                     INSYMBOL();
                 else
                     CERROR(5);
-        }
-        if (options.DEBUGGING)
-        {
-            GEN1(85/*BPT*/,SCREENDOTS+1);
-            options.BPTONLINE=true;
-        }
-        if (!(FSYS+SYMBOLS::IDENT).in(SY))
-        {
-            CERROR(6);
-            SKIP(FSYS);
-        }
+			}
+			if (options.DEBUGGING)
+			{
+				GEN1(85/*BPT*/,SCREENDOTS+1);
+				options.BPTONLINE=true;
+			}
+			if (!(FSYS+SYMBOLS::IDENT).in(SY))
+			{
+				CERROR(6);
+				SKIP(FSYS);
+			}	
+		}
     }
     if ((BNF::STATBEGSYS+SYMBOLS::IDENT).in(SY))
     {
@@ -2014,18 +2015,17 @@ fubar:			INSYMBOL();
 #if 0
         RELEASE(HEAP);
 #endif
-        if (IC+100>MAXCODE)
-        {
+		if (IC+100>MAXCODE)
+		{
             CERROR(253);
             IC=0;
         }
-        if (!(SET(4,SYMBOLS::SEMICOLON,SYMBOLS::ENDSY,SYMBOLS::ELSESY,SYMBOLS::UNTILSY).in(SY)))
-        {
-            CERROR(6);
-            SKIP(FSYS);
-        }
-    }
-    STMTLEV=STMTLEV-1;
+		if (!(SET(4,SYMBOLS::SEMICOLON,SYMBOLS::ENDSY,SYMBOLS::ELSESY,SYMBOLS::UNTILSY).in(SY)))
+		{
+			CERROR(6);
+			SKIP(FSYS);
+		}
+		STMTLEV=STMTLEV-1;
     }
 } /*STATEMENT*/
 
@@ -2128,7 +2128,7 @@ void BODYPART::STRGVAR(const SETOFSYS &FSYS, bool MUSTBEVAR)
                     }
                     GATTR.CVAL.VALP=SCONST;
 //					NEW(TYPTR,ARRAYS,true,true);
-                    GATTR.TYPTR = (STRUCTURE*) new STRUCTURE;
+                    GATTR.TYPTR = (structure*) new structure(ARRAYS);
                     *GATTR.TYPTR = *STRGPTR;
                     GATTR.TYPTR->MAXLENG=1;
                 };
@@ -2455,7 +2455,7 @@ void BODYPART::CONCAT(const SETOFSYS &FSYS)
  // with GATTR
     {
 //		NEW(TYPTR,ARRAYS,true,true);
-        GATTR.TYPTR = new STRUCTURE; 
+        GATTR.TYPTR = new structure(ARRAYS); 
         *GATTR.TYPTR=*STRGPTR;
         GATTR.TYPTR->MAXLENG=TEMPLGTH;
     }

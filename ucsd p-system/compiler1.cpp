@@ -20,7 +20,7 @@ public:
 	int index;
 	SYMBOL		SY;		/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;		/*CLASSIFICATION LAST SYMBOL*/
-	ALPHA		ID;		/*LAST IDENTIFIER FOUND*/			
+	ALPHA		ID;		/*LAST identifier FOUND*/			
     VALU		VAL;	/*VALUE THEN LAST CONSTANT*/
 	char		*str;	// pointer to string constant
 };
@@ -242,9 +242,9 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 		p.VAL = VAL;
 		p.index = (int) sz;
 		if (SY==SYMBOLS::IDENT)
-			memcpy(p.ID,ID,16);
+			memcpy(p.ID,ID,IDENTSIZE);
 		else
-			memset(p.ID,0,16);
+			memset(p.ID,0,IDENTSIZE);
 		if ((SY==SYMBOLS::STRINGCONST)
 			&&(SCONST->SVAL[0]>0))
 			p.str = strdup(&SCONST->SVAL[1]);

@@ -25,19 +25,6 @@ using namespace std;
 #define MAXSEG		15
 #define MAXPROCNUM	149
 
-class EXIT_CODE
-{
-public:
-	int	 *err;
-	char *m_str;
-
-public:
-	EXIT_CODE(char*str)
-	{
-		m_str = str;
-	}
-};
-
 class USERPROGRAM
 {
 public:
@@ -79,6 +66,7 @@ DISPRANGE==0..DISPLIMIT;
 
 typedef enum  _STRUCTFORM
 {
+	UNDEFINED,
 	SCALAR,
 	SUBRANGE,
 	POINTER,
@@ -98,8 +86,16 @@ typedef enum  _DECLKIND
 	SPECIAL,
 } DECLKIND;
 
-struct STRUCTURE
+class structure
 {
+protected:
+	structure();
+
+public:
+	structure(STRUCTFORM);
+	static void debug1 (structure *stp);
+
+public:
 	ADDRRANGE	SIZE;
 	STRUCTFORM	FORM;
 	union
@@ -168,6 +164,7 @@ struct STRUCTURE
 /*NAMES*/
 typedef enum _IDCLASS0
 {
+	NONE,
 	TYPES,
 	KONST,
 	FORMALVARS,
@@ -184,8 +181,16 @@ typedef enum _IDKIND
 	FORMAL,
 } IDKIND;
 
-struct IDENTIFIER
+class identifier
 {
+protected:
+	identifier();
+
+public:
+	identifier(char*,IDCLASS,STP);
+	identifier(IDCLASS);
+
+public:
 	ALPHA NAME;
 	CTP LLINK;
 	CTP RLINK;
@@ -243,7 +248,8 @@ struct IDENTIFIER
 					int SEGID;//MODULE;
 				};
 			};
-		};};
+		};
+	};
 };
 
 typedef enum _WHERE
@@ -476,7 +482,7 @@ protected:
 protected: // fuctions called from DECLARATIONPART
 //	virtual void CERROR(int ERRORNUM) = 0;
 	virtual void CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU) = 0;
-	virtual void BLOCK(SETOFSYS FSYS) = 0;
+	virtual void BLOCK(const SETOFSYS &FSYS) = 0;
 	virtual void GETBOUNDS(STP FSP, int &FMIN, int &FMAX) = 0;
 	virtual bool STRGTYPE(STP FSP) = 0;
 	virtual int DECSIZE(int I) = 0;

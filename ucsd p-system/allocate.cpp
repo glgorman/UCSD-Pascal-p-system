@@ -16,6 +16,41 @@
 
 using namespace std;
 
+CONSTREC::CONSTREC(enum _CSTCLASS _cst)
+{
+	memset(this,0,sizeof(CONSTREC));
+	this->CCLASS = _cst;
+}
+
+identifier::identifier (IDCLASS idclass)
+{
+	memset(this,0,sizeof(identifier));
+	KLASS = idclass;
+}
+
+identifier::identifier (char *str,IDCLASS idclass,STP ptr)
+{
+	memset(this,0,sizeof(identifier));
+	if (str!=NULL)
+		strcpy_s(NAME,IDENTSIZE,str);
+	KLASS = idclass;
+	IDTYPE = ptr;
+}
+
+void structure::debug1 (structure *stp)
+{
+	char addr[16];
+	sprintf_s(addr,16,"%08x",(int)stp);
+	WRITELN (OUTPUT,"structure addr: ",addr);
+//	ASSERT(false);
+}
+
+structure::structure (STRUCTFORM form)
+{
+	memset(this,0,sizeof(structure));
+	this->FORM = form;
+}
+
 #if 0
 void *PASCALCOMPILER::operator new (size_t,void* ptr2)
 {

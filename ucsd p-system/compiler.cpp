@@ -41,7 +41,9 @@ void COMPILERDATA::ENTERID(CTP FCP)
 	};
 	FCP->LLINK=NULL;
 	FCP->RLINK=NULL;
-//	PRINTTREE(LCP);
+#if 0
+	PRINTTREE(LCP);
+#endif
 } /*ENTERID*/ ;
 
 void PASCALCOMPILER::ENTERID(CTP FCP)
@@ -126,60 +128,51 @@ void COMPINIT::ENTSTDTYPES()
 {
 	WRITELN(OUTPUT,"COMPINIT::ENTSTDTYPES()");
 //	NEW(INTPTR,SCALAR,STANDARD);
-	STRUCTURE *INTPTR;
-	INTPTR = (STRUCTURE*) new STRUCTURE;
+	structure *INTPTR;
+	INTPTR = (structure*) new structure(SCALAR);
 	INTPTR->SIZE = INTSIZE;
-	INTPTR->FORM=SCALAR;
 	INTPTR->SCALKIND=STANDARD;
 	m_ptr->INTPTR = INTPTR;
 
-	STRUCTURE *REALPTR;
-	REALPTR = (STRUCTURE*) new STRUCTURE;
+	structure *REALPTR;
+	REALPTR = (structure*) new structure(SCALAR);
 	REALPTR->SIZE = REALSIZE;
-	REALPTR->FORM=SCALAR;
 	REALPTR->SCALKIND=STANDARD;
 	m_ptr->REALPTR = REALPTR;
 
-	STRUCTURE *LONGINTPTR;
-	LONGINTPTR = (STRUCTURE*) new STRUCTURE;
+	structure *LONGINTPTR;
+	LONGINTPTR = (structure*) new structure(SCALAR);
 	LONGINTPTR->SIZE = INTSIZE;
-	LONGINTPTR->FORM=SCALAR;
 	LONGINTPTR->SCALKIND=STANDARD;
 	m_ptr->LONGINTPTR = LONGINTPTR;
 
-	m_ptr->CHARPTR = (STRUCTURE*) new STRUCTURE;
+	m_ptr->CHARPTR = (structure*) new structure(SCALAR);
 	m_ptr->CHARPTR->SIZE = CHARSIZE;
-	m_ptr->CHARPTR->FORM=SCALAR;
 	m_ptr->CHARPTR->SCALKIND=STANDARD;
 
-	m_ptr->BOOLPTR = (STRUCTURE*) new STRUCTURE;
+	m_ptr->BOOLPTR = (structure*) new structure(SCALAR);
 	m_ptr->BOOLPTR->SIZE = BOOLSIZE;
-	m_ptr->BOOLPTR->FORM=SCALAR;
 	m_ptr->BOOLPTR->SCALKIND=DECLARED;
 
-	m_ptr->NILPTR = (STRUCTURE*) new STRUCTURE;
+	m_ptr->NILPTR = (structure*) new structure(POINTER);
 	m_ptr->NILPTR->SIZE = PTRSIZE;
-	m_ptr->NILPTR->FORM=POINTER;
 	m_ptr->NILPTR->ELTYPE=NULL ;
    
-	m_ptr->TEXTPTR = (STRUCTURE*) new STRUCTURE;
+	m_ptr->TEXTPTR = (structure*) new structure(FILES);
 	m_ptr->TEXTPTR->SIZE = FILESIZE+CHARSIZE;
-	m_ptr->TEXTPTR->FORM=FILES;
 	m_ptr->TEXTPTR->FILTYPE=m_ptr->CHARPTR;
 	
 	// NEW(INTRACTVPTR,FILES);
-	STRUCTURE *INTRACTVPTR; 
-	INTRACTVPTR = (STRUCTURE*) new STRUCTURE;
+	structure *INTRACTVPTR; 
+	INTRACTVPTR = (structure*) new structure(FILES);
 	INTRACTVPTR->SIZE=FILESIZE+CHARSIZE;
-	INTRACTVPTR->FORM=FILES;
 	// FIXME? weird??
 	INTRACTVPTR->FILTYPE = m_ptr->CHARPTR;
 	m_ptr->INTRACTVPTR = INTRACTVPTR;
 	
 	// NEW(STRGPTR,ARRAYS,true,true);
-	STRUCTURE *STRGPTR; 
-	STRGPTR = new STRUCTURE;
-	STRGPTR->FORM=ARRAYS;
+	structure *STRGPTR; 
+	STRGPTR = new structure(ARRAYS);
 	STRGPTR->SIZE=(DEFSTRGLGTH + CHRSPERWD)/CHRSPERWD;
 	STRGPTR->AISPACKD=true;
 	STRGPTR->AISSTRNG=true;
@@ -205,69 +198,36 @@ void COMPINIT::ENTSTDNAMES()
 	STP &BOOLPTR = m_ptr->BOOLPTR;
 	STP &STRGPTR = m_ptr->STRGPTR;
 	STP &TEXTPTR = m_ptr->TEXTPTR;
+	STP &INTRACTVPTR = m_ptr->INTRACTVPTR;
+	STP &NILPTR = m_ptr->NILPTR;
 
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"INTEGER ");
-	CP->IDTYPE = INTPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("INTEGER ",TYPES,INTPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"REAL    ");
-	CP->IDTYPE = REALPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("REAL    ",TYPES,REALPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"CHAR    ");
-	CP->IDTYPE = CHARPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("CHAR    ",TYPES,CHARPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"BOOLEAM ");
-	CP->IDTYPE = BOOLPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("BOOLEAM ",TYPES,BOOLPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"STRING  ");
-	CP->IDTYPE = STRGPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("STRING  ",TYPES,STRGPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"TEXT  ");
-	CP->IDTYPE = TEXTPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("TEXT  ",TYPES,TEXTPTR);
 	m_ptr->ENTERID(CP);
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"INTERACT ");
-	CP->IDTYPE = m_ptr->INTRACTVPTR;
-	CP->KLASS = TYPES;
+	CP = (identifier*) new identifier("INTERACT ",TYPES,INTRACTVPTR);
 	m_ptr->ENTERID(CP);
-	
-	m_ptr->INPUTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->INPUTPTR->NAME,IDENTSIZE,"INPUT  ");
-	m_ptr->INPUTPTR->IDTYPE = TEXTPTR;
-	m_ptr->INPUTPTR->KLASS = FORMALVARS;
+	m_ptr->INPUTPTR = (identifier*) new identifier("INPUT  ",FORMALVARS,TEXTPTR);
 	m_ptr->INPUTPTR->VLEV = 0;
 	m_ptr->INPUTPTR->VADDR = 2;
 	m_ptr->ENTERID(m_ptr->INPUTPTR);
-
-	m_ptr->OUTPUTPTR = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(m_ptr->OUTPUTPTR->NAME,IDENTSIZE,"OUTPUT  ");
+	m_ptr->OUTPUTPTR = (identifier*) new identifier("OUTPUT  ",FORMALVARS,TEXTPTR);
 	m_ptr->OUTPUTPTR->IDTYPE = TEXTPTR;
-	m_ptr->OUTPUTPTR->KLASS = FORMALVARS;
 	m_ptr->OUTPUTPTR->VLEV = 0;
 	m_ptr->OUTPUTPTR->VADDR = 3;
 	m_ptr->ENTERID(m_ptr->OUTPUTPTR);
 
-	CP = (IDENTIFIER*) new IDENTIFIER;
+	CP = (identifier*) new identifier(FORMALVARS);
 	strcpy_s(CP->NAME,IDENTSIZE,"KEYBOARD ");
 	CP->IDTYPE = TEXTPTR;
-	CP->KLASS = FORMALVARS;
 	CP->VLEV = 0;
 	CP->VADDR = 4;
 	m_ptr->ENTERID(CP);
@@ -275,32 +235,22 @@ void COMPINIT::ENTSTDNAMES()
 	CP1=NULL;
 	for (I=0;I<=1;I++)
 	{
-		CP = (IDENTIFIER*) new IDENTIFIER;
-        CP->IDTYPE=BOOLPTR;
+		CP = (identifier*) new identifier(NULL,KONST,BOOLPTR);
         if (I==0)
 			strcpy_s(CP->NAME,IDENTSIZE,"FALSE   ");
 		else 
 			strcpy_s(CP->NAME,IDENTSIZE,"TRUE    ");
 		CP->NEXT=CP1;
 		CP->VALUES.IVAL=I;
-		CP->KLASS=KONST;
 		m_ptr->ENTERID(CP);
 		CP1=CP;
     };
     m_ptr->BOOLPTR->FCONST=CP;
-
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"NULL     ");
-	CP->IDTYPE=m_ptr->NILPTR;
+	CP = (identifier*) new identifier("NULL     ",KONST,NILPTR);
 	CP->NEXT=NULL;
 	CP->VALUES.IVAL=0;
-	CP->KLASS=KONST;
 	m_ptr->ENTERID(CP);
-	
-	CP = (IDENTIFIER*) new IDENTIFIER;
-	strcpy_s(CP->NAME,IDENTSIZE,"MAXINT  ");
-	CP->IDTYPE=INTPTR;
-	CP->KLASS=KONST;
+	CP = (identifier*) new identifier("MAXINT  ",KONST,INTPTR);
 	CP->VALUES.IVAL=MAXINT;
 	m_ptr->ENTERID(CP);
 } /*ENTSTDNAMES*/ ;
@@ -308,34 +258,30 @@ void COMPINIT::ENTSTDNAMES()
 void COMPINIT::ENTUNDECL()
 {
 	WRITELN(OUTPUT,"COMPINIT::ENTUNDECL()");
-	m_ptr->UTYPPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UTYPPTR = (identifier*) new identifier(TYPES);
 	strcpy_s(m_ptr->UTYPPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UTYPPTR->IDTYPE=NULL;
-	m_ptr->UTYPPTR->KLASS=TYPES;
 
-	m_ptr->UCSTPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UCSTPTR = (identifier*) new identifier(KONST);
 	strcpy_s(m_ptr->UCSTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UCSTPTR->IDTYPE=NULL;
-	m_ptr->UCSTPTR->KLASS=KONST;
 	m_ptr->UCSTPTR->VALUES.IVAL = NULL;
 	m_ptr->UCSTPTR->NEXT=NULL;
 
-	m_ptr->UVARPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UVARPTR = (identifier*) new identifier(ACTUALVARS);
 	strcpy_s(m_ptr->UVARPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UVARPTR->IDTYPE=NULL;
 	m_ptr->UCSTPTR->NEXT = NULL;
 	m_ptr->UCSTPTR->VLEV = 0;
 	m_ptr->UCSTPTR->VADDR = 0;
-	m_ptr->UCSTPTR->KLASS=ACTUALVARS;
 
-	m_ptr->UFLDPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UFLDPTR = (identifier*) new identifier(FIELD);
 	strcpy_s(m_ptr->UFLDPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFLDPTR->IDTYPE=NULL;
 	m_ptr->UFLDPTR->NEXT = NULL;
 	m_ptr->UFLDPTR->FLDADDR = 0;
-	m_ptr->UFLDPTR->KLASS=FIELD;
 
-	m_ptr->UPRCPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UPRCPTR = (identifier*) new identifier(PROC1);
 	strcpy_s(m_ptr->UPRCPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UPRCPTR->IDTYPE=NULL;
 	m_ptr->UPRCPTR->FORWDECL=false;
@@ -343,11 +289,10 @@ void COMPINIT::ENTUNDECL()
 	m_ptr->UPRCPTR->INSCOPE=false;
 	m_ptr->UPRCPTR->LOCALLC=0;
 	m_ptr->UPRCPTR->EXTURNAL=false;
-	m_ptr->UPRCPTR->KLASS=PROC1;
 	m_ptr->UPRCPTR->PFDECKIND=DECLARED;
 	m_ptr->UPRCPTR->PFKIND=ACTUAL;
 
-	m_ptr->UFCTPTR = (IDENTIFIER*) new IDENTIFIER;
+	m_ptr->UFCTPTR = (identifier*) new identifier(FUNC);
 	strcpy_s(m_ptr->UFCTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFCTPTR->IDTYPE=NULL;
 	m_ptr->UFCTPTR->NEXT = NULL;
@@ -357,7 +302,6 @@ void COMPINIT::ENTUNDECL()
 	m_ptr->UFCTPTR->PFLEV=0;
 	m_ptr->UFCTPTR->PFNAME=0;
 	m_ptr->UFCTPTR->PFSEG=0;
-	m_ptr->UFCTPTR->KLASS=FUNC;
 	m_ptr->UFCTPTR->PFDECKIND=DECLARED;
 	m_ptr->UFCTPTR->PFKIND=ACTUAL;
 } /*ENTUNDECL*/ ;
@@ -420,16 +364,17 @@ void COMPINIT::ENTSPCPROCS()
 			if (TSET.in(I))
                continue;
 		ISFUNC= FSET.in(I);
-		LCP = (IDENTIFIER*) new IDENTIFIER;
+		IDCLASS idclass;
+		if (ISFUNC)
+			idclass=FUNC;
+		else
+			idclass=PROC1;
+		LCP = (identifier*) new identifier(idclass);
 		LCP->PFDECKIND = SPECIAL;
 		strcpy_s(LCP->NAME,IDENTSIZE,NA[I]);
 		LCP->NEXT=NULL;
 		LCP->IDTYPE=NULL;
-		LCP->KEY=I;
-		if (ISFUNC)
-			LCP->KLASS=FUNC;
-		else
-			LCP->KLASS=PROC1;
+		LCP->KEY=I;	
          m_ptr->ENTERID(LCP);
 	}
 } /*ENTSPCPROCS*/
@@ -473,9 +418,8 @@ void COMPINIT::ENTSTDPROCS()
 		{
 		case 1:
 			FTYPE=m_ptr->BOOLPTR;;
-			PARAM =  (IDENTIFIER*) new IDENTIFIER;
+			PARAM =  (identifier*) new identifier(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->INTPTR;
-			PARAM->KLASS=ACTUALVARS;
 			break;
 
 		case 2:
@@ -489,9 +433,8 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 4:
 			FTYPE=m_ptr->INTPTR;
-			PARAM =  (IDENTIFIER*) new IDENTIFIER;
+			PARAM =  (identifier*) new identifier(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->REALPTR;
-			PARAM->KLASS=ACTUALVARS;
 			break;
 
 		case 5:
@@ -500,13 +443,11 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 12:
 			FTYPE=NULL;
-			PARAM = (IDENTIFIER*) new IDENTIFIER;
-			LSP = (STRUCTURE*) new STRUCTURE;
+			PARAM = (identifier*) new identifier(FORMALVARS);
+			LSP = (structure*) new structure(POINTER);
 			LSP->SIZE=PTRSIZE;
-			LSP->FORM=POINTER;
 			LSP->ELTYPE=NULL;
 			PARAM->IDTYPE=LSP;
-			PARAM->KLASS=FORMALVARS;
 			break;
 
 		case 14:
@@ -516,9 +457,8 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 15:
 			FTYPE=m_ptr->BOOLPTR; 
-			PARAM = (IDENTIFIER*) new IDENTIFIER;
+			PARAM = (identifier*) new identifier(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->INTPTR;
-			PARAM->KLASS=ACTUALVARS;
 			break;
 
 		case 16:
@@ -537,19 +477,16 @@ void COMPINIT::ENTSTDPROCS()
 		 default:
 			break;
 		}
-
+		IDCLASS idclass;
 		if (ISPROC)
-			LCP = (IDENTIFIER*) new IDENTIFIER;
+			idclass=PROC1;
 		else
-			LCP = (IDENTIFIER*) new IDENTIFIER;
-		
+			idclass=FUNC;
+		LCP = (identifier*) new identifier(idclass);		
 		strcpy_s(LCP->NAME,IDENTSIZE,NA[i]);
 		LCP->PFDECKIND=STANDARD;
 		LCP->CSPNUM=i + 20;
-		if (ISPROC)
-			LCP->KLASS=PROC1;
-		else
-			LCP->KLASS=FUNC;
+		
 		if (PARAM!=NULL)
 			PARAM->NEXT=NULL;
 		LCP->IDTYPE=FTYPE;
@@ -595,7 +532,7 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->NEXTPROC=2;
 	 m_ptr->CURPROC=1;
 
-     m_ptr->SCONST = new CONSTREC;
+     m_ptr->SCONST = new CONSTREC(VOID2);
 	 m_ptr->m_src.SYMBUFP = (SYMBUFARRAY*) new SYMBUFARRAY;
 	 m_ptr->CODEP = (CODEARRAY*) new CODEARRAY;
 	 memset(m_ptr->CODEP,0xff,MAXCODE+1);
@@ -713,8 +650,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->LC=m_ptr->LC+2;
 	m_ptr->GLEV=3; /*KEEP STACK STRAIGHT FOR NOW*/
       
-	m_ptr->OUTERBLOCK = new IDENTIFIER;
-	m_ptr->OUTERBLOCK->KLASS=PROC1;
+	m_ptr->OUTERBLOCK = new identifier(PROC1);
 	m_ptr->OUTERBLOCK->PFDECKIND=DECLARED;
 	m_ptr->OUTERBLOCK->PFKIND=ACTUAL;
 
@@ -745,7 +681,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
        else
 		   m_ptr->CERROR(2);
 
-//#define DEBUG_TREE true
+#define DEBUG_TREE true
 #ifdef DEBUG_TREE
 	PRINTTREE(m_ptr->DISPLAY[0].FNAME);
 #endif
@@ -799,6 +735,7 @@ void PASCALCOMPILER::DECLARATIONS(SETOFSYS FSYS)
 	{
 		except = true;
 		str_exit = e.m_str;
+		WRITELN(OUTPUT,"PASCALCOMPILER::DECLARATIONS(SETOFSYS FSYS)");
 		WRITELN(OUTPUT,"CAUGHT EXCEPTION:", str_exit);
 		WRITELN(OUTPUT,str_exit);
 	}
@@ -807,21 +744,29 @@ void PASCALCOMPILER::DECLARATIONS(SETOFSYS FSYS)
 
 }
 
-void PASCALCOMPILER::BODY(SETOFSYS FSYS, CTP FPROCP)
+void PASCALCOMPILER::BODY(const SETOFSYS &FSYS, CTP FPROCP)
 {
+	char *str_exit;
+	bool except = false;
 	LPVOID ptr1 = (LPVOID) FPROCP;
 	WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART FPROCP = ", (int)ptr1);
 	BODYPART *ptr2;
-//	ptr2 = (BODYPART*) BODYPART::allocate(this);
 	ptr2 = static_cast<BODYPART*>(BODYPART::allocate((void*)this));
 	try
 	{
 		ptr2->MAIN(FSYS,FPROCP);
+		WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART - completed");
 	}
 	catch (EXIT_CODE e)
 	{
-
+		except = true;
+		str_exit = e.m_str;
+		WRITELN(OUTPUT,"PASCALCOMPILER::BODY(const SETOFSYS &FSYS, CTP FPROCP)");
+		WRITELN(OUTPUT,"CAUGHT EXCEPTION: <",e.err,"> ... ",str_exit);
+		WRITELN(OUTPUT,str_exit);
 	}
+	if (except==false)
+		WRITELN(OUTPUT,"Resuming Compilation");
 }
 
 void PASCALCOMPILER::WRITELINKERINFO(bool flag)
@@ -960,11 +905,11 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
 				LSP=CHARPTR;
 			else
 			{
-				LSP = (STRUCTURE*) new STRUCTURE;
+				LSP = (structure*) new structure(POINTER);
 				*LSP=*STRGPTR;
 				LSP->MAXLENG=LGTH;
 				LSP->INXTYPE=NULL;
-				LVP = (CONSTREC*) new CONSTREC;
+				LVP = (CONSTREC*) new CONSTREC(VOID2);
 				*LVP=*VAL.VALP;
 				VAL.VALP=LVP;
 			};
@@ -1000,8 +945,7 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
 				{
 					if (SIGN==NEG)
 					{
-						LVP = (CONSTREC*) new CONSTREC;
-						LVP->CCLASS=REEL;
+						LVP = (CONSTREC*) new CONSTREC(REEL);
 						LVP->RVAL=-FVALU.VALP->RVAL;
 						FVALU.VALP=LVP;
                    }
@@ -1010,8 +954,7 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
 				{
                    if (SIGN==NEG)
 				   {
-					   LVP = (CONSTREC*) new CONSTREC;
-					   LVP->CCLASS=LONG1;
+					   LVP = (CONSTREC*) new CONSTREC(LONG1);
 					   LVP->LONGVAL[1]=- FVALU.VALP->LONGVAL[1];
 					   FVALU.VALP=LVP;
 				   }
@@ -1040,9 +983,8 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
 			{
                if (SIGN==NEG) {
 				   VAL.VALP->LONGVAL[1]=- VAL.VALP->LONGVAL[1];
-				   LSP = (STRUCTURE*) new STRUCTURE;
+				   LSP = (structure*) new structure(LONGINT);
                    LSP->SIZE=DECSIZE(LGTH);
-                   LSP->FORM=LONGINT;
                    FVALU=VAL;
                    INSYMBOL();
                  }
@@ -1234,25 +1176,30 @@ void PASCALCOMPILER::FINDFORW(CTP FCP)
 	{
 		if (S1.in(FCP->KLASS))
 		if (FCP->PFDECKIND==DECLARED)
-			if (FCP->PFKIND==ACTUAL)
-				if (FCP->FORWDECL)
-				{
-					USERINFO.ERRNUM=117;
-					WRITELN(OUTPUT);
-					::WRITE(OUTPUT,FCP->NAME," undefined");
-				};
+		if (FCP->PFKIND==ACTUAL)
+		if (FCP->FORWDECL)
+		{
+			USERINFO.ERRNUM=117;
+			WRITELN(OUTPUT);
+			::WRITELN(OUTPUT,FCP->NAME," undefined");
+		};
 		FINDFORW(FCP->RLINK);
 		FINDFORW(FCP->LLINK);
 	}
 } 
 /*FINDFORW*/ ;
 
-void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
+void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
 {
+	FSYS.debug_list ("FSYS");
 	SET S1 = SET((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY);
 	SETOFSYS S2;
 	S2 = S2 + (SETOFSYS)SET((4),SYMBOLS::UNITSY,
 		SYMBOLS::INTERSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY);
+	
+	SETOFSYS S3 = FSYS;
+	S3 += SYMBOLS::CASESY;
+	S3 -= SYMBOLS::ENDSY;
 	bool BFSYFOUND;
 
 	WRITELN(OUTPUT,"PASCALCOMPILER::BLOCK");
@@ -1301,7 +1248,7 @@ void PASCALCOMPILER::BLOCK(SETOFSYS FSYS)
 				CERROR(17);
 			do
 			{
-				BODY(FSYS + SYMBOLS::CASESY - SYMBOLS::ENDSY, TOS->DFPROCP);
+				BODY(S3, TOS->DFPROCP);
 				BFSYFOUND=(SYMBOLS::BEGINSY==TOS->BFSY)||
 					(options.INMODULE&&(SY==SYMBOLS::ENDSY));
 				if (!BFSYFOUND)
@@ -1397,8 +1344,9 @@ UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
 	{
 		p->COMPILER_MAIN(NULL);
 	}
-	catch (PASCALSOURCE *q)
+	catch (...)
 	{
+		WRITELN(OUTPUT,"Caught EXCEPTION");
 		WRITELN(OUTPUT,"EXIT(PASCALCOMPILER)");
 	}
 	return 0;
@@ -1452,8 +1400,8 @@ int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 	if (options.NOISY)
 	{
 	   WRITELN(OUTPUT);
-	   char nbuf[16];
-	   sprintf_s(nbuf,16,"%d",SMALLESTSPACE);
+	   char nbuf[IDENTSIZE];
+	   sprintf_s(nbuf,IDENTSIZE,"%d",SMALLESTSPACE);
 	   ::WRITE(OUTPUT,"Smallest available space = ",nbuf," words");
 	   WRITELN(OUTPUT); 
 	}

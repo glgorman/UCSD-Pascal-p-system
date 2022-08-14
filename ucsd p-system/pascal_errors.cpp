@@ -1,18 +1,7 @@
-
+  
 #include "stdafx.h"
-
-struct pascal_error
-{
-	char *errstr;
-	int	 errnum;
-
-	pascal_error() {}
-	pascal_error (int id, char *str)
-	{
-		errnum = id;
-		errstr = str;
-	}
-};
+#include <vector>
+#include "../Frame Lisp/intrinsics.h"
 
 pascal_error error_list [] =
 {
@@ -186,7 +175,7 @@ char *SYMBOL_NAMES1[] =
 
 char *SYMBOL_NAMES2[] =
 {
-	"IDENTIFIER",
+	"identifier",
 	",",
 	":",
 	";",

@@ -3,10 +3,12 @@ class BODYPART:
 	public DECLARATIONPART
 {
 public:
-	static void *allocate (void *);
 	void MAIN(const SETOFSYS &FSYS, CTP FPROCP);
 
 protected:
+	static void *allocate (void *);
+
+private:
 	void LINKERREF(IDCLASS KLASS, int ID, int ADDR);
 	void GENLDC(INT_PTR IVAL);
 	void GENBIG(INT_PTR IVAL);
@@ -56,7 +58,7 @@ protected:
 		void FACTOR(const SETOFSYS &);
 		void MAKEPA(STP &STRGFSP, STP);
 
-	void STATEMENT(const SETOFSYS FSYS);
+	void STATEMENT(const SETOFSYS &FSYS);
 //	called from statement
 		void ASSIGNMENT(const SETOFSYS &, CTP);
 		void GOTOSTATEMENT();

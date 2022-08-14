@@ -140,7 +140,8 @@ void DECLARATIONPART::MAIN (const SETOFSYS &FSYS)
 	NEWBLOCK = false;
 } /*DECLARATIONPART*/
 
-void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
+//void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
+void DECLARATIONPART::SIMPLETYPE(stack_frame *param, const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 {
 	STP LSP,LSP1;
 	CTP LCP,LCP1;
@@ -148,6 +149,7 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 	int LCNT;
 	VALU LVALU2;
 	FSIZE=1;
+	LSP1 = NULL;
 	if (!BNF::SIMPTYPEBEGSYS.in(SY))
 	{
 		CERROR(1);
@@ -160,11 +162,8 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				while (DISPLAY[TOP].OCCUR!=BLCK)
 				{
 					TOP=TOP - 1;
-					//					NEW(LSP,SCALAR,DECLARED);
-					LSP = (STRUCTURE*) new STRUCTURE;
-					// WITH LSP
+					LSP = (structure*) new structure(SCALAR);
 					LSP->SIZE=INTSIZE;
-					LSP->FORM=SCALAR;
 					LSP->SCALKIND=DECLARED;
 					LCP1=NULL;
 					LCNT=0;
@@ -173,15 +172,12 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 					INSYMBOL();
 					if (SY==SYMBOLS::IDENT)
 					{
-						//				NEW(LCP,KONST);
-						LCP = (IDENTIFIER*) new IDENTIFIER; 
-						// WITH LCP^
-						strcpy_s(LCP->NAME,15,ID);
+						LCP = (identifier*) new identifier(KONST); 
+						strcpy_s(LCP->NAME,IDENTSIZE,ID);
 						LCP->IDTYPE=LSP;
 						LCP->NEXT=LCP1;
 						LCP->VALUES.IVAL=LCNT;
-						LCP->KLASS=KONST;
-						PASCALCOMPILER::ENTERID(LCP);
+						ENTERID(LCP);
 						LCNT=LCNT + 1;
 						LCP1=LCP;
 						INSYMBOL();
@@ -206,15 +202,15 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 			{
 				if (SY==SYMBOLS::IDENT)
 				{
+#if 0
 					PASCALCOMPILER::SEARCHID(SETOFIDS(2,TYPES,KONST),LCP);
+#endif
+					SEARCHID(SETOFIDS(2,TYPES,KONST),LCP);
 					INSYMBOL();
 					if (LCP->KLASS==KONST)
 					{
-						//				NEW(LSP,SUBRANGE);
-						//				WITH LSP^, LCP
-						LSP = (STRUCTURE*) new STRUCTURE;
+						LSP = (structure*) new structure(SUBRANGE);
 						LSP->RANGETYPE=LCP->IDTYPE;
-						LSP->FORM=SUBRANGE;
 						if (STRGTYPE(LSP->RANGETYPE))
 						{
 							CERROR(148);
@@ -247,8 +243,8 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 								}
 								if (LVALU2.IVAL!=DEFSTRGLGTH)
 								{
-									//							 NEW(LSP,ARRAYS,true,true);
-									LSP = (STRUCTURE*) new STRUCTURE;
+									//NEW(LSP,ARRAYS,true,true);
+									LSP = (structure*) new structure(ARRAYS);
 									LSP->AELTYPE = STRGPTR;
 									// WITH LSP^,LVALU
 									LSP->MAXLENG=LVALU2.IVAL;
@@ -267,7 +263,7 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 								if (SY==SYMBOLS::LBRACK)
 								{ INSYMBOL();
 						//   NEW(LSP,LONGINT);
-						LSP = (STRUCTURE*) new STRUCTURE;
+						LSP = (structure*) new structure(LONGINT);
 						LSP->ELTYPE=LONGINTPTR;
 						CONSTANT(FSYS+SYMBOLS::RBRACK,LSP1,LVALU2);
 						if (LSP1==INTPTR)
@@ -294,8 +290,7 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				} /*SY==IDENT*/
 				else
 				{ 
-					//		 NEW(LSP,SUBRANGE);
-					LSP = (STRUCTURE*) new STRUCTURE;
+					LSP = (structure*) new structure(SUBRANGE);
 					LSP->FORM=SUBRANGE;
 					CONSTANT(FSYS+SYMBOLS::COLON,LSP1,LVALU2);
 					if (STRGTYPE(LSP1))
@@ -341,10 +336,27 @@ void DECLARATIONPART::TYP::SIMPLETYPE(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 	}
 } /*SIMPLETYPE*/
 
-bool DECLARATIONPART::TYP::PACKABLE(STP FSP)
+//bool DECLARATIONPART::TYP::PACKABLE(STP FSP)
+bool DECLARATIONPART::PACKABLE(stack_frame *param, STP FSP)
 {
+	union
+	{
+	  struct /*locals*/
+	  {
+		STP			FSP;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
+
 	bool result;
-	int LMIN,LMAX;
 	result=false;
 	if ((FSP!=NULL)&&(PACKING))
 		// WITH FSP^
@@ -370,7 +382,7 @@ bool DECLARATIONPART::TYP::PACKABLE(STP FSP)
 			}
 			break;
 		case POWER:
-			if (PACKABLE(FSP->ELSET))
+			if (PACKABLE(param,FSP->ELSET))
 			{ GETBOUNDS(FSP->ELSET,LMIN,LMAX);
 			LMAX=LMAX + 1;
 			if (LMAX<BITSPERWD)
@@ -386,8 +398,26 @@ bool DECLARATIONPART::TYP::PACKABLE(STP FSP)
 	return result;
 }
 
-void DECLARATIONPART::TYP::FIELDLIST(SETOFSYS FSYS, STP &FRECVAR)
+//void DECLARATIONPART::TYP::FIELDLIST(statck_frame *param, const SETOFSYS &FSYS, STP &FRECVAR)
+void DECLARATIONPART::FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR)
 {
+	union
+	{
+	  struct /*typ locals from nesting proc*/
+	  {
+		STP			FSP;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
+
 	/*FIELDLIST*/
 //	CTP LCP,LCP1,NXT,NXT1,LAST;
 //	STP LSP,LSP1,LSP2,LSP3,LSP4;
@@ -411,20 +441,14 @@ void DECLARATIONPART::TYP::FIELDLIST(SETOFSYS FSYS, STP &FRECVAR)
 		{
 			if (SY==SYMBOLS::IDENT)
 			{
-	#if 0
-				if (PACKING)
-					NEW(LCP,FIELD,true)
-				else NEW(LCP,FIELD,false);
-	#endif
-				LCP = (IDENTIFIER*) new IDENTIFIER;
-				// WITH LCP^
-				strcpy_s(LCP->NAME,15,ID);
-				LCP->IDTYPE=NULL;
+				LCP = (identifier*) new identifier(ID,FIELD,NULL);
 				LCP->NEXT=NXT;
-				LCP->KLASS=FIELD;
-				LCP->FISPACKED=false;
+				if (PACKING)
+					LCP->FISPACKED=true;
+				else
+					LCP->FISPACKED=false;
 				NXT=LCP;
-				PASCALCOMPILER::ENTERID(LCP);
+				ENTERID(LCP);
 				INSYMBOL();
 			}
 			else
@@ -444,7 +468,11 @@ void DECLARATIONPART::TYP::FIELDLIST(SETOFSYS FSYS, STP &FRECVAR)
 				INSYMBOL();
 			else
 				CERROR(5);
-			TYP(FSYS+SYMBOLS::CASESY+SYMBOLS::SEMICOLON,LSP,LSIZE);
+#if 0
+			TYP T(this);
+			T.TYP1(FSYS+SYMBOLS::CASESY+SYMBOLS::SEMICOLON,LSP,LSIZE);
+#endif
+			TYP1(FSYS+SYMBOLS::CASESY+SYMBOLS::SEMICOLON,LSP,LSIZE);
 			if (LSP!=NULL)
 				if (LSP->FORM==FILES)
 					CERROR(108);
@@ -453,7 +481,7 @@ void DECLARATIONPART::TYP::FIELDLIST(SETOFSYS FSYS, STP &FRECVAR)
 
 		// WITH NXT^
 		NXT->IDTYPE=LSP;
-		ALLOCATE(NXT);
+		ALLOCATE(param,NXT);
 		if (NXT->NEXT==NXT1)
 			LAST=NXT;
 		NXT=NXT->NEXT;
@@ -478,18 +506,62 @@ void DECLARATIONPART::TYP::FIELDLIST(SETOFSYS FSYS, STP &FRECVAR)
 		NXT1=LCP;
 
 		if (SY==SYMBOLS::CASESY)
-			VARIANTLIST();
+			VARIANTLIST(param);
 		else
 			FRECVAR=NULL;
 	}
 } /*FIELDLIST*/
 
-void DECLARATIONPART::TYP::FIELDLIST::ALLOCATE(CTP FCP)
+//void DECLARATIONPART::TYP::FIELDLIST::ALLOCATE(CTP FCP)
+void DECLARATIONPART::ALLOCATE(stack_frame *param, CTP FCP)
 {
+	union
+	{
+	  struct /*typ locals from nesting proc*/
+	  {
+		STP			FSP;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
+	
+	CTP	LAST;
+
+#if 0
+	union
+{
+  struct stack_frame
+  {
+	CTP LCP,LCP1,NXT,NXT1,LAST;
+	STP LSP,LSP1,LSP2,LSP3,LSP4;
+	ADDRRANGE MINSIZE,MAXSIZE,LSIZE;
+	VALU LVALU1;
+	BITRANGE MAXBIT,MINBIT;
+	STP	FRECVAR; //passed into constructor 
+  } fp;
+  struct
+  {
+	CTP LCP,LCP1,NXT,NXT1,LAST;
+	STP LSP,LSP1,LSP2,LSP3,LSP4;
+	ADDRRANGE MINSIZE,MAXSIZE,LSIZE;
+	VALU LVALU1;
+	BITRANGE MAXBIT,MINBIT;
+	STP	FRECVAR; //passed into constructor 
+  };
+};
+#endif
+
 	bool ONBOUND;
 	ONBOUND=false;
 	// WITH FCP^) {
-	if (PACKABLE(FCP->IDTYPE))
+	if (PACKABLE(param,FCP->IDTYPE))
     {
        if ((NUMBITS + NEXTBIT)>BITSPERWD)
 	   {
@@ -525,42 +597,58 @@ void DECLARATIONPART::TYP::FIELDLIST::ALLOCATE(CTP FCP)
 		 }
 } /*ALLOCATE*/
 
-void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
+//void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 //void DECLARATIONPART::TYP::VARIANTLIST()
+void DECLARATIONPART::VARIANTLIST(stack_frame *param)
 {
+	union
+	{
+	  struct /*typ locals from nesting proc*/
+	  {
+		STP			FSP;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
 	SET FSYS;
+	STP	FRECVAR,LSP3,LSP4;
+	CTP	LCP1;
+	ADDRRANGE MINSIZE,MAXSIZE;
+	BITRANGE MAXBIT,MINBIT;
+	VALU LVALU1;
 
 	bool GOTTAGNAME;
-	//	NEW(LSP,TAGFLD);
-	LSP = (STRUCTURE*) new STRUCTURE;
-	// WITH LSP^
+	LSP = (structure*) new structure(TAGFLD);
 	LSP->TAGFIELDP=NULL;
 	LSP->FSTVAR=NULL;
-	LSP->FORM=TAGFLD;
 	FRECVAR=LSP;
 	INSYMBOL();
 	if (SY==SYMBOLS::IDENT)
 	{
-		//     if (PACKING)
-		//		 NEW(LCP,FIELD,true)
-		//		LCP = new (IDENTIFIER*) new IDENTIFIER;
-		//    else
-		//		NEW(LCP,FIELD,false);
-		LCP = (IDENTIFIER*) new IDENTIFIER;
-		// WITH LCP^
+		LCP = (identifier*) new identifier(FIELD);
 		LCP->IDTYPE=NULL;
-		LCP->KLASS = FIELD;
 		LCP->NEXT=NULL;
-		LCP->FISPACKED=false;
+		if (PACKING)
+			LCP->FISPACKED=true;
+		else
+			LCP->FISPACKED=true;
+
 		GOTTAGNAME=false;
 		PRTERR=false;
-		PASCALCOMPILER::SEARCHID(TYPES,LCP1);
+		SEARCHID(TYPES,LCP1);
 		PRTERR=true;
 		if (LCP1==NULL)
 		{ 
 			GOTTAGNAME=true;
-			strcpy_s(LCP->NAME,15,ID);
-			PASCALCOMPILER::ENTERID(LCP);
+			strcpy_s(LCP->NAME,IDENTSIZE,ID);
+			ENTERID(LCP);
 			INSYMBOL();
 			if (SY==SYMBOLS::COLON)
 				INSYMBOL();
@@ -569,7 +657,7 @@ void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 		}
 		if (SY==SYMBOLS::IDENT)
 		{
-			PASCALCOMPILER::SEARCHID(TYPES,LCP1);
+			SEARCHID(TYPES,LCP1);
 			LSP1=LCP1->IDTYPE;
 			if (LSP1!=NULL)
 			{
@@ -579,7 +667,7 @@ void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 				 LCP->IDTYPE=LSP1;
 				 LSP->TAGFIELDP=LCP;
 				 if (GOTTAGNAME)
-					 ALLOCATE(LCP);
+					 ALLOCATE(param,LCP);
 				}
 				else
 					CERROR(110);
@@ -612,13 +700,13 @@ void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 		do
 		{
 			CONSTANT(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON
-				+SYMBOLS::LPARENT,LSP3,LVALU1);
+ 				+SYMBOLS::LPARENT,LSP3,LVALU1);
 
 			if (LSP->TAGFIELDP!=NULL)
 				if (!COMPTYPES(LSP->TAGFIELDP->IDTYPE,LSP3))
 					CERROR(111);
 				//     NEW(LSP3,VARIANT);
-				LSP3 = (STRUCTURE*) new STRUCTURE;
+				LSP3 = (structure*) new structure(VARIANT2);
 				// WITH LSP3^
 					LSP3->NXTVAR=LSP1;
 					LSP3->SUBVAR=LSP2;
@@ -643,8 +731,8 @@ void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 		if (SY==SYMBOLS::RPARENT)
 			LSP2=NULL;
 		else
-			DECLARATIONPART::TYP::FIELDLIST
-			(FSYS+SYMBOLS::RPARENT+SYMBOLS::SEMICOLON,LSP2);
+//			DECLARATIONPART::TYP::
+			FIELDLIST(param,FSYS+SYMBOLS::RPARENT+SYMBOLS::SEMICOLON,LSP2);
 		if (DISPL>MAXSIZE)
 		{
 			MAXSIZE=DISPL;
@@ -683,31 +771,41 @@ void DECLARATIONPART::TYP::FIELDLIST::VARIANTLIST()
 	LSP->FSTVAR=LSP1;
 } /*VARIANTLIST*/
 
-void DECLARATIONPART::TYP::POINTERTYPE()
+//void DECLARATIONPART::TYP::POINTERTYPE()
 //DECLARATIONPART::FIELDLIST
+void DECLARATIONPART::POINTERTYPE(stack_frame *param)
 {
-//	NEW(LSP,POINTER);
+	union
+	{
+	  struct /*typ locals from nesting proc*/
+	  {
+		STP			FSP;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
+
 	FSP=LSP;
-	// WITH LSP^
-	LSP = (STRUCTURE*) new STRUCTURE;
+	LSP = (structure*) new structure(POINTER);
 	LSP->ELTYPE=NULL;
 	LSP->SIZE=PTRSIZE;
-	LSP->FORM=POINTER;
 	INSYMBOL();
 	if (SY==SYMBOLS::IDENT)
 	{
 		PRTERR=false;
-		PASCALCOMPILER::SEARCHID(TYPES,LCP);
+		SEARCHID(TYPES,LCP);
 		PRTERR=true;
 		if (LCP==NULL) /*FORWARD REFERENCED TYPE ID*/
 		{
-//			NEW(LCP,TYPES);
-			LCP = (IDENTIFIER*) new IDENTIFIER;
-			// WITH LCP^
-			strcpy_s(LCP->NAME,15,ID);
-			LCP->IDTYPE=LSP;
+			LCP = (identifier*) new identifier(ID,TYPES,LSP);
 			LCP->NEXT=FWPTR;
-			LCP->KLASS=TYPES;
 			FWPTR=LCP;
 		}
 		else
@@ -806,7 +904,7 @@ void DECLARATIONPART::USESDECLARATION::GETTEXT(bool &FOUND)
 						// WITH SEGTABLE[SEG]
 						SEGTABLE[SEG].DISKADDR=0;
 						SEGTABLE[SEG].CODELENGTH=0;
-						strcpy_s(SEGTABLE[SEG].SEGNAME,15,SEGDICT.SEGNAME[SEGINDEX]);
+						strcpy_s(SEGTABLE[SEG].SEGNAME,IDENTSIZE,SEGDICT.SEGNAME[SEGINDEX]);
 						if (options.INMODULE||MAGIC)
 							SEGTABLE[SEG].SEGKIND=0;
 						else
@@ -871,14 +969,14 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(const SETOFSYS &FSYS, bool MAG
 		{
 			if (MAGIC)
 			{ 
-				strcpy_s(LNAME,15,"TURTLE  ");
+				strcpy_s(LNAME,IDENTSIZE,"TURTLE  ");
 				LSY=SY;
 				LOP=OP;
-				strcpy_s(LID,15,ID);
+				strcpy_s(LID,IDENTSIZE,ID);
 			}
 			else
 			{
-				strcpy_s(LNAME,15,ID);
+				strcpy_s(LNAME,IDENTSIZE,ID);
 				DWORD mem = MEMAVAIL();
 				WRITELN(OUTPUT);
 				WRITELN(OUTPUT,&(ID[0])," [",mem," words]");
@@ -890,13 +988,8 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(const SETOFSYS &FSYS, bool MAG
 			GETTEXT(FOUND);
 			if (FOUND)
 			{
-		//		NEW(LCP,MODULE);
-           // WITH LCP^
-				LCP = (IDENTIFIER*) new IDENTIFIER;
-				strcpy_s(LCP->NAME,15,LNAME);
+				LCP = (identifier*) new identifier(LNAME,MODULE,NULL);
 				LCP->NEXT=USINGLIST;
-				LCP->IDTYPE=NULL;
-				LCP->KLASS=MODULE;
 				if (LSEPPROC)
 					LCP->SEGID=-1; /*NO SEG*/
 				else
@@ -938,7 +1031,7 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(const SETOFSYS &FSYS, bool MAG
 	else
 		SY=LSY;
 	OP=LOP;
-	strcpy_s(ID,15,LID);
+	strcpy_s(ID,IDENTSIZE,LID);
 	if (!options.USING)
 	{
 		if (options.INMODULE)
@@ -1001,104 +1094,99 @@ void DECLARATIONPART::LABELDECLARATION(const SETOFSYS &FSYS)
 void DECLARATIONPART::CONSTDECLARATION(const SETOFSYS &FSYS)
 {
 	CTP LCP;
-	STP LSP;
+	STP LSP = NULL;
 	VALU LVALU3;
 	if (SY!=SYMBOLS::IDENT)
 	{
 		CERROR(2);
 		SKIP(FSYS+SYMBOLS::IDENT);
-		while (SY==SYMBOLS::IDENT)
-		{
-//			NEW(LCP,KONST);
-			// WITH LCP^
-			LCP = (IDENTIFIER*) new IDENTIFIER;
-			strcpy_s(LCP->NAME,15,ID);
-			LCP->IDTYPE=NULL;
-			LCP->NEXT=NULL;
-			LCP->KLASS=KONST;
+	}
+	while (SY==SYMBOLS::IDENT)
+	{
+		ID[IDENTSIZE-1]=0; // sanity check
+		LCP = (identifier*) new identifier(ID,KONST,NULL);
+		INSYMBOL();
+		if ((SY==SYMBOLS::RELOP)&& (OP==EQOP))
 			INSYMBOL();
-			if ((SY==SYMBOLS::RELOP)&& (OP==EQOP))
-				INSYMBOL();
-			else CERROR(16);
-			CONSTANT(FSYS+SYMBOLS::SEMICOLON,LSP,LVALU3);
-			ENTERID(LCP);
-			LCP->IDTYPE=LSP;
-			LCP->VALUES=LVALU3;
-			if (SY==SYMBOLS::SEMICOLON)
+		else CERROR(16);
+		CONSTANT(FSYS+SYMBOLS::SEMICOLON,LSP,LVALU3);
+		ENTERID(LCP);
+		LCP->IDTYPE=LSP;
+		LCP->VALUES=LVALU3;
+#if 1
+		WRITELN(OUTPUT,"CONSTDECLARATION ",(char*)LCP->NAME," = ",LCP->VALUES.IVAL);
+#endif
+		if (SY==SYMBOLS::SEMICOLON)
+		{
+			INSYMBOL();
+			if (!(FSYS+SYMBOLS::IDENT).in(SY))
 			{
-				INSYMBOL();
-				if (!(FSYS+SYMBOLS::IDENT).in(SY))
-				{
-					CERROR(6);
-					SKIP(FSYS+SYMBOLS::IDENT);
-				}
+				CERROR(6);
+				SKIP(FSYS+SYMBOLS::IDENT);
 			}
-			else
-				if (!((SY==SYMBOLS::ENDSY)&&(options.INMODULE)))
-					CERROR(14);
 		}
+		else
+			if (!((SY==SYMBOLS::ENDSY)&&(options.INMODULE)))
+				CERROR(14);
 	} /*CONSTDECLARATION*/
 }
-
-
 
 void DECLARATIONPART::TYPEDECLARATION(const SETOFSYS &FSYS)
 {
 	CTP LCP,LCP1,LCP2;
 	STP LSP;
+	LSP = NULL;
 	ADDRRANGE LSIZE;
 	if (SY!=SYMBOLS::IDENT)
 	{
 		CERROR(2);
 		SKIP(FSYS+SYMBOLS::IDENT);
-		while (SY==SYMBOLS::IDENT)
-		{
-//		NEW(LCP,TYPES);
-			// WITH LCP^
-			LCP = (IDENTIFIER*) new IDENTIFIER;
-			strcpy_s(LCP->NAME,15,ID);
-			LCP->IDTYPE=NULL;
-			LCP->KLASS=TYPES;
-
+	}
+	while (SY==SYMBOLS::IDENT)
+	{
+		LCP = (identifier*) new identifier(ID,TYPES,NULL);
+		INSYMBOL();
+		if ((SY==SYMBOLS::RELOP)&&(OP==EQOP))
 			INSYMBOL();
-			if ((SY==SYMBOLS::RELOP)&&(OP==EQOP))
-				INSYMBOL();
-			else
-				CERROR(16);
-			TYP(FSYS+SYMBOLS::SEMICOLON,LSP,LSIZE);
-			ENTERID(LCP);
-			LCP->IDTYPE=LSP;
-			LCP1=FWPTR;
-			while (LCP1!=NULL)
-			{
-				if (LCP1->NAME==LCP->NAME)
-				{
-					LCP1->IDTYPE->ELTYPE=LCP->IDTYPE;
-					if (LCP1!=FWPTR)
-						LCP2->NEXT=LCP1->NEXT;
-					else
-						FWPTR=LCP1->NEXT;
-				}
-				LCP2=LCP1;
-				LCP1=LCP1->NEXT;
-			}
-			if (SY==SYMBOLS::SEMICOLON)
-			{
-				INSYMBOL();
-				if (!(FSYS+SYMBOLS::IDENT).in(SY))
-				{
-					CERROR(6);
-					SKIP(FSYS+SYMBOLS::IDENT);
-				}
-			}
-			else if (!((SY==SYMBOLS::ENDSY)&& (options.INMODULE)))
-					CERROR(14);
-		}
-		if (FWPTR!=NULL)
+		else
+			CERROR(16);
+#if 0
+		TYP T(this);
+		T.TYP1(FSYS+SYMBOLS::SEMICOLON,LSP,LSIZE);
+#endif
+		TYP1(FSYS+SYMBOLS::SEMICOLON,LSP,LSIZE);
+		ENTERID(LCP);
+		LCP->IDTYPE=LSP;
+		LCP1=FWPTR;
+		while (LCP1!=NULL)
 		{
-			CERROR(117);
-			FWPTR=NULL;
+			if (LCP1->NAME==LCP->NAME)
+			{
+				LCP1->IDTYPE->ELTYPE=LCP->IDTYPE;
+				if (LCP1!=FWPTR)
+					LCP2->NEXT=LCP1->NEXT;
+				else
+					FWPTR=LCP1->NEXT;
+			}
+			LCP2=LCP1;
+			LCP1=LCP1->NEXT;
 		}
+		if (SY==SYMBOLS::SEMICOLON)
+		{
+			INSYMBOL();
+			if (!(FSYS+SYMBOLS::IDENT).in(SY))
+			{
+				CERROR(6);
+				SKIP(FSYS+SYMBOLS::IDENT);
+			}
+		}
+		else if (!((SY==SYMBOLS::ENDSY)&& (options.INMODULE)))
+			CERROR(14);
+	}
+	if (FWPTR!=NULL)
+	{
+		CERROR(117);
+		FWPTR=NULL;
 	}
 } /*TYPEDECLARATION*/ 
 
@@ -1107,23 +1195,20 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 	CTP LCP,NXT,IDLIST;
 	STP LSP;
 	ADDRRANGE LSIZE;
+	LSP = NULL;
 	NXT=NULL;
 	do {
 		do {
 			if (SY==SYMBOLS::IDENT)
 			{
-				LCP = (IDENTIFIER*) new IDENTIFIER;
+				LCP = (identifier*) new identifier(ID,ACTUALVARS,NULL);
 #if 0
 				if (INMODULE)
 					NEW(LCP,ACTUALVARS,true)
 				else
 					NEW(LCP,ACTUALVARS,false);
 #endif
-				// WITH LCP^
-				strcpy_s(LCP->NAME,15,ID);
 				LCP->NEXT=NXT;
-				LCP->KLASS=ACTUALVARS;
-				LCP->IDTYPE=NULL;
 				LCP->VLEV=LEVEL;
 				if (options.INMODULE)
 					if (options.ININTERFACE)
@@ -1152,7 +1237,12 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 		else
 			CERROR(5);
 		IDLIST=NXT;
-		TYP((FSYS+SYMBOLS::SEMICOLON+BNF::TYPEDELS),LSP,LSIZE);
+#if 0
+		TYP T(this);
+		T.TYP1((FSYS+SYMBOLS::SEMICOLON+BNF::TYPEDELS),LSP,LSIZE);
+#endif
+		structure::debug1 (LSP);
+		TYP1((FSYS+SYMBOLS::SEMICOLON+BNF::TYPEDELS),LSP,LSIZE);
 		while (NXT!=NULL)
 		{
 			// WITH NXT^
@@ -1261,23 +1351,18 @@ void DECLARATIONPART::PROCDECLARATION
 		}
 		if (!FORW)
 		{
+#if 0
 			if (FSY==SYMBOLS::PROCSY)
-				if (options.INMODULE)
-					LCP = (IDENTIFIER*) new (IDENTIFIER);
-//					NEW(LCP,PROC,DECLARED,ACTUAL,true);
+				if (options.INMODULE)					
+					NEW(LCP,PROC,DECLARED,ACTUAL,true);
 				else
-					LCP = (IDENTIFIER*) new (IDENTIFIER);
-//					NEW(LCP,PROC,DECLARED,ACTUAL,false);
+					NEW(LCP,PROC,DECLARED,ACTUAL,false);
 				else if (options.INMODULE)
-//					NEW(LCP,FUNC,DECLARED,ACTUAL,true)
-					LCP = (IDENTIFIER*) new (IDENTIFIER);
+					NEW(LCP,FUNC,DECLARED,ACTUAL,true)
 			else
-				LCP = (IDENTIFIER*) new (IDENTIFIER);
-//			NEW(LCP,FUNC,DECLARED,ACTUAL,false);
-			// WITH LCP^
-
-			strcpy_s(LCP->NAME,15,ID);
-			LCP->IDTYPE=NULL;
+				NEW(LCP,FUNC,DECLARED,ACTUAL,false);
+#endif	
+			LCP = (identifier*) new identifier(ID,NONE,NULL);
 			LCP->LOCALLC=LC;
 			LCP->PFDECKIND=DECLARED;
 			LCP->PFKIND=ACTUAL;
@@ -1297,7 +1382,7 @@ void DECLARATIONPART::PROCDECLARATION
 				if (NEXTSEG>MAXSEG)
 					CERROR(250);
 				NEXTSEG=NEXTSEG+1;
-				strcpy_s(SEGTABLE[SEG].SEGNAME,15,ID);
+				strcpy_s(SEGTABLE[SEG].SEGNAME,IDENTSIZE,ID);
 			}
 			if (NEXTPROC==MAXPROCNUM)
 				CERROR(251);
@@ -1560,10 +1645,7 @@ void DECLARATIONPART::PARAMETERLIST
 					else
 					{
 //						NEW(LCP,FORMALVARS,false);/*MAY BE ACTUAL(SAME SIZE)*/
-						LCP = (IDENTIFIER*) new IDENTIFIER;
-						// WITH LCP^
-						strcpy_s(LCP->NAME,15,ID);
-						LCP->IDTYPE=NULL;
+						LCP = (identifier*) new identifier(ID,NONE,NULL);
 						LCP->NEXT=LCP2;
 						if (LKIND==FORMAL)
 							LCP->KLASS=FORMALVARS;
@@ -1687,35 +1769,45 @@ void DECLARATIONPART::PARAMETERLIST
 		FPAR=NULL;
 } /*PARAMETERLIST*/
 
-void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
+//void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
+void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 {
-	STP LSP,LSP1;
-//	LSP2;
-	DISPRANGE OLDTOP;
-//	CTP LCP;
-	ADDRRANGE LSIZE,DISPL;
-	int LMIN,LMAX;
+	union
+	{
+	struct /*locals*/
+	{
+		STP			FSP1;
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	stack_frame *param = reinterpret_cast<stack_frame*>(fp);
+	debug_stack (param);
 
-// line 1174 in original
-
-	BITRANGE NEXTBIT,NUMBITS;
 	/*TYP*/
+	LSP = FSP1 = FSP;
+	LSP1 = NULL;
+	LSP2 = NULL;
+
 	PACKING=false;
 	if (!(BNF::TYPEBEGSYS.in(SY)))
 	{
 		CERROR(10);
 		SKIP(FSYS + BNF::TYPEBEGSYS);
 	}
-	int sz;
-	// FIXME
-	// todo implement set size
-	BNF::TYPEBEGSYS.INTERSECT(SY);
-	if (sz) 
+	if (BNF::TYPEBEGSYS.in(SY))
+	{
 		if (BNF::SIMPTYPEBEGSYS.in(SY))
-			SIMPLETYPE(FSYS,FSP,FSIZE);
+			SIMPLETYPE(param,FSYS,FSP,FSIZE);
 
 		else if (SY==SYMBOLS::ARROW)
-			POINTERTYPE();
+			POINTERTYPE(param);
 		else if (SY==SYMBOLS::PACKEDSY)
 		{
 			INSYMBOL();
@@ -1735,26 +1827,19 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				CERROR(11);
 			LSP1=NULL;
 			do {
+				LSP = (STP) new structure(ARRAYS);
 				if (PACKING)
 				{
-					LSP = (STP) new STRUCTURE;
-//						NEW(LSP,ARRAYS,true,false);
-					LSP = (STP) new STRUCTURE;
+					LSP->AISPACKD = true;
+					LSP->AISSTRNG=false;
 				}
 				else
-				{
-			// NEW(LSP,ARRAYS,false);
-			// WITH LSP^
-				LSP = (STP) new STRUCTURE;
-				}
+					LSP->AISPACKD=false;
+
 				LSP->AELTYPE=LSP1;
 				LSP->INXTYPE=NULL;
-				if (PACKING)
-					LSP->AISSTRNG=false;
-				LSP->AISPACKD=false;
-				LSP->FORM=ARRAYS;
 				LSP1=LSP;
-				SIMPLETYPE(FSYS+SYMBOLS::COMMA+SYMBOLS::RBRACK+SYMBOLS::OFSY,LSP2,LSIZE);
+				SIMPLETYPE(param,FSYS+SYMBOLS::COMMA+SYMBOLS::RBRACK+SYMBOLS::OFSY,LSP2,LSIZE);
 				LSP1->SIZE=LSIZE;
 				if (LSP2!=NULL)
 				{
@@ -1792,11 +1877,16 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				INSYMBOL();
 			else
 				CERROR(8);
-			TYP(FSYS,LSP,LSIZE);
+#if 0
+			TYP T(this);
+			T.TYP1(FSYS,LSP,LSIZE);
+#endif
+			// YES - RECURSUVE!!
+			TYP1(FSYS,LSP,LSIZE);
 			if (LSP!=NULL)
 				if (LSP->FORM==FILES)
 					CERROR(108);
-			if (PACKABLE(LSP))
+			if (PACKABLE(param,LSP))
 				if (NUMBITS + NUMBITS<=BITSPERWD)
 				// WITH LSP1^
 				{
@@ -1844,15 +1934,14 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				CERROR(250);
 			DISPL=0;
 			NEXTBIT=0;
-			FIELDLIST(FSYS-SYMBOLS::SEMICOLON+SYMBOLS::ENDSY,LSP1);
+			FIELDLIST(param,FSYS-SYMBOLS::SEMICOLON+SYMBOLS::ENDSY,LSP1);
 			DISPL=DISPL + ORD(NEXTBIT>0);
 //				NEW(LSP,RECORDS);
-			LSP = (STP) new STRUCTURE;
+			LSP = (STP) new structure(RECORDS);
 			// WITH LSP^
 			LSP->FSTFLD=DISPLAY[TOP].FNAME;
 			LSP->RECVAR=LSP1;
 			LSP->SIZE=DISPL;
-			LSP->FORM=RECORDS;
 			TOP=OLDTOP;
 			if (SY==SYMBOLS::ENDSY)
 				INSYMBOL();
@@ -1866,7 +1955,7 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				INSYMBOL();
 			else
 				CERROR(8);
-			SIMPLETYPE(FSYS,LSP1,LSIZE);
+			SIMPLETYPE(param,FSYS,LSP1,LSIZE);
 			if (LSP1!=NULL)
 				if ((LSP1->FORM>SUBRANGE)||
 					(LSP1==INTPTR)||(LSP1==REALPTR))
@@ -1880,10 +1969,9 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 					LSP1=NULL;
 				}
 			//NEW(LSP,POWER);
-			LSP = (STP) new STRUCTURE;
+			LSP = (STP) new structure(POWER);
 			// WITH LSP^
 			LSP->ELSET=LSP1;
-			LSP->FORM=POWER;
 			if (LSP1!=NULL)
 			{
 				GETBOUNDS(LSP1,LMIN,LMAX);
@@ -1905,13 +1993,16 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 			INSYMBOL();
 			// NEW(LSP,FILES);
 			// WITH LSP^
-			LSP = (STP) new STRUCTURE;
-			LSP->FORM=FILES;
+			LSP = (STP) new structure(FILES);
 			LSP->FILTYPE=NULL;
 			if (SY==SYMBOLS::OFSY)
 			{
 				INSYMBOL();
-				TYP(FSYS,LSP1,LSIZE);
+#if 0
+				TYP T(this);
+				T.TYP1(FSYS,LSP1,LSIZE);
+#endif
+				TYP1(FSYS,LSP1,LSIZE);
 			}
 			else
 				LSP1=NULL;
@@ -1927,12 +2018,13 @@ void DECLARATIONPART::TYP::TYP1(SETOFSYS FSYS, STP &FSP, ADDRRANGE &FSIZE)
 			CERROR(6);
 			SKIP(FSYS);
 		}
-		else
-			FSP=NULL;
+	}
+	else
+		FSP=NULL;
 
-		if (FSP==NULL)
-			FSIZE=1;
-		else
-			FSIZE=FSP->SIZE;
+	if (FSP==NULL)
+		FSIZE=1;
+	else
+		FSIZE=FSP->SIZE;
 }/*TYP*/
 
