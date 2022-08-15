@@ -476,7 +476,7 @@ protected:
 	// declared in PASCALCOMPILER, but called from
 	// declaration part, etc.
 	virtual void ENTERID(CTP FCP) = 0;
-	virtual void SEARCHID(SETOFIDS FIDCLS, CTP &FCP) = 0;
+	virtual void SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP) = 0;
 	void SEARCHSECTION(CTP FCP, CTP &FCP1);
 
 protected: // fuctions called from DECLARATIONPART

@@ -9,18 +9,14 @@ protected:
 #endif
 
 class DECLARATIONPART:
-//	virtual public PASCALSOURCE,
 	virtual public COMPILERDATA
-#if 0
-	public DECLARATIONS
-#endif
 {
 public:
 class TYP;
 struct stack_frame
 {
 	STP			FSP;
-//	STP			LSP,LSP1,LSP2;
+	STP			LSP,LSP1,LSP2;
 	DISPRANGE	OLDTOP;
 	CTP			LCP;
 	ADDRRANGE	LSIZE,DISPL;
@@ -42,7 +38,7 @@ private:
 		void VARIANTLIST(stack_frame *param);
 		void USESDECLARATION(bool MAGIC);
 		void POINTERTYPE(stack_frame *param);
-		void SIMPLETYPE(stack_frame *param, const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);
+		void SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);
 		void DYYVARIANTLIST(stack_frame *param);
 
 	void LABELDECLARATION(const SETOFSYS &FSYS);
@@ -50,7 +46,7 @@ private:
 	void TYPEDECLARATION(const SETOFSYS &FSYS);
 	void VARDECLARATION(const SETOFSYS &FSYS);
 	void PROCDECLARATION(const SETOFSYS &,SYMBOLS::SYMBOL,bool,bool&);
-	void PARAMETERLIST(SETOFSYS, SYMBOLS::SYMBOL, CTP &, CTP, bool, bool);
+	void PARAMETERLIST(SETOFSYS, SYMBOLS::SYMBOL &, CTP &, CTP, bool, bool);
 
 public:
 	DECLARATIONPART ();

@@ -74,16 +74,14 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
     DUMMYVAR = &temp;
 
 	WRITELN(OUTPUT,"BODYPART::MAIN");
+#if 0
 	FSYS.debug_list();
+#endif
 
     /*for(PRETTY DISPLAY)STACK&&HEAP*/
     if ((options.NOSWAP)&&(STARTINGUP))
     {
         /* BRING IN DECLARATIONPART */
-#if 0
-        PASCALCOMPILER *ptr1 = reinterpret_cast<PASCALCOMPILER *>(this);
-        DECLARATIONPART decl = DECLARATIONPART(ptr1);
-#endif
 		DECLARATIONPART::MAIN(FSYS);
 		EXIT_CODE E("BODYPART");
         throw(E);
@@ -117,17 +115,16 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
                         GEN2(50/*LDA*/,0,LCP->VADDR);
                         GEN2(54/*LOD*/,0,LLC1);
                         if (PAOFCHAR(LCP->IDTYPE))
-                        //with (LCP->IDTYPE)
-                            if (LCP->IDTYPE->AISSTRNG)
-                                GEN1(42/*SAS*/,LCP->IDTYPE->MAXLENG);
-                            else if (LCP->IDTYPE->INXTYPE!=NULL)
-                            { 
-                                GETBOUNDS(LCP->IDTYPE->INXTYPE,LMIN,LMAX);
-                                GEN1(41/*MVB*/,LMAX - LMIN + 1);
-                            }
-                            else;
-                            else
-                GEN1(40/*MOV*/,LCP->IDTYPE->SIZE);
+                        if (LCP->IDTYPE->AISSTRNG)
+							GEN1(42/*SAS*/,LCP->IDTYPE->MAXLENG);
+                        else if (LCP->IDTYPE->INXTYPE!=NULL)
+                        { 
+                            GETBOUNDS(LCP->IDTYPE->INXTYPE,LMIN,LMAX);
+                            GEN1(41/*MVB*/,LMAX - LMIN + 1);
+                        }
+                        else;
+                        else
+							GEN1(40/*MOV*/,LCP->IDTYPE->SIZE);
             }
             else
                 LLC1 = LLC1 - LCP->IDTYPE->SIZE;
@@ -1748,163 +1745,171 @@ void BODYPART::SIMPLEEXPRESSION(const SETOFSYS &FSYS)
 
 void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 {
-    /*EXPRESSION*/
-    //	LABEL 1;    /* STRING COMPARE KLUDGE */
-    ATTR LATTR;
-    OPERATOR LOP;
-    int  TYPIND;
-    ADDRRANGE LSIZE;
-    bool LSTRING,GSTRING;
-    int LMIN,LMAX;
-    
-    SIMPLEEXPRESSION(FSYS+SYMBOLS::RELOP);
-    if (SY==SYMBOLS::RELOP)
-    {
-        LSTRING=(GATTR.KIND==CST)&&
-            (STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
-        if (GATTR.TYPTR!=NULL)
-            if (GATTR.TYPTR->FORM<=POWER)
-                LOAD();
-            else
-                LOADADDRESS();
-        LATTR=GATTR;
-        LOP=OP;
-        INSYMBOL();
-        SIMPLEEXPRESSION(FSYS);
-        GSTRING=(GATTR.KIND==CST)&&
-            (STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
-        if (GATTR.TYPTR!=NULL)
-            if (GATTR.TYPTR->FORM<=POWER)
-                LOAD();
-            else
-                LOADADDRESS();
-        if ((LATTR.TYPTR!=NULL)&&(GATTR.TYPTR!=NULL))
-            if (LOP==INOP)
-                if (GATTR.TYPTR->FORM==POWER)
-                    if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR->ELSET))
-                        GEN0(11/*INN*/);
-                    else {
-                        CERROR(129);
-                        GATTR.TYPTR=NULL;
-                    }
-                else {
-                    CERROR(130);
-                    GATTR.TYPTR=NULL;
-                }
-            else
-            {
-                if (LATTR.TYPTR!=GATTR.TYPTR)
-                {
-                    FLOATIT(LATTR.TYPTR,false);
-                    STRETCHIT(LATTR.TYPTR);
-                };
-                if (LSTRING)
-                {
-                    if (PAOFCHAR(GATTR.TYPTR))
-                        if (!GATTR.TYPTR->AISSTRNG)
-                        {
-                            GEN0(29/*S2P*/);
-                            MAKEPA(LATTR.TYPTR,GATTR.TYPTR);
-                        }
-                }
-                else if (GSTRING)
-                {
-                    if (PAOFCHAR(LATTR.TYPTR))
-                        if (!LATTR.TYPTR->AISSTRNG)
-                        {
-                            GEN0(80/*S1P*/);
-                            MAKEPA(GATTR.TYPTR,LATTR.TYPTR);
-                        };
-                };
-                if ((LSTRING&&STRGTYPE(GATTR.TYPTR))||
-                    (GSTRING&&STRGTYPE(LATTR.TYPTR)))
-                    goto retry;
-                if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
-                { LSIZE=LATTR.TYPTR->SIZE; /*INVALID for(LONG intS*/
-            switch (LATTR.TYPTR->FORM) {
-             case SCALAR:
-                 if (LATTR.TYPTR==REALPTR)
-                     TYPIND=1;
-                 else
-                     if (LATTR.TYPTR==BOOLPTR)
-                         TYPIND=3;
-                     else
-                         TYPIND=0;
-                 break;
-             case POINTER:
-                 if (SET(2,LTOP,LEOP,GTOP,GEOP).in(LOP))
-                     CERROR(131);
-                 TYPIND=0;
-                 break;
-             case LONGINT:
-                 TYPIND=7;
-                 break;
-             case POWER:
-                 if (SET(LTOP,GTOP).in(LOP))
-                     CERROR(132);
-                 TYPIND=4;
-                 break;
-             case ARRAYS:
-                 TYPIND=6;
-                 if (PAOFCHAR(LATTR.TYPTR))
-                     if (LATTR.TYPTR->AISSTRNG)
+	/*EXPRESSION*/
+	//	LABEL 1;    /* STRING COMPARE KLUDGE */
+	ATTR LATTR;
+	OPERATOR LOP;
+	int  TYPIND;
+	ADDRRANGE LSIZE;
+	bool LSTRING,GSTRING;
+	int LMIN,LMAX;
+
+	SIMPLEEXPRESSION(FSYS+SYMBOLS::RELOP);
+	if (SY!=SYMBOLS::RELOP)
+		return;
+
+	LSTRING=(GATTR.KIND==CST)&&
+		(STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
+	if (GATTR.TYPTR!=NULL)
+		if (GATTR.TYPTR->FORM<=POWER)
+			LOAD();
+		else
+			LOADADDRESS();
+	LATTR=GATTR;
+	LOP=OP;
+	INSYMBOL();
+	SIMPLEEXPRESSION(FSYS);
+	GSTRING=(GATTR.KIND==CST)&&
+		(STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
+
+	if (GATTR.TYPTR!=NULL)
+		if (GATTR.TYPTR->FORM<=POWER)
+			LOAD();
+		else
+			LOADADDRESS();
+
+	if ((LATTR.TYPTR!=NULL)&&(GATTR.TYPTR!=NULL))
+		if (LOP==INOP)
+			if (GATTR.TYPTR->FORM==POWER)
+				if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR->ELSET))
+					GEN0(11/*INN*/);
+				else {
+					CERROR(129);
+					GATTR.TYPTR=NULL;
+				}
+			else {
+				CERROR(130);
+				GATTR.TYPTR=NULL;
+			}
+		else if (LATTR.TYPTR!=GATTR.TYPTR)
+			{
+				FLOATIT(LATTR.TYPTR,false);
+				STRETCHIT(LATTR.TYPTR);
+			}
+			if (LSTRING)
+			{
+				if (PAOFCHAR(GATTR.TYPTR))
+					if (!GATTR.TYPTR->AISSTRNG)
+					{
+						GEN0(29/*S2P*/);
+						MAKEPA(LATTR.TYPTR,GATTR.TYPTR);
+					}
+			}
+			else if (GSTRING)
+			{
+				if (PAOFCHAR(LATTR.TYPTR))
+					if (!LATTR.TYPTR->AISSTRNG)
+					{
+						GEN0(80/*S1P*/);
+						MAKEPA(GATTR.TYPTR,LATTR.TYPTR);
+					}
+			}
+			if ((LSTRING&&STRGTYPE(GATTR.TYPTR))||
+				(GSTRING&&STRGTYPE(LATTR.TYPTR)))
+				goto retry;
+
+		if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
+		{
+			LSIZE=LATTR.TYPTR->SIZE; /*INVALID for(LONG intS*/
+			switch (LATTR.TYPTR->FORM)
+			{
+			case SCALAR:
+				if (LATTR.TYPTR==REALPTR)
+					TYPIND=1;
+				else
+					if (LATTR.TYPTR==BOOLPTR)
+						TYPIND=3;
+					else
+						TYPIND=0;
+				break;
+			case POINTER:
+				if (SET(2,LTOP,LEOP,GTOP,GEOP).in(LOP))
+					CERROR(131);
+				TYPIND=0;
+				break;
+			case LONGINT:
+				TYPIND=7;
+				break;
+			case POWER:
+				if (SET(LTOP,GTOP).in(LOP))
+					CERROR(132);
+				TYPIND=4;
+				break;
+			case ARRAYS:
+				TYPIND=6;
+				if (PAOFCHAR(LATTR.TYPTR))
+					if (LATTR.TYPTR->AISSTRNG)
 retry:					TYPIND=2;
-                     else
-                     {
-                         TYPIND=5;
-                        if (LATTR.TYPTR->INXTYPE!=NULL)
-                        {
-                        GETBOUNDS(LATTR.TYPTR->INXTYPE,LMIN,LMAX);
-                        LSIZE=LMAX-LMIN+1;
-                        }
-                    }
-                 else if (SET(4,LTOP,LEOP,GTOP,GEOP).in(LOP))
-                     CERROR(131);
-                 break;
-             case RECORDS:
-                 if (SET(4,LTOP,LEOP,GTOP,GEOP).in(LOP))
-                     CERROR(131);
-                 TYPIND=6;
-                 break;
-             case FILES:
-                 CERROR(133);
-                 TYPIND=0;
-                 if (TYPIND==7)
-                 {
-                     GENLDC(ORD(LOP));
-                     GENLDC(16/*DCMP*/);
-                     GENNR(DECOPS);
-                 }
-                 else
-                     switch (LOP)
-             case LTOP:
-                 GEN2(53/*LES*/,TYPIND,LSIZE);
-                 break;
-             case LEOP:
-                 GEN2(52/*LEQ*/,TYPIND,LSIZE);
-                 break;
-             case GTOP:
-                 GEN2(49/*GRT*/,TYPIND,LSIZE);
-                 break;
-             case GEOP:
-                 GEN2(48/*GEQ*/,TYPIND,LSIZE);
-                 break;
-             case NEOP:
-                 GEN2(55/*NEQ*/,TYPIND,LSIZE);
-                 break;
-             case EQOP:
-                 GEN2(47/*EQU*/,TYPIND,LSIZE);
-                 break;
-             default:
-                 break;
-                }
-            }
-        else
-            CERROR(129);
-    }
+					else
+					{
+						TYPIND=5;
+						if (LATTR.TYPTR->INXTYPE!=NULL)
+						{
+							GETBOUNDS(LATTR.TYPTR->INXTYPE,LMIN,LMAX);
+							LSIZE=LMAX-LMIN+1;
+						}
+					}
+				else if (SET(4,LTOP,LEOP,GTOP,GEOP).in(LOP))
+					CERROR(131);
+				break;
+			case RECORDS:
+				if (SET(4,LTOP,LEOP,GTOP,GEOP).in(LOP))
+					CERROR(131);
+				TYPIND=6;
+				break;
+			case FILES:
+				CERROR(133);
+				TYPIND=0;
+				break;
+			default:
+				TYPIND=0;
+				break;
+			}
+			if (TYPIND==7)
+			{
+				GENLDC(ORD(LOP));
+				GENLDC(16/*DCMP*/);
+				GENNR(DECOPS);
+			}
+			else switch (LOP)
+			{
+			case LTOP:
+				GEN2(53/*LES*/,TYPIND,LSIZE);
+				break;
+			case LEOP:
+				GEN2(52/*LEQ*/,TYPIND,LSIZE);
+				break;
+			case GTOP:
+				GEN2(49/*GRT*/,TYPIND,LSIZE);
+				break;
+			case GEOP:
+				GEN2(48/*GEQ*/,TYPIND,LSIZE);
+				break;
+			case NEOP:
+				GEN2(55/*NEQ*/,TYPIND,LSIZE);
+				break;
+			case EQOP:
+				GEN2(47/*EQU*/,TYPIND,LSIZE);
+				break;
+			default:
+				break;
+			}
+		}
+		else
+			CERROR(129);
+
     GATTR.TYPTR=BOOLPTR;
     GATTR.KIND=EXPR;
-    } /*SY==RELOP*/
 } /*EXPRESSION*/
 
 void BODYPART::STATEMENT(const SETOFSYS &FSYS)
@@ -2029,16 +2034,9 @@ fubar:			INSYMBOL();
     }
 } /*STATEMENT*/
 
-#if 0
-void BODYPART::CALL(SETOFSYS &FSYS, CTP FCP)
-{
-    ASSERT(false);
-}
-#endif
 
 void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
 {
-//	LABEL 1;
     STP			LSP,LSP1;
     int			VARTS;
     ADDRRANGE	LSIZE;
@@ -2047,24 +2045,20 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
     VARIABLE(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
     LOADADDRESS();
     LSP=NULL;
+	LSP1=NULL;
     VARTS=0;
     LSIZE=0;
     if (GATTR.TYPTR!=NULL)
     {
-        // with GATTR.TYPTR^
-        if (GATTR.TYPTR->FORM==POINTER)
-        {
-            if (GATTR.TYPTR->ELTYPE!=NULL)
-                // with ELTYPE^
-            {
-                LSIZE=GATTR.TYPTR->SIZE;
-            if (GATTR.TYPTR->FORM==RECORDS)
-                LSP=GATTR.TYPTR->RECVAR;
-            }
-        }
-        else
-            CERROR(116);
+        if (GATTR.TYPTR->FORM!=POINTER)
+			CERROR(116);
 
+		else if (GATTR.TYPTR->ELTYPE!=NULL)
+		{
+			LSIZE=GATTR.TYPTR->SIZE;
+			if (GATTR.TYPTR->FORM==RECORDS)
+				LSP=GATTR.TYPTR->RECVAR;
+        }
         while(SY==SYMBOLS::COMMA)
         {
             INSYMBOL();

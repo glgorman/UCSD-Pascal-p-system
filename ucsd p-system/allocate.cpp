@@ -49,6 +49,7 @@ structure::structure (STRUCTFORM form)
 {
 	memset(this,0,sizeof(structure));
 	this->FORM = form;
+	debug1 (this);
 }
 
 #if 0

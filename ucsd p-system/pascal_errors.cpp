@@ -14,7 +14,7 @@ pascal_error error_list [] =
 	pascal_error(7,"Error in parameter list"), 
 	pascal_error(8,"'OF' expected"), 
 	pascal_error(9,"'(' expected"), 
-	pascal_error(10,"~r;or in type"), 
+	pascal_error(10,"Error in type"), 
 	pascal_error(11,"[ expected"), 
 	pascal_error(12,"']'expected"), 
 	pascal_error(13,"'END' expected"), 
@@ -159,6 +159,11 @@ pascal_error error_list [] =
 	pascal_error(405,"Call not allowed in separate procedure"), 
 	pascal_error(406,"Include file not legal"), 
 	pascal_error(407,"Too many libraries"),
+};
+
+char *ID_NAMES1[] =
+{
+	"NONE","TYPES","KONST","FORMALVARS","ACTUALVARS","FIELD","PROC1","FUNC","MODULE",
 };
 
 char *SYMBOL_NAMES1[] =

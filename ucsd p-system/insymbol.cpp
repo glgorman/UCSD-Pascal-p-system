@@ -78,49 +78,41 @@ char PASCALSOURCE::GETC()
 
 void PASCALSOURCE::CERROR(int ERRORNUM)
 {
-//	int ERRSTART;
-//	char A[128];
 	char CH;
-//	// // WITH USERINFO
 	if ((USERINFO.ERRSYM!=m_src.SYMCURSOR)||(USERINFO.ERRBLK!=SYMBLK))
 	{
 		USERINFO.ERRBLK=SYMBLK;
 		USERINFO.ERRSYM=m_src.SYMCURSOR;
 		USERINFO.ERRNUM=ERRORNUM;
-	
-		if (options.NOISY)
-			WRITELN(OUTPUT);
-		else if (options.LIST&&(ERRORNUM<=400))
-			return;
-		WRITELN(OUTPUT," >>>>");
-		if (m_src.LINESTART==0)
-		{
-			char *str1 = (char*)m_src.SYMBUFP;
-			char *str2 = &(str1[m_src.SYMCURSOR]);
-			WRITE(OUTPUT,str2);
-		}
-		else
-		{
-#if 0
-			ERRSTART=SCAN(
-				-(LINESTART-1),true,
-				char(EOL),*(&(SYMBUFP[LINESTART-2])+ (size_t)(LINESTART)-1));
-			if (ERRSTART<0)
-				ERRSTART=0;
-			MOVELEFT(&(*SYMBUFP[ERRSTART]),&A[0],SYMCURSOR-ERRSTART);
-			WRITE(OUTPUT,A /*SYMCURSOR-ERRSTART*/ );
-#endif
-		};
-		WRITELN(OUTPUT," <<<<");
-		WRITELN(OUTPUT,"Line ",SCREENDOTS,", error ",ERRORNUM,":");
 	}
+	if (options.NOISY)
+		WRITELN(OUTPUT);
+	else if (options.LIST&&(ERRORNUM<=400))
+		return;
+	WRITELN(OUTPUT," >>>>");
+	if (m_src.LINESTART==0)
+	{
+		int pos = m_src.SYMCURSOR-16;
+		if (pos<0)
+			pos==0;
+		char *str1 = (char*)m_src.SYMBUFP;
+		char *str2 = &(str1[pos]);
+		WRITE(OUTPUT,str2);
+	}
+	WRITELN(OUTPUT," <<<<");
+	WRITE(OUTPUT,"Line<",SCREENDOTS,"> Error: <",ERRORNUM,"> ");
+	EXIT_CODE T(ERRORNUM,false);
+	WRITE(OUTPUT,T.m_str);
+	if (ERRORNUM==104)
+		WRITE (OUTPUT," ---> \"",ID,"\"");
+	WRITELN(OUTPUT);
+
 	if (USERINFO.STUPID)
 		CH='E';
-
 	else if (options.NOISY)
 	{
 		WRITE(OUTPUT,"<",SCREENDOTS/*4*/,'>');
-		WRITELN(OUTPUT," <sp>(continue), <esc>(terminate), E(dit");
+		WRITELN(OUTPUT," <sp>(continue), <esc>(terminate/debug), E(dit");
 		WRITE(OUTPUT,":");
 		do
 		{
@@ -128,13 +120,16 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 			WRITE(OUTPUT,CH);
 		}
 		while (!((CH==' ')||(CH=='E')||(CH=='e')||(CH==USERINFO.ALTMODE)));
-		WRITELN(OUTPUT);
 	}
 	if ((CH=='E')||(CH=='e'))
 	{
 		EXIT_CODE E(ERRORNUM,true);
 		USERINFO.ERRBLK=SYMBLK-2;
 		throw(E);
+	}
+	if (CH==USERINFO.ALTMODE)
+	{
+		ASSERT(false);
 	}
 	if ((ERRORNUM>400)||(CH==(char)(27)))
 	{
@@ -261,7 +256,7 @@ void PASCALSOURCE::CHECK()
 	CH=PEEK();
 	while(skip)
 	{
-		if (chartype::whitespace.in(CH))
+		if (chartypes::whitespace.in(CH))
 			CH=GETC();
 		else
 			skip=false;
@@ -518,7 +513,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 	EPART=9999; /* OUT) REACH */
 
 	IPART=m_src.SYMCURSOR; /* int PART STARTS HERE */
-	while (chartype::digits.in(PEEK()))
+	while (chartypes::digits.in(PEEK()))
 	{
 		CH1 = GETC();	
 	}
@@ -535,7 +530,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 			TIPE=REALTIPE;
 			CH1 = GETC();
 			FPART=m_src.SYMCURSOR; /* {NING) FPART */
-			while (chartype::digits.in(PEEK()))
+			while (chartypes::digits.in(PEEK()))
 			{
 				CH1 = GETC();
 				if (m_src.SYMCURSOR==FPART)
@@ -556,7 +551,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		else if (PEEK()=='+')
 			CH1 = GETC();
 		EPART=m_src.SYMCURSOR; /* {NING) EXPONENT */
-		while (chartype::digits.in(PEEK()))
+		while (chartypes::digits.in(PEEK()))
 		{
 			CH1 = GETC();
 		}
@@ -695,7 +690,7 @@ void PASCALSOURCE::GETIDENT()
 		for (i=1;i<16;i++)
 		{
 			c = GETC();
-			if (chartype::ident.in(c))
+			if (chartypes::ident.in(c))
 				ID[i]=c;
 			else
 				break;
@@ -761,13 +756,13 @@ retry:
 	SY=(SYMBOLS::SYMBOL)-1;
 	OP=NOOP;
 	char CH = PEEK();
-	if (chartype::alpha.in(CH))
+	if (chartypes::alpha.in(CH))
 		GETIDENT();
-	else if (chartype::digits.in(CH))
+	else if (chartypes::digits.in(CH))
 		NUMBER();
 	else if (CH=='\'')
 		STRING();
-	else if (chartype::whitespace.in(CH)) {
+	else if (chartypes::whitespace.in(CH)) {
 		CH = GETC();
 		goto retry;
 	}
@@ -815,14 +810,14 @@ start:
 
 	SY=(SYMBOL)-1; /* if (NO CASES EXERCISED BLOW UP */
 	char CH = PEEK();
-	if (chartype::alpha.in(CH)==true)
+	if (chartypes::alpha.in(CH)==true)
 	{
 		GETIDENT();
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
 #endif
 	}
-	else if (chartype::digits.in(CH)==true)
+	else if (chartypes::digits.in(CH)==true)
 	{
 #ifdef DEBUG_INSYMBOL
 	WRITE(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," ");
@@ -833,7 +828,7 @@ start:
 	{
 		STRING();
 	}
-	else if (chartype::whitespace.in(CH)==true)
+	else if (chartypes::whitespace.in(CH)==true)
 	{
 #ifdef DEBUG_INSYMBOL
 	WRITELN(OUTPUT,"\nPASCALCOMPILER::INSYMBOL() SYMCURSOR = ",(int)SYMCURSOR," CH= \'",CH,"\'");

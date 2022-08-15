@@ -26,6 +26,7 @@ using namespace std;
 
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
+extern char *ID_NAMES1[];
 
 namespace pascal0
 {
