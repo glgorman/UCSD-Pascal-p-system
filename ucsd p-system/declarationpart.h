@@ -18,7 +18,7 @@ struct stack_frame
 	STP			FSP;
 	STP			LSP,LSP1,LSP2;
 	DISPRANGE	OLDTOP;
-	CTP			LCP;
+	CTP			LCP,LAST;
 	ADDRRANGE	LSIZE,DISPL;
 	int			LMIN,LMAX;
 	bool		PACKING;
@@ -35,7 +35,7 @@ private:
 		bool PACKABLE(stack_frame *param, STP FSP);
 		void FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR);
 		void ALLOCATE(stack_frame *paarm, CTP FCP);
-		void VARIANTLIST(stack_frame *param);
+		void VARIANTLIST(stack_frame *param, const SETOFSYS &FSYS);
 		void USESDECLARATION(bool MAGIC);
 		void POINTERTYPE(stack_frame *param);
 		void SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);

@@ -37,7 +37,7 @@ protected:
 	bool STRGTYPE(STP FSP);
 	int DECSIZE(int I);
 	void CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU);
-	bool COMPTYPES(STP FSP1, STP FSP2);
+	bool COMPTYPES(STP &FSP1, STP &FSP2);
 	void GENBYTE(int FBYTE);
 	void GENWORD(int FWORD);
 	void WRITECODE(bool FORCEBUF);

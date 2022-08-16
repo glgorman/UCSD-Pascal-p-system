@@ -187,8 +187,9 @@ protected:
 	identifier();
 
 public:
-	identifier(char*,IDCLASS,STP);
+	identifier(char*,STP,IDCLASS);
 	identifier(IDCLASS);
+	static void debug1 (identifier *stp, bool);
 
 public:
 	ALPHA NAME;
@@ -486,7 +487,7 @@ protected: // fuctions called from DECLARATIONPART
 	virtual void GETBOUNDS(STP FSP, int &FMIN, int &FMAX) = 0;
 	virtual bool STRGTYPE(STP FSP) = 0;
 	virtual int DECSIZE(int I) = 0;
-	virtual bool COMPTYPES(STP FSP1, STP FSP2) = 0;
+	virtual bool COMPTYPES(STP &FSP1, STP &FSP2) = 0;
 
 protected:	// functions called from BODYPART
 	virtual void GENBYTE(int FBYTE) = 0;

@@ -52,8 +52,12 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 //	end = THENSY;
 //	begin = WITHSY;
 //	end = DOSY;
-	begin = SYMBOLS::PROCSY;
-	end = SYMBOLS::SEMICOLON;
+//	begin = SYMBOLS::STRINGCONST;
+//	end = SYMBOLS::STRINGCONST;
+//	begin = SYMBOLS::IFSY;
+//	end = SYMBOLS::THENSY;
+	begin = SYMBOLS::INTCONST;
+	end = SYMBOLS::INTCONST;
 
 	DWORD t0, t1;
 	t0 = GetTickCount();

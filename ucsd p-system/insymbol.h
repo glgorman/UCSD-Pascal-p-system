@@ -15,7 +15,7 @@
 
 using namespace std;
 
-#define IDENTSIZE	16
+#define IDENTSIZE	63
 #define STRGLGTH	255
 #define MAXDIRLEN	40
 #define MAXINT		32767
@@ -39,12 +39,13 @@ class identifier;
 typedef identifier* CTP;
 class structure;
 typedef structure*	STP;
-typedef char ALPHA[IDENTSIZE];
+typedef char ALPHA[IDENTSIZE+1];
 typedef char SYMBUFARRAY[MAXCURSOR+1];
 typedef char CODEARRAY[MAXCODE+1];
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
 void PRINTTREE(const CTP &n1);
+void PRINTTREE1(const CTP &n1);
 
 namespace SYMBOLS
 {
@@ -188,6 +189,9 @@ struct
 	CURSRANGE	LINESTART;
 	CURSRANGE	PREVLINESTART;
     CURSRANGE	OLDLINESTART;
+	int			SYMBLK;
+	int			OLDSYMBLK;
+	int			PREVSYMBLK;
 } m_src;
 
 	CODEARRAY	*CODEP;			/*CODE BUFFER WHILE WRITEOUT*/
@@ -208,9 +212,6 @@ struct // _options
 	int		LINEINFO;
 	int		BEGSTMTLEV;
 	int		STMTLEV;		/*CURRENT STATEMENT NESTING LEVEL*/
-	int		SYMBLK;
-	int		OLDSYMBLK;
-	int		PREVSYMBLK;
 	int		CURBLK;
 	 
 	char		SYSTEMLIB[MAXDIRLEN];
@@ -247,7 +248,7 @@ protected:
 	void WRITETEXT();
 	void GETNEXTPAGE();
 	void PARSEOPTION(char);
-	void SKIP(SETOFSYS FSYS);
+	void SKIP(const SETOFSYS &FSYS);
 
 public:
 	static void *allocate(void*);

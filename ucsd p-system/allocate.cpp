@@ -22,19 +22,31 @@ CONSTREC::CONSTREC(enum _CSTCLASS _cst)
 	this->CCLASS = _cst;
 }
 
+void identifier::debug1 (identifier *stp, bool alloc)
+{
+	char addr_str[16];
+	DWORD addr_val = reinterpret_cast<DWORD>(stp);
+	sprintf_s(addr_str,16,"%08x",addr_val);
+	if (alloc==true)
+		::WRITE (OUTPUT,"new ");
+	WRITELN (OUTPUT,"identifier addr: 0x",addr_str," ",(char*)stp->NAME);
+}
+
 identifier::identifier (IDCLASS idclass)
 {
 	memset(this,0,sizeof(identifier));
 	KLASS = idclass;
+	debug1(this,true);
 }
 
-identifier::identifier (char *str,IDCLASS idclass,STP ptr)
+identifier::identifier (char *str, STP ptr, IDCLASS idclass)
 {
 	memset(this,0,sizeof(identifier));
 	if (str!=NULL)
 		strcpy_s(NAME,IDENTSIZE,str);
 	KLASS = idclass;
 	IDTYPE = ptr;
+	debug1(this,true);
 }
 
 void structure::debug1 (structure *stp)
