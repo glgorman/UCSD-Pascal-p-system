@@ -6,6 +6,30 @@
 #define PAGESZ (4096)
 #define	BLOCKSIZE	(512)
 
+EXIT_CODE::EXIT_CODE(char*str)
+{
+	m_edit = false;
+	m_str = str;
+	err = 0;
+}
+	
+EXIT_CODE::EXIT_CODE(int n, bool edit)
+{
+	m_edit = edit;
+	int j = 0;
+	err = n;
+	m_str = NULL;
+	while (error_list[j].errstr!=NULL)
+	{
+		if (n==error_list[j].errnum)
+		{
+			m_str = error_list[j].errstr;
+			break;
+		}
+		j++;
+	}
+}
+
 namespace SYSCOMM
 {
 using namespace std;

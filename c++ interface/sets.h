@@ -11,16 +11,22 @@
 //////////////////////////////////////////////////////
 
 #define MAX_SET (256)
-#define	SETSZ (MAX_SET>>5)
+//#define	SETSZ (MAX_SET>>5)
 
-class SET 
+#define SETOFCHAR SET<256>
+
+template<size_t SETSIZE>
+class SET
 {
 friend class SETOFSYS;
 friend class SETOFIDS;
 protected:
+	static const int SETSZ = (SETSIZE+(8*sizeof(DWORD)-1))/(8*sizeof(DWORD));
 	DWORD bits[SETSZ];
 
 public:
+	SET();
+	SET(size_t,...);
 	inline bool in(int s) const
 	{
 		bool result;
@@ -36,38 +42,140 @@ public:
 	virtual SET INTERSECT(const SET&) const;
 	virtual SET operator + (const SET &) const;
 	virtual SET operator - (const SET &) const;
-	SET();
-	SET(int,...);
 };
 
-namespace chartype
+namespace chartypes
 {
-	extern SET ident;
-	extern SET digits;
-	extern	SET whitespace;
-	extern	SET alpha;
-	extern	SET punct1;
-	extern	SET operat;
+	extern SETOFCHAR ident;
+	extern SETOFCHAR digits;
+	extern SETOFCHAR whitespace;
+	extern SETOFCHAR alpha;
+	extern SETOFCHAR punct1;
+	extern SETOFCHAR operat;
 }
 
-class SETOFSYS: public SET 
+class SETOFSYS: public SET<128> 
 {
 public:
-	SETOFSYS operator + (int) const;
-	SETOFSYS operator + (const SETOFSYS&) const;
-	SETOFSYS &operator += (int);
-	SETOFSYS &operator = (const SET&);
 	SETOFSYS();
 	SETOFSYS(const SET&);
+	SETOFSYS(size_t,...);
+	SETOFSYS &operator = (const SET&);
+	SETOFSYS &operator += (int);
+	SETOFSYS &operator -= (int);
+	SETOFSYS operator + (int) const;
+	SETOFSYS operator + (const SETOFSYS&) const;
 	void debug_list (char *str="") const;
 };
 
-class SETOFIDS: public SET 
+class SETOFIDS: public SET<128>
 {
 public:
+	SETOFIDS();
+	SETOFIDS(const SET&);
+	SETOFIDS(size_t,...);
 	SETOFIDS operator + (int) const;
 	SETOFSYS &operator += (int);
 	SETOFIDS &operator = (const SET &);
-	SETOFIDS();
-	SETOFIDS(int,...);
+	void debug_list (char *str="") const;
 };
+
+template<size_t SETSIZE>
+SET<SETSIZE>::SET(size_t n, ...)
+{
+	size_t i,j,k;
+	int val;
+	va_list vl;
+	va_start(vl,n);
+	memset(bits,0,sizeof(DWORD)*SETSZ);
+	for (i=0;i<n;i++)
+	{
+		val=va_arg(vl,int);
+		j = val>>5;
+		k = val&0x1f;
+		bits[j]|=(1<<k);
+	}
+	va_end(vl);
+}
+
+template<size_t SETSIZE>
+SET<SETSIZE>::SET()
+{
+	memset(bits,0,sizeof(DWORD)*SETSZ);
+}
+
+template<size_t SETSIZE>
+bool SET<SETSIZE>::operator == (const SET &x) const
+{
+	bool result = true;
+	int i;
+	for (i=0;i<SETSZ;i++)
+	if (bits[i]!=x.bits[i])
+	{
+		result=false;
+		break;
+	}
+	return result;
+}
+
+template<size_t SETSIZE>
+bool SET<SETSIZE>::operator != (const SET &x) const
+{
+	bool result = false;
+	int i;
+	for (i=0;i<SETSZ;i++)
+	if (bits[i]!=x.bits[i])
+	{
+		result=true;
+		break;
+	}
+	return result;
+}
+
+template<size_t SETSIZE>
+SET<SETSIZE> SET<SETSIZE>::operator + (const SET &x) const
+{
+	SET result;
+	result = *this;
+	int i;
+	for (i=0;i<SETSZ;i++)
+		result.bits[i]|=x.bits[i];
+	return result;
+}
+
+template<size_t SETSIZE>
+SET<SETSIZE> SET<SETSIZE>::operator - (const SET &x) const
+{
+	SET result;
+	int i;
+	DWORD s1, s2;
+	for (i=0;i<SETSZ;i++)
+	{
+		s1 = bits[i];
+		s2 = ~(x.bits[i]);
+		result.bits[i]=s1&s2;
+	}
+	return result;
+}
+
+template<size_t SETSIZE>
+SET<SETSIZE> SET<SETSIZE>::UNION(const SET&S) const
+{
+	SET result;
+	result = *this;
+	int i;
+	for (i=0;i<SETSZ;i++)
+		result.bits[i]|=S.bits[i];
+	return result;
+}
+
+template<size_t SETSIZE>
+SET<SETSIZE> SET<SETSIZE>::INTERSECT(const SET&S) const
+{
+	SET result;
+	result = *this;
+	int i;
+	for (i=0;i<SETSZ;i++)
+		result.bits[i]&=S.bits[i];
+	return result;
+}

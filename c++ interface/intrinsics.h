@@ -20,6 +20,33 @@ typedef char *TEXT;
 
 typedef	enum { CHAR1, CHARPTR1, DOUBLE1, DWORD1, FLOAT1, INT1, SIZE1, ULONG1, VOID1 } PTYPE;
 
+struct pascal_error
+{
+	char *errstr;
+	int	 errnum;
+
+	pascal_error() {}
+	pascal_error (int id, char *str)
+	{
+		errnum = id;
+		errstr = str;
+	}
+};
+
+extern pascal_error error_list[];
+
+class EXIT_CODE
+{
+public:
+	bool m_edit;
+	int	 err;
+	char *m_str;
+
+public:
+	EXIT_CODE(char*str);
+	EXIT_CODE(int n, bool edit);
+};
+
 class s_param
 {
 public:

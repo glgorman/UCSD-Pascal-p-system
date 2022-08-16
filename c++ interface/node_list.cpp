@@ -113,37 +113,37 @@ node_list<char*>::node_list<char*> (char* str)
 //	and returns;
 		if (ignore_whitespace==true)
 		{
-			while (chartype::whitespace.in(c))
+			while (chartypes::whitespace.in(c))
 			{
 				position++;
 				c = str[position];
 			}
 			start = position;
 		}
-		else if (chartype::whitespace.in(c))
+		else if (chartypes::whitespace.in(c))
 		do {
 			buffer [n++] = c;
 			position++;
 			c = str[position];
 		}	
-		while (chartype::whitespace.in(c));
+		while (chartypes::whitespace.in(c));
 
 //	tokenize if alphanumeric	
-		else if (chartype::alpha.in(c))
+		else if (chartypes::alpha.in(c))
 		do {
 			buffer [n++] = c;
 			position++;
 			c = str[position];
 		}	
-		while (chartype::ident.in(c));
+		while (chartypes::ident.in(c));
 
 //	else tokenize numeric
-		else if (chartype::digits.in(c)) do {
+		else if (chartypes::digits.in(c)) do {
 			buffer [n++] = c;
 			position++;
 			c = str[position];
 		}
-		while (chartype::digits.in(c));
+		while (chartypes::digits.in(c));
 
 //	else any other printing chars
 		else if (str[position]!=0) do {
@@ -151,8 +151,8 @@ node_list<char*>::node_list<char*> (char* str)
 			position++;
 			c = str[position];
 		}
-		while ((c!=0)&&(!chartype::ident.in(c))
-			&&(!chartype::whitespace.in(c)));
+		while ((c!=0)&&(!chartypes::ident.in(c))
+			&&(!chartypes::whitespace.in(c)));
 
 		buffer [n]=0;
 		if (*buffer!=0)

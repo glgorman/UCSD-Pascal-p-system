@@ -11,12 +11,17 @@
 #include "../Frame Lisp/frames.h"
 #include "../Frame Lisp/frames1.h"
 #include "../Frame Lisp/extras.h"
-#include "compiler.h"
+
+#include "../p-system compiler/compilerdata.h"
+#include "../p-system compiler/declarationpart.h"
+#include "../p-system compiler/bodypart.h"
+#include "../p-system compiler/compiler.h"
 
 //#define DEBUG_SEARCH
 
 // DEFINED IN COMPILER.H
-/*
+
+#if 0
 typedef enum _SYMBOL
 {
 	IDENT,COMMA,COLON,SEMICOLON,LPARENT,RPARENT,DOSY,TOSY,
@@ -34,67 +39,86 @@ typedef enum _OPERATOR
 	MUL,RDIV,ANDOP,IDIV,IMOD,PLUS,MINUS,OROP,LTOP,LEOP,
 	GEOP,GTOP,NEOP,EQOP,INOP,NOOP,MAXOPERATOR,
 } OPERATOR;	
-*/
-/*
-struct key_info
+#endif
+
+namespace pascal0
 {
-	ALPHA		ID;
-	SYMBOL		SY;
-	OPERATOR	OP;
-	key_info() { };
-	key_info(char *STR, SYMBOL _SY, OPERATOR _OP)
-	{
-		strcpy_s(ID,16,STR);
-		SY = _SY;
-		OP = _OP;
-	}
+key_info operators[] = 
+{
+	key_info(":=",SYMBOLS::BECOMES,NOOP),
+	key_info("(*",SYMBOLS::COMMENTSY,NOOP),
+	key_info("*)",SYMBOLS::SEPARATSY,NOOP),
+	key_info("(",SYMBOLS::LPARENT,NOOP),
+	key_info(")",SYMBOLS::RPARENT,NOOP),
+	key_info("{",SYMBOLS::COMMENTSY,NOOP),	
+	key_info("}",SYMBOLS::SEPARATSY,NOOP),
+	key_info("..",SYMBOLS::COLON,NOOP),
+	key_info(".",SYMBOLS::PERIOD,NOOP),
+	key_info(";",SYMBOLS::SEMICOLON,NOOP),
+	key_info(",",SYMBOLS::COMMA,NOOP),
+	key_info(":",SYMBOLS::COLON,NOOP),
+	key_info("^",SYMBOLS::ARROW,NOOP),
+	key_info("[",SYMBOLS::LBRACK,NOOP),
+	key_info("]",SYMBOLS::RBRACK,NOOP),	
+	key_info("+",SYMBOLS::ADDOP,PLUS),
+	key_info("-",SYMBOLS::ADDOP,MINUS),
+	key_info("*",SYMBOLS::MULOP,MUL),
+	key_info("/",SYMBOLS::MULOP,RDIV),
+	key_info("=",SYMBOLS::RELOP,EQOP),
+	key_info("<>",SYMBOLS::RELOP,NEOP),
+	key_info(">=",SYMBOLS::RELOP,GEOP),
+	key_info("<=",SYMBOLS::RELOP,LEOP),
+	key_info(">",SYMBOLS::RELOP,GTOP),	
+	key_info("<",SYMBOLS::RELOP,LTOP),
+	key_info("\'",SYMBOLS::STRINGCONST,NOOP),
+	key_info("",SYMBOLS::OTHERSY,NOOP),
 };
-*/
 
 key_info key_map[] =
 {
-	key_info("DO",DOSY,NOOP),
-	key_info("WITH",WITHSY,NOOP),
-	key_info("IN",SETSY,INOP),
-	key_info("TO",TOSY,NOOP),
-	key_info("GOTO",GOTOSY,NOOP),
-	key_info("SET",SETSY,NOOP),
-	key_info("DOWNTO",DOWNTOSY,NOOP),
-	key_info("LABEL",LABELSY,NOOP),
-	key_info("PACKED",PACKEDSY,NOOP),
-	key_info("END",ENDSY,NOOP),
-	key_info("CONST",CONSTSY,NOOP),
-	key_info("ARRAY",ARRAYSY,NOOP),
-	key_info("UNTIL",UNTILSY,NOOP),
-	key_info("TYPE",TYPESY,NOOP),
-	key_info("RECORD",RECORDSY,NOOP),
-	key_info("OF",OFSY,NOOP),
-	key_info("VAR",VARSY,NOOP),
-	key_info("FILE",FILESY,NOOP),
-	key_info("THEN",THENSY,NOOP),
-	key_info("PROCEDURE",PROCSY,NOOP),
-	key_info("USES",USESSY,NOOP),
-	key_info("ELSE",ELSESY,NOOP),
-	key_info("FUNCTION",FUNCSY,NOOP),
-	key_info("UNIT",UNITSY,NOOP),
-	key_info("BEGIN",BEGINSY,NOOP),
-	key_info("PROGRAM",PROGSY,NOOP),
-	key_info("INTERFACE",INTERSY,NOOP),
-	key_info("IF",IFSY,NOOP),
-	key_info("SEGMENT",SEPARATSY,NOOP),
-	key_info("IMPLEMENTATION",IMPLESY,NOOP),
-	key_info("CASE",CASESY,NOOP),
-	key_info("FORWARD",FORWARDSY,NOOP),
-	key_info("EXTERNAL",EXTERNLSY,NOOP),
-	key_info("REPEAT",REPEATSY,NOOP),
-	key_info("NOT",NOTSY,NOOP),
-	key_info("OTHERWISE",OTHERSY,NOOP),
-	key_info("WHILE",WHILESY,NOOP),
-	key_info("AND",RELOP,ANDOP),
-	key_info("DIV",MULOP,IDIV),
-	key_info("MOD",MULOP,IMOD),
-	key_info("FOR",FORSY,NOOP),
-	key_info("OR",RELOP,OROP),
+	key_info("DO",SYMBOLS::DOSY,NOOP),
+	key_info("WITH",SYMBOLS::WITHSY,NOOP),
+	key_info("IN",SYMBOLS::SETSY,INOP),
+	key_info("TO",SYMBOLS::TOSY,NOOP),
+	key_info("GOTO",SYMBOLS::GOTOSY,NOOP),
+	key_info("SET",SYMBOLS::SETSY,NOOP),
+	key_info("DOWNTO",SYMBOLS::DOWNTOSY,NOOP),
+	key_info("LABEL",SYMBOLS::LABELSY,NOOP),
+	key_info("PACKED",SYMBOLS::PACKEDSY,NOOP),
+	key_info("END",SYMBOLS::ENDSY,NOOP),
+	key_info("CONST",SYMBOLS::CONSTSY,NOOP),
+	key_info("ARRAY",SYMBOLS::ARRAYSY,NOOP),
+	key_info("UNTIL",SYMBOLS::UNTILSY,NOOP),
+	key_info("TYPE",SYMBOLS::TYPESY,NOOP),
+	key_info("RECORD",SYMBOLS::RECORDSY,NOOP),
+	key_info("OF",SYMBOLS::OFSY,NOOP),
+	key_info("VAR",SYMBOLS::VARSY,NOOP),
+	key_info("FILE",SYMBOLS::FILESY,NOOP),
+	key_info("THEN",SYMBOLS::THENSY,NOOP),
+	key_info("PROCEDURE",SYMBOLS::PROCSY,NOOP),
+	key_info("USES",SYMBOLS::USESSY,NOOP),
+	key_info("ELSE",SYMBOLS::ELSESY,NOOP),
+	key_info("FUNCTION",SYMBOLS::FUNCSY,NOOP),
+	key_info("UNIT",SYMBOLS::UNITSY,NOOP),
+	key_info("BEGIN",SYMBOLS::BEGINSY,NOOP),
+	key_info("PROGRAM",SYMBOLS::PROGSY,NOOP),
+	key_info("INTERFACE",SYMBOLS::INTERSY,NOOP),
+	key_info("IF",SYMBOLS::IFSY,NOOP),
+	key_info("SEGMENT",SYMBOLS::SEPARATSY,NOOP),
+	key_info("IMPLEMENTATION",SYMBOLS::IMPLESY,NOOP),
+	key_info("CASE",SYMBOLS::CASESY,NOOP),
+	key_info("FORWARD",SYMBOLS::FORWARDSY,NOOP),
+	key_info("EXTERNAL",SYMBOLS::EXTERNLSY,NOOP),
+	key_info("REPEAT",SYMBOLS::REPEATSY,NOOP),
+	key_info("NOT",SYMBOLS::NOTSY,NOOP),
+	key_info("OTHERWISE",SYMBOLS::OTHERSY,NOOP),
+	key_info("WHILE",SYMBOLS::WHILESY,NOOP),
+	key_info("AND",SYMBOLS::RELOP,ANDOP),
+	key_info("DIV",SYMBOLS::MULOP,IDIV),
+	key_info("MOD",SYMBOLS::MULOP,IMOD),
+	key_info("FOR",SYMBOLS::FORSY,NOOP),
+	key_info("OR",SYMBOLS::RELOP,OROP),
+};
 };
 
 namespace SEARCH
@@ -116,7 +140,7 @@ namespace SEARCH
 	};
 	frame m_pFrame;
 	symbol_table *m_keywords;
-	key_info *get_key_info (int index);
+	pascal0::key_info *get_key_info (int index);
 	void RESET_SYMBOLS();
 	int IDSEARCH(int pos, char *&str);
 //	SYMBOL SY(token *t);
@@ -124,21 +148,17 @@ namespace SEARCH
 
 void SEARCH::RESET_SYMBOLS()
 {
-	bool test1,test2;
-	test1 = chartype::alpha.in('B');
-	test2 = chartype::alpha.in('$');
 	frame &f = SEARCH::m_pFrame;
 	symbol_table *t=NULL;
 	t = f.cons(keywords)->sort();
  	m_keywords = t;
 }
 
-key_info *SEARCH::get_key_info (int index)
+pascal0::key_info *SEARCH::get_key_info (int index)
 {
-	key_info *result;
+	pascal0::key_info *result;
 	ASSERT((index>=0)&&(index<=42));
-
-	result = &key_map[index];
+	result = &pascal0::key_map[index];
 	return result;
 }
 
@@ -146,19 +166,20 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 {
 #ifdef DEBUG_SEARCH
 	WRITE(OUTPUT,"\nSEARCH::IDSEARCH() ");
+	SEARCH::RESET_SYMBOLS();
 #endif
 
 	size_t i, len, sz;
 	bool found = false;
 	int syid = -1;
-	key_info result;
-	key_info *kp = key_map;
+	pascal0::key_info result;
+	pascal0::key_info *kp = pascal0::key_map;
 	char c1, buf[32];
 	char *str1=str+pos;
 	for (len=0;len<32;len++)
 	{
 		c1=str1[len];
-		if (!chartype::symbol.in(c1))
+		if (!chartypes::ident.in(c1))
 			break;
 	}
 	memcpy(buf,str1,len);
@@ -168,7 +189,6 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 	WRITELN (OUTPUT,"searching for \"",buf,"\"");
 #endif
 
-	SEARCH::RESET_SYMBOLS();
 	symbol_table &T = *SEARCH::m_keywords;
 	sz = T.size();
 	token *t;
@@ -178,7 +198,7 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 		len = strlen(t->ascii);
 		if (strcmp(buf,t->ascii)==0)
 		{
-			strcpy_s(result.ID,16,t->ascii);
+			strcpy_s(result.ID,IDENTSIZE,t->ascii);
 			found = true;
 			syid = t->m_index;
 			break;
@@ -202,9 +222,32 @@ int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
 	CTP ptr = n1;
 	bool found = false;
 	bool quit = false;
-	int test = 0; 
+	int test;
+	int i,j,k,l;
+	char c1, c2;
+	i = strlen(str);
 	do {
-		test = strcmp (str,ptr->NAME);
+		j = strlen(ptr->NAME);
+		if (i<j)
+			l=i;
+		else
+			l=j;
+		for (k=0;k<l;k++)
+		{
+			test = 0;
+			c1 = tolower(str[k]);
+			c2 = tolower(ptr->NAME[k]);
+			if (c1!=c2)
+			{
+				test = (c1>c2?1:-1);
+				break;
+			}
+		}
+	// if the string lengths are equal, we should be done
+	// but some of the symbols have trailing spaces??
+		if (((i<j)&&(test==0))&&(ptr->NAME[i]!=32))
+			test=-1;
+
 		if ((test<0)&&(ptr->LLINK!=NULL))
 			ptr = ptr->LLINK;
 		else if ((test>0)&&(ptr->RLINK!=NULL))
@@ -305,4 +348,60 @@ void PRINTTREE(const CTP &n1)
 	else
 		WRITE(OUTPUT,"nil");
 	WRITELN(OUTPUT,")");
+}
+
+void PRINTNODE1(const CTP &n1, size_t &N)
+{
+	CTP node;
+	node = n1;
+
+	if (node->LLINK!=NULL)
+	{
+		PRINTNODE1(node->LLINK,N);			
+	}
+	else
+	{
+		WRITE(OUTPUT,"<null>");
+	}
+	WRITE (OUTPUT,",\"",node->NAME,"\",");
+	if (node->RLINK!=NULL)
+	{
+		PRINTNODE1(node->RLINK,N);	
+	}
+	else
+	{
+		WRITE(OUTPUT,"null");
+//		N+=3;l
+	}
+	WRITE(OUTPUT,")");
+	N--;
+//	++N;
+}
+
+void PRINTTREE1(const CTP &n1)
+{
+	CTP node;
+	size_t lex = 0;
+	node = n1;
+	if (node==NULL)
+	{
+	WRITELN(OUTPUT,"TREE = NULL");
+	return;
+	}
+	WRITELN(OUTPUT,"TREE: IDTYPE = ",(int)n1->IDTYPE);
+	if (node->LLINK!=NULL)
+	{
+		PRINTNODE1(node->LLINK,lex);	
+	}
+	else
+		WRITE(OUTPUT,"null");
+
+	WRITE (OUTPUT,",\"",node->NAME,"\",");
+	if (node->RLINK!=NULL)
+	{
+		PRINTNODE1(node->RLINK,lex);	
+	}
+	else
+		WRITE(OUTPUT,"nulll");
+	WRITELN(OUTPUT);
 }
