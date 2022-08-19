@@ -44,8 +44,8 @@ identifier::identifier (char *str, STP ptr, IDCLASS idclass)
 	memset(this,0,sizeof(identifier));
 	if (str!=NULL)
 		strcpy_s(NAME,IDENTSIZE,str);
-	KLASS = idclass;
 	IDTYPE = ptr;
+	KLASS = idclass;
 	debug1(this,true);
 }
 

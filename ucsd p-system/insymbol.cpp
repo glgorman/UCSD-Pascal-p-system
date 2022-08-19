@@ -4,6 +4,7 @@
 #include "../Frame Lisp/btreetype.h"
 #include "compilerdata.h"
 
+//#define DEBUG_GETIDENT `1
 //#define IGNORE_ERRORS 1
 //#define DEBUG_INSYMBOL	1
 //#define DEBUG_RETRY		1
@@ -164,7 +165,7 @@ void PASCALSOURCE::GETNEXTPAGE()
 			if (read!=2)
 				options.USING=false; }
 		else if (USEFILE==SYSLIBRARY) {
-			read = SYSCOMM::BLOCKREAD(&LIBRARY,*m_src.SYMBUFP,2,blocks_read);
+			read = SYSCOMM::BLOCKREAD(LIBRARY,*m_src.SYMBUFP,2,blocks_read);
 			if (read!=2)
 				options.USING=false; }			
 		if (!options.USING) {
@@ -175,9 +176,9 @@ void PASCALSOURCE::GETNEXTPAGE()
 	if (!options.USING)
 	{
 		if (options.INCLUDING) {
-			read = SYSCOMM::BLOCKREAD(&INCLFILE,*m_src.SYMBUFP,2,blocks_read);
+			read = SYSCOMM::BLOCKREAD(INCLFILE,*m_src.SYMBUFP,2,blocks_read);
 			if (read!=2) {
-				SYSCOMM::CLOSE((FILE*)(&INCLFILE));
+				SYSCOMM::CLOSE((pascal_file*)(INCLFILE));
 				options.INCLUDING=false;
 				m_src.SYMBLK=m_src.OLDSYMBLK;
 				m_src.SYMCURSOR=m_src.OLDSYMCURSOR;
@@ -185,7 +186,7 @@ void PASCALSOURCE::GETNEXTPAGE()
 	}
 	if (!(options.INCLUDING||options.USING)) {
 		read = SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*m_src.SYMBUFP,2,blocks_read);
-		if (read!=2)
+		if (read==0)
 			CERROR(401);
 	}
 	if (m_src.SYMCURSOR==0)
@@ -212,7 +213,8 @@ void PASCALSOURCE::PRINTLINE()
 
    if (options.BPTONLINE)
 	   STARORC='*';
-   WRITE(OUTPUT,_LP._tmpfname,SCREENDOTS/*6**/,
+
+   WRITE(OUTPUT,USERINFO.WORKSYM->_tmpfname,SCREENDOTS/*6**/,
 	   (int)SEG/*4*/,
 	   (int)CURPROC,/*5,*/
 	   STARORC,
@@ -226,14 +228,14 @@ void PASCALSOURCE::PRINTLINE()
    if (A[0]==(char)(16/*DLE*/))
    {
        if (A[1]>' ')
-		   WRITE(OUTPUT,0,_LP._tmpfname," ",ORD(A[1])-ORD(' '));
+		   WRITE(OUTPUT,0,USERINFO.WORKSYM->_tmpfname," ",ORD(A[1])-ORD(' '));
        LENG=LENG-2;
        MOVELEFT((const char*)&A[2],A,LENG);
    };
    A[LENG-1]=char(EOL);
-   WRITE(OUTPUT,0,_LP._tmpfname,&A[0],LENG);
+   WRITE(OUTPUT,0,USERINFO.WORKSYM->_tmpfname,&A[0],LENG);
    if ((USERINFO.ERRBLK==m_src.SYMBLK)&&(USERINFO.ERRSYM>m_src.LINESTART))
-	   WRITELN(OUTPUT,0,_LP._tmpfname,">>>>>> Error # ",USERINFO.ERRNUM);
+	   WRITELN(OUTPUT,0,USERINFO.WORKSYM->_tmpfname,">>>>>> Error # ",USERINFO.ERRNUM);
 
 } /*PRINTLINE*/ ;
 
@@ -354,12 +356,12 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 				{
 					options.LIST=(SW=='+');
 					if (options.LIST)
-						SYSCOMM::OPENNEW(&_LP,"*SYSTEM.LST.TEXT");
+						SYSCOMM::OPENNEW(_LP,"*SYSTEM.LST.TEXT");
 				}
 				else
 				{
 					SCANSTRING(LTITLE,40,STOPPER);
-					SYSCOMM::OPENNEW(&_LP,LTITLE);
+					SYSCOMM::OPENNEW(_LP,LTITLE);
 					options.LIST=SYSCOMM::IORESULT()==0;
 					return;
 				};
@@ -370,7 +372,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 				break;
 				
 			case 'P':
-				WRITE(OUTPUT,_LP._tmpfname,(char)(12/*FF*/));
+				WRITE(OUTPUT,USERINFO.WORKSYM->_tmpfname,(char)(12/*FF*/));
 				break;
 				
 			case 'R':
@@ -397,7 +399,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 					if (!options.USING)
 					{
 						SCANSTRING(SYSTEMLIB,40,STOPPER);
-						SYSCOMM::CLOSE(&LIBRARY);
+						SYSCOMM::CLOSE(LIBRARY);
 						options.LIBNOTOPEN=true;
 						return;
 					}
@@ -447,16 +449,19 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			GETNEXTPAGE();
 			CH = PEEK();
 		}
-		if (CH==')')
-		{				
+		if ((STOPPER=='*')&&(CH==')'))
+		{	
+			CH=GETC();
 			resume=true;
 			break;
 		}
+		if (STOPPER=='}')
+		{
+			resume = true;
+			break;
+		}
 	}
-	while (resume==false);
-	CH=GETC();
-	ASSERT(CH==')');
-
+	while (resume==false);	
 } /*COMMENTER*/
 
 void PASCALSOURCE::SCANSTRING(char *STRG, int MAXLENG, char STOPPER)
@@ -686,7 +691,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 
 void PASCALSOURCE::WRITETEXT()
 {
-	MOVELEFT(m_src.SYMBUFP[m_src.SYMCURSOR],CODEP[0],1024);
+	MOVELEFT(m_src.SYMBUFP[m_src.SYMCURSOR],(char*)CODEP[0],1024);
 	if (USERINFO.ERRNUM==0)
        if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,2,CURBLK)!=2)
          CERROR(402);
@@ -700,6 +705,10 @@ void PASCALSOURCE::GETIDENT()
 	int index,i;
 	pascal0::key_info *key;
 	int val = m_src.SYMCURSOR;
+#ifdef DEBUG_GETIDENT
+		WRITELN(OUTPUT);
+		WRITELN(OUTPUT,"PASCALSOURCE::GETIDENT1: \"",ID,"\" ");
+#endif
 	index = SEARCH::IDSEARCH(val,(char*&)(m_src.SYMBUFP));
 	if (index!=-1)
 	{
@@ -710,8 +719,8 @@ void PASCALSOURCE::GETIDENT()
 		len = strlen(key->ID);
 		strcpy_s(ID,IDENTSIZE,key->ID);
  		m_src.SYMCURSOR = m_src.SYMCURSOR+(int)len;
-#ifdef DEBUG_INSYMBOL
-		WRITELN(OUTPUT,"FOUND: \"",ID,"\" ");
+#ifdef DEBUG_GETIDENT
+		WRITELN(OUTPUT,"found keyword: \"",ID,"\" ");
 #endif
 	}
 	else
@@ -729,10 +738,9 @@ void PASCALSOURCE::GETIDENT()
 				break;
 		}
 		m_src.SYMCURSOR--;
-//#ifdef DEBUG_INSYMBOL
-		WRITELN(OUTPUT);
-		WRITELN(OUTPUT,"GETIDENT: identifier: \"",ID,"\" ");
-//#endif
+#ifdef DEBUG_GETIDENT
+		WRITELN(OUTPUT,"found identifier: \"",ID,"\" ");
+#endif
 	}
 }
 
@@ -813,8 +821,13 @@ retry:
 		result = GETOPERATOR();
 		if (result==false)
 			SY=SYMBOLS::OTHERSY;
-		if (SY==SYMBOLS::COMMENTSY) {
-			COMMENTER('*');
+		if (SY==SYMBOLS::COMMENTSY)
+		{
+			if (ID[1]=='*')
+				CH='*';
+			else
+				CH='}';
+			COMMENTER(CH);
 			goto retry;
 		}
 	}
@@ -920,10 +933,6 @@ void PASCALSOURCE::INSYMBOL()
 // then grab characters from a shadow
 // node_list<char*>
 			GETNEXTPAGE();
-		}
-		catch (EXIT_CODE E)
-		{
-//			ASSERT(false);
 		}
 	}
 }

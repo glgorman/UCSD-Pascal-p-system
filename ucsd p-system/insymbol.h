@@ -4,11 +4,6 @@
 #include <memory>
 #include <vector>
 
-//#include "../Frame Lisp/symbol_table.h"
-//#include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
 #include "../Frame Lisp/intrinsics.h"
 #include "../Frame Lisp/range.h"
 #include "../Frame Lisp/sets.h"
@@ -22,7 +17,7 @@ using namespace std;
 #define MAXDEC		36
 #define EOL			13
 #define MAXCURSOR	1023
-#define MAXCODE		1299
+#define MAXCODE		4095
 
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
@@ -41,7 +36,7 @@ class structure;
 typedef structure*	STP;
 typedef char ALPHA[IDENTSIZE+1];
 typedef char SYMBUFARRAY[MAXCURSOR+1];
-typedef char CODEARRAY[MAXCODE+1];
+typedef unsigned char CODEARRAY[MAXCODE+1];
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
 void PRINTTREE(const CTP &n1);
@@ -79,11 +74,13 @@ typedef enum _CSTCLASS
 	MAXCST,
 } CSTCLASS;
 
+#if 0
 typedef enum _UNITFILE
 {
 	WORKCODE,
 	SYSLIBRARY,
 } UNITFILE;
+#endif
 
 class CONSTREC;
 typedef CONSTREC*	CSP;
@@ -155,7 +152,7 @@ struct key_info
 class INFOREC
 {
 public:
-	FILE *WORKSYM, *WORKCODE;
+	pascal_file *WORKSYM, *WORKCODE;
 	int ERRSYM,ERRBLK,ERRNUM;
 	bool SLOWTERM,STUPID;
 	char ALTMODE;
@@ -216,10 +213,13 @@ struct // _options
 	 
 	char		SYSTEMLIB[MAXDIRLEN];
 	char		*COMMENT;
-	FILE		_LP;
-	FILE		LIBRARY;
-	FILE		INCLFILE;
-	UNITFILE	USEFILE;
+	pascal_file		*_LP;
+	pascal_file		*LIBRARY;
+	pascal_file		*INCLFILE;
+	pascal_file		*USEFILE;
+	pascal_file		*WORKCODE;
+	pascal_file		*UNITFILE;
+	pascal_file		*SYSLIBRARY;
 
 	INFOREC		USERINFO;
 	ADDRRANGE	LC,IC;			/*LOCATION AND INSTRUCT COUNTERS*/

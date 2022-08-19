@@ -30,7 +30,7 @@ class PROCDECLARATION;
 #endif
 
 private:
-	void debug_stack (stack_frame *ptr);
+	void debug_stack (char *src, stack_frame *ptr);
 	void TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);
 		bool PACKABLE(stack_frame *param, STP FSP);
 		void FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR);

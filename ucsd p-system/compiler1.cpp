@@ -56,8 +56,8 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 //	end = SYMBOLS::STRINGCONST;
 //	begin = SYMBOLS::IFSY;
 //	end = SYMBOLS::THENSY;
-	begin = SYMBOLS::INTCONST;
-	end = SYMBOLS::INTCONST;
+	begin = SYMBOLS::PROCSY;
+	end = SYMBOLS::SEMICOLON;
 
 	DWORD t0, t1;
 	t0 = GetTickCount();
@@ -85,19 +85,19 @@ void PASCALSOURCE::SOURCE_DUMP ()
 	char *buff1, *buff2;
 	int line;
 	line = 0;
-	if (SYSCOMM::m_source==NULL)
+	if (USERINFO.WORKSYM==NULL)
 	{
 		WRITELN(OUTPUT,"NULL source file");
 		return;
 	}
-	else if ((*SYSCOMM::m_source).size()==0)
+	else if (USERINFO.WORKSYM->size()==0)
 	{
 		WRITELN(OUTPUT,"Empty source file");
 		return;
 	}
 	else do
 	{
-		buff1 = (*SYSCOMM::m_source)[line];
+		buff1 = USERINFO.WORKSYM->get_sector (line);
 		source = buff1;
 //		buf2=buff1;
 		eliza.process = source;
@@ -237,8 +237,9 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 	size_t sz = 0;
 	size_t max_symbol;
 	max_symbol = m_symbols.size()-1;
-	do
-	{
+	
+	try {
+loop:
 		INSYMBOL();
 		ASSERT((SY>=0)&&(SY<SYMBOLS::MAXSYMBOL));
 		p.SY = SY;
@@ -267,13 +268,89 @@ int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
 			m_symbols.resize (sz+1024);
 			max_symbol = m_symbols.size()-1;
 		}
-//		if (sz>34000)
-//			break;
+		goto loop;
 	}
-	while (SY!=SYMBOLS::OTHERSY);
+	catch (EXIT_CODE E)
+	{
+		if (E.err!=401)
+			throw(E);
+		else
+		{
+			WRITELN(OUTPUT,"Emd of file: <",sz,"> symbols read.");
+		}
+	}
 	return (int) sz;
 }
 
+void DECLARATIONPART::debug_stack (char *src, stack_frame *ptr)
+{
+union
+{
+  struct /*locals*/
+  {
+	STP			FSP;
+	STP			LSP,LSP1,LSP2;
+	DISPRANGE	OLDTOP;
+	CTP			LCP,LAST;
+	ADDRRANGE	LSIZE,DISPL;
+	int			LMIN,LMAX;
+	bool		PACKING;
+	BITRANGE	NEXTBIT,NUMBITS;
+  };
+  char fp[sizeof(stack_frame)];
+};
+	WRITELN (OUTPUT,"#### ",src," ####");
+	memcpy (fp,ptr,sizeof(stack_frame));
+	char hexval[16];
+	sprintf_s(hexval,"%08x",FSP);
+	if (FSP!=NULL)
+		WRITELN (OUTPUT,"FSP:     ",hexval);
+	sprintf_s(hexval,"%08x",LSP);
+	if (LSP!=NULL)
+		WRITELN (OUTPUT,"LSP:     ",hexval);
+	sprintf_s(hexval,"%08x",LSP1);
+	if (LSP1!=NULL)
+		WRITELN (OUTPUT,"LSP1:    ",hexval);
+	sprintf_s(hexval,"%08x",LSP2);
+	if (LSP2!=NULL)
+		WRITELN (OUTPUT,"LSP2:    ",hexval);
+	sprintf_s(hexval,"%08x",OLDTOP);
+	if (OLDTOP!=NULL)
+		WRITELN (OUTPUT,"OLDTOP:  ",hexval);
+	if (LCP!=NULL)
+	{
+		sprintf_s(hexval,"%08x",LCP);
+		WRITELN (OUTPUT,"LCP:     ",hexval);
+		PRINTTREE1(LCP);
+	}
+	if (LAST!=NULL)
+	{
+		sprintf_s(hexval,"%08x",LAST);
+		WRITELN (OUTPUT,"LAST:     ",hexval);
+		PRINTTREE1(LAST);
+	}
+	sprintf_s(hexval,"%08x",LSIZE);
+	if (LSIZE!=NULL)
+		WRITELN (OUTPUT,"LSIZE:   ",hexval);
+	sprintf_s(hexval,"%08x",DISPL);
+	if (DISPL!=NULL)
+		WRITELN (OUTPUT,"DISPL:   ",hexval);
+	sprintf_s(hexval,"%08x",LMIN);
+	if (LMIN!=NULL)
+		WRITELN (OUTPUT,"LMIN:    ",hexval);
+	sprintf_s(hexval,"%08x",LMAX);
+	if (LMAX!=NULL)
+		WRITELN (OUTPUT,"LMAX:    ",hexval);
+	sprintf_s(hexval,"%08x",PACKING);
+	if (PACKING!=NULL)
+		WRITELN (OUTPUT,"PACKING: ",hexval);
+	sprintf_s(hexval,"%08x",NEXTBIT);
+	if (NEXTBIT!=NULL)
+		WRITELN (OUTPUT,"MEXTBIT: ",hexval);
+	sprintf_s(hexval,"%08x",NUMBITS);
+	if (NUMBITS!=NULL)
+		WRITELN (OUTPUT,"NUMBITS: ",hexval);
+}
 
 
 

@@ -465,13 +465,13 @@ protected:
 
 // bodypart
 public:
-	FILE	REFFILE;
+	pascal_file	*REFFILE;
     int NREFS,REFBLK;
 	REFARRAY	*REFLIST;
 
 protected:	
-	int			CURBYTE;
-    char		DISKBUF[512];
+	int				CURBYTE;
+    unsigned char	DISKBUF[512];
 
 protected:
 	// declared in PASCALCOMPILER, but called from

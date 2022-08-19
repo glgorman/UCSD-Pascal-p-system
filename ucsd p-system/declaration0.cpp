@@ -28,26 +28,6 @@ DECLARATIONPART::TYP::TYP(DECLARATIONPART *ptr)
 }
 #endif
 
-void DECLARATIONPART::debug_stack (stack_frame *ptr)
-{
-union
-{
-  struct /*locals*/
-  {
-	STP			FSP;
-	STP			LSP,LSP1,LSP2;
-	DISPRANGE	OLDTOP;
-	CTP			LCP;
-	ADDRRANGE	LSIZE,DISPL;
-	int			LMIN,LMAX;
-	bool		PACKING;
-	BITRANGE	NEXTBIT,NUMBITS;
-  };
-  char fp[sizeof(stack_frame)];
-};
-	memcpy (fp,ptr,sizeof(stack_frame));	
-//	ASSERT(0);
-}
 
 void DECLARATIONPART::USESDECLARATION(bool MAGIC)
 {

@@ -1,11 +1,6 @@
 
 #include "stdafx.h"
-
-//#include "../Frame Lisp/symbol_table.h"
 #include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -14,8 +9,10 @@
 
 void COMPILERDATA::ENTERID(CTP FCP)
 {
+#if 0
 	WRITELN(OUTPUT,"PASCALCOMPILER::ENTERID: ");
 	WRITELN(OUTPUT,"FCP->NAME = \"",FCP->NAME,'"');
+#endif
 
 	CTP LCP,LCP1;
 	int I;
@@ -369,11 +366,10 @@ void COMPINIT::ENTSPCPROCS()
 			idclass=FUNC;
 		else
 			idclass=PROC1;
-		LCP = (identifier*) new identifier(idclass);
+		LCP = (identifier*) new identifier(NA[I],NULL,idclass);
 		LCP->PFDECKIND = SPECIAL;
-		strcpy_s(LCP->NAME,IDENTSIZE,NA[I]);
-		LCP->NEXT=NULL;
-		LCP->IDTYPE=NULL;
+		//LCP->NEXT=NULL;
+		//LCP->IDTYPE=NULL;
 		LCP->KEY=I;	
          m_ptr->ENTERID(LCP);
 	}
@@ -559,7 +555,7 @@ void COMPINIT::INITSCALARS()
 	 m_ptr->options.INCLUDING=false;
 	 m_ptr->options.USING=false;
 	 I=SEEK;
-	 while (I<=DECOPS)
+	 while (I<MAXNONRESIDENT)
 	 {
 		 m_ptr->PFNUMOF[I]=0;
 		 I = (NONRESIDENT)(I+1);
@@ -620,6 +616,14 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->DISPLAY[0].OCCUR = BLCK;
 	m_ptr->SMALLESTSPACE=MEMAVAIL();
 
+//	we are reading in the file via windows MFC
+//	so the whole thing is stored in a vector<char*>
+//	this will reset the iterator, so that we can make
+//	consecutive calls to BLOCKREAD via GETNEXTPAGE and
+//	INSYMBOL, just like the way the original code was
+//	written.
+
+	SYSCOMM::RESET (m_ptr->USERINFO.WORKSYM,NULL);
 	m_ptr->GETNEXTPAGE();
 	m_ptr->INSYMBOL();
 
@@ -649,18 +653,14 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->LC=m_ptr->LC+2;
 	m_ptr->GLEV=3; /*KEEP STACK STRAIGHT FOR NOW*/
       
-	m_ptr->OUTERBLOCK = new identifier(PROC1);
+	m_ptr->OUTERBLOCK = new identifier("PROGRAM ",NULL,PROC1);
 	m_ptr->OUTERBLOCK->PFDECKIND=DECLARED;
 	m_ptr->OUTERBLOCK->PFKIND=ACTUAL;
-
 	m_ptr->OUTERBLOCK->NEXT=NULL;
 	m_ptr->OUTERBLOCK->LOCALLC=m_ptr->LC;
-    strcpy_s(m_ptr->OUTERBLOCK->NAME,IDENTSIZE,"PROGRAM ");
-	m_ptr->OUTERBLOCK->IDTYPE=NULL;
 	m_ptr->OUTERBLOCK->PFLEV=0;
 	m_ptr->OUTERBLOCK->PFNAME=1;
 	m_ptr->OUTERBLOCK->PFSEG=m_ptr->SEG;
-	
 	m_ptr->OUTERBLOCK->FORWDECL=false;
 	m_ptr->OUTERBLOCK->EXTURNAL=false;
 	m_ptr->OUTERBLOCK->INSCOPE=true;
@@ -673,7 +673,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 		   strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,16,m_ptr->ID);
            if (m_ptr->OUTERBLOCK!=NULL)
 		   {
-				strcpy_s(m_ptr->OUTERBLOCK->NAME,16,m_ptr->ID);
+				strcpy_s(m_ptr->OUTERBLOCK->NAME,IDENTSIZE,m_ptr->ID);
 				m_ptr->ENTERID(m_ptr->OUTERBLOCK); /*ALLOWS EXIT ON PROGRAM NAME*/
            }
 	   }
@@ -685,19 +685,19 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	PRINTTREE1(m_ptr->DISPLAY[0].FNAME);
 #endif
 
-	   m_ptr->INSYMBOL();
-	   SETOFSYS SPECIAL = SETOFSYS(2,SYMBOLS::RPARENT,SYMBOLS::SEMICOLON)
+		m_ptr->INSYMBOL();
+		SETOFSYS SPECIAL = SETOFSYS(2,SYMBOLS::RPARENT,SYMBOLS::SEMICOLON)
 		   +m_ptr->BNF::BLOCKBEGSYS;
-	   if (m_ptr->SY==SYMBOLS::LPARENT)
-	   {
+		if (m_ptr->SY==SYMBOLS::LPARENT)
+		{
 			do
 				m_ptr->INSYMBOL();
 			while (!SPECIAL.in(m_ptr->SY));
-			if (m_ptr->SY==SYMBOLS::RPARENT)
-				m_ptr->INSYMBOL();
-			else
-				m_ptr->CERROR(4);
-	   }
+				if (m_ptr->SY==SYMBOLS::RPARENT)
+					m_ptr->INSYMBOL();
+				else
+					m_ptr->CERROR(4);
+		}
 		if (m_ptr->SY==SYMBOLS::SEMICOLON)
 			m_ptr->INSYMBOL();
 		else
@@ -716,7 +716,6 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
    m_ptr->TOS->POLDPROC=m_ptr->CURPROC;
    m_ptr->TOS->ISSEGMENT=false;
    m_ptr->TOS->DMARKP=m_ptr->MARKP;
-
 } /*COMPINIT*/
 
 void PASCALCOMPILER::DECLARATIONS(SETOFSYS FSYS)
@@ -795,20 +794,35 @@ void COMPILERDATA::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 	ptr->PASCALCOMPILER::SEARCHID(FIDCLS,FCP);
 }
 
+void TRAP1 (char *str1, char *str2)
+{
+	if (strcmp(str1,str2)==0)
+		ASSERT(false);
+}
+
+void TRAP2 (char *str1, char *str2, CTP LCP0)
+{
+	if (strcmp(str1,str2)==0)
+		PRINTTREE1(LCP0);
+}
+
 void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 {
-	CTP LCP, LCP1;
+	CTP LCP = NULL;
+	CTP LCP1 = NULL;
 	int status = false;
 	WRITELN(OUTPUT);
 	::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
 	WRITELN(OUTPUT,"Searching for: \"",ID,"\" in SETOFIDS ");
+	TRAP1(ID,"ACTUALVARS");
+	
 	FIDCLS.debug_list ();
 
 	for (DISX=TOP;DISX>=0;DISX--)
 	{
 		LCP=DISPLAY[DISX].FNAME;
 		LCP1 = NULL;
-//		PRINTTREE1(LCP);
+		TRAP2(ID,"ACTUALVARS",LCP);
 		if (LCP!=NULL)
 		{
 			status = (TREESEARCH(LCP,LCP1,ID)==0?true:false);
@@ -842,10 +856,11 @@ void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 		else
 			LCP=UFCTPTR;
 	}
-	found: FCP=LCP;
-#if 1
+found:
 	if (LCP!=NULL)
-		identifier::debug1(LCP,false);
+		FCP=LCP1;
+#if 1
+	identifier::debug1(LCP1,false);
 #endif
 } /*SEARCHID*/ ;
 
@@ -870,7 +885,8 @@ void PASCALCOMPILER::GETBOUNDS(STP FSP, int &FMIN, int &FMAX)
 
 void PASCALSOURCE::SKIP(const SETOFSYS &FSYS)
 {
-	WRITELN(OUTPUT,"PSCALCOMPILER::SKIP ... ");
+	WRITE(OUTPUT,"PSCALCOMPILER::SKIP ... ");
+	FSYS.debug_list ("<skip_set> = ");
   	while (!FSYS.in(SY))
 		INSYMBOL();
 }
@@ -1023,13 +1039,14 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
 bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 {
 	bool result;
-	bool COMP;
 	CTP	NXT1,NXT2;
+	bool COMP;
 	TESTP LTESTP1,LTESTP2;
 
 	if ((FSP1==FSP2)||(FSP1==NULL)||(FSP2==NULL))
 		result=true;
-	else if (FSP1->FORM==FSP2->FORM)
+	else
+	if (FSP1->FORM==FSP2->FORM)
 		switch (FSP1->FORM)
 		{
 			case SCALAR:
@@ -1049,17 +1066,17 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 					{
 						COMP=true;
 						LTESTP1=LTESTP1->LASTTESTP;
-					};
+					}
 					if (!COMP)
 					{
 						LTESTP1 = (TESTPOINTER*) new TESTPOINTER;
 						LTESTP1->ELT1=FSP1->ELTYPE;
 						LTESTP1->ELT2=FSP2->ELTYPE;
 						LTESTP1->LASTTESTP=GLOBTESTP;
-					};
+					}
 					GLOBTESTP=LTESTP1;
 					COMP=COMPTYPES(FSP1->ELTYPE,FSP2->ELTYPE);
-				};
+				}
 				result=COMP;
 				GLOBTESTP=LTESTP2;
 				break;
@@ -1089,7 +1106,7 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 					result = COMPTYPES(NXT1->IDTYPE,NXT2->IDTYPE);
 					NXT1=NXT1->NEXT;
 					NXT2=NXT2->NEXT;
-				};
+				}
 				result=COMP&&(NXT1==NULL)&&(NXT2==NULL)
 				   &&(FSP1->RECVAR==NULL)&&(FSP2->RECVAR==NULL);
 				break;
@@ -1141,23 +1158,30 @@ void PASCALCOMPILER::GENWORD(int FWORD)
 	IC++;
 }
 
+#define FORCE_OUTPUT 1
+
 void PASCALCOMPILER::WRITECODE(bool FORCEBUF)
 {
 	/*FORCEBUF: bool*/;
 	int CODEINX,LIC,I;
 	CODEINX=0;
 	LIC=IC;
+	char *ptr1, *ptr2;
 	do {
        I=512-CURBYTE;
        if (I>LIC)
 		   I=LIC;
-       MOVELEFT((char*)(&CODEP[CODEINX]),(char*)(&DISKBUF[CURBYTE]),I);
+	   ptr1 = (char*)&((*CODEP)[CODEINX]);
+	   ptr2 = (char*)&(DISKBUF[CURBYTE]);
+       MOVELEFT(ptr1,ptr2,I);
        CODEINX=CODEINX+I;
        CURBYTE=CURBYTE+I;
        if ((CURBYTE==512)||FORCEBUF)
 	   {
+#ifndef FORCE_OUTPUT
 		   if (USERINFO.ERRNUM==0)
-			   if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,CURBLK)!=1)
+#endif
+		if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,CURBLK)!=1)
 				CERROR(402);
            CURBLK=CURBLK+1;
 		   CURBYTE=0;
@@ -1262,8 +1286,14 @@ void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
 						FINISHSEG();
 						return;
 					}
+		// what do we do about infinite
+		// loop cycling between error 13 and
+		// error 17?
+
 			if (SY==SYMBOLS::BEGINSY)
 				INSYMBOL();
+			else if (SY==SYMBOLS::PERIOD)
+				return; // added - now what?
 			else
 				CERROR(17);
 			do
@@ -1282,7 +1312,7 @@ void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
 						(options.INMODULE&& (SY==SYMBOLS::ENDSY));
 				}
 			}
-			while (!(BFSYFOUND)||BNF::BLOCKBEGSYS.in(SY));
+			while (!(BFSYFOUND)&&!(BNF::BLOCKBEGSYS.in(SY)));
 			if (!BFSYFOUND)
 			{
 				if (TOS->BFSY==SYMBOLS::SEMICOLON)
@@ -1307,8 +1337,8 @@ void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
 				else
 					goto fail;
 			else
-fail:		{
-				if (TOS->DFPROCP!=NULL)
+			{
+fail:			if (TOS->DFPROCP!=NULL)
 					(TOS->DFPROCP)->INSCOPE=false;
 				if (TOS->ISSEGMENT)
 				{
@@ -1323,15 +1353,15 @@ fail:		{
 					{
 						SEGTABLE[SEG].SEGKIND=2;
 						WRITELINKERINFO(false);
-					};
+					}
 					NEXTPROC=TOS->SOLDPROC;
 					SEG=TOS->DOLDSEG;
-				};
+				}
 				LEVEL=TOS->DOLDLEV;
 				TOP=TOS->DOLDTOP;
 				LC=TOS->DLLC;
 				CURPROC=TOS->POLDPROC;
-			};
+				}
 #if 0
 	//NOT USING THE PASCAL HEAP --- YET!
 			RELEASE(TOS->DMARKP);
@@ -1340,12 +1370,12 @@ fail:		{
 			
 			NEWBLOCK=SETOFSYS((3),SYMBOLS::PROCSY,SYMBOLS::FUNCSY,
 				SYMBOLS::PROGSY).in(SY);
+			}
 		}
-	}
-	else
-	{
-		DECLARATIONS(FSYS);
-		if (LEVEL==0)
+		else
+		{
+			DECLARATIONS(FSYS);
+			if (LEVEL==0)
 			if (SETOFSYS((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY).in(SY))
 			{
 				UNITPART(FSYS + SETOFSYS((4),SYMBOLS::UNITSY,
@@ -1354,7 +1384,8 @@ fail:		{
 					SYMBOLS::PROGSY).in(SY))
 					DECLARATIONPART::MAIN(FSYS);
 			}
-	}}
+		}
+	}
 	while (!TOS==NULL);
 	FINISHSEG();
 }
@@ -1412,7 +1443,7 @@ int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 		SEGTABLE[(int)SEG].SEGKIND=1;
 		WRITELINKERINFO(true);
 	};
-	SYSCOMM::CLOSE(&_LP,LOCK);
+	SYSCOMM::CLOSE(_LP,LOCK);
 	if (options.NOISY)
 		WRITELN(OUTPUT);
 	
