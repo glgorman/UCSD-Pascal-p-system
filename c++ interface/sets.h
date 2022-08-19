@@ -30,6 +30,8 @@ public:
 	inline bool in(int s) const
 	{
 		bool result;
+		if ((s>=SETSZ<<5)||(s<0))
+			return false;
 		int i, j;
 		i = s>>5;
 		j = s&0x1f;
@@ -60,11 +62,11 @@ public:
 	SETOFSYS();
 	SETOFSYS(const SET&);
 	SETOFSYS(size_t,...);
-	SETOFSYS &operator = (const SET&);
+	SETOFSYS &operator = (const SETOFSYS&);
+	SETOFSYS operator + (const SETOFSYS&) const;
 	SETOFSYS &operator += (int);
 	SETOFSYS &operator -= (int);
 	SETOFSYS operator + (int) const;
-	SETOFSYS operator + (const SETOFSYS&) const;
 	void debug_list (char *str="") const;
 };
 
@@ -72,11 +74,12 @@ class SETOFIDS: public SET<128>
 {
 public:
 	SETOFIDS();
-	SETOFIDS(const SET&);
+	SETOFIDS(const SETOFIDS&);
 	SETOFIDS(size_t,...);
+	SETOFIDS &operator = (const SETOFIDS&);
+	SETOFIDS operator + (const SETOFIDS&) const;
 	SETOFIDS operator + (int) const;
 	SETOFSYS &operator += (int);
-	SETOFIDS &operator = (const SET &);
 	void debug_list (char *str="") const;
 };
 

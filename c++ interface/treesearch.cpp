@@ -17,7 +17,7 @@
 #include "../p-system compiler/bodypart.h"
 #include "../p-system compiler/compiler.h"
 
-//#define DEBUG_SEARCH
+// #define DEBUG_SEARCH
 
 // DEFINED IN COMPILER.H
 
@@ -74,7 +74,7 @@ key_info operators[] =
 	key_info("",SYMBOLS::OTHERSY,NOOP),
 };
 
-key_info key_map[] =
+key_info keywords [] =
 {
 	key_info("DO",SYMBOLS::DOSY,NOOP),
 	key_info("WITH",SYMBOLS::WITHSY,NOOP),
@@ -158,22 +158,22 @@ pascal0::key_info *SEARCH::get_key_info (int index)
 {
 	pascal0::key_info *result;
 	ASSERT((index>=0)&&(index<=42));
-	result = &pascal0::key_map[index];
+	result = &pascal0::keywords [index];
 	return result;
 }
 
 int SEARCH::IDSEARCH(int pos, char *&str)
 {
+//	SEARCH::RESET_SYMBOLS();
 #ifdef DEBUG_SEARCH
-	WRITE(OUTPUT,"\nSEARCH::IDSEARCH() ");
-	SEARCH::RESET_SYMBOLS();
+	WRITE(OUTPUT,"\nSEARCH::IDSEARCH --> ");
 #endif
 
 	size_t i, len, sz;
 	bool found = false;
 	int syid = -1;
 	pascal0::key_info result;
-	pascal0::key_info *kp = pascal0::key_map;
+	pascal0::key_info *kp = pascal0::keywords;
 	char c1, buf[32];
 	char *str1=str+pos;
 	for (len=0;len<32;len++)
@@ -206,9 +206,9 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 	}
 #ifdef DEBUG_SEARCH
 	if (found==true)
-		WRITELN(OUTPUT,"FOUND \"",result.ID,"\"\n");
+		WRITELN(OUTPUT,"FOUND \"",result.ID,"\"");
 	else
-		WRITELN(OUTPUT,"NOT FOUND \"",buf,"\"\n");
+		WRITELN(OUTPUT,"NOT FOUND \"",buf,"\"");
 #endif
 	return syid;
 }
@@ -228,24 +228,33 @@ int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
 	i = strlen(str);
 	do {
 		j = strlen(ptr->NAME);
-		if (i<j)
+		if (i>j)
 			l=i;
 		else
 			l=j;
+	
+	
 		for (k=0;k<l;k++)
 		{
 			test = 0;
 			c1 = tolower(str[k]);
 			c2 = tolower(ptr->NAME[k]);
+// some of the symbols have trailing spaces, which means
+// that one string will have a terminatinng null while
+// the other will have a trailing space, but only when
+// the lengths are unequal.
+			if ((c1==0)&&(c2==32)
+				||(c2==0)&&(c1==32))
+				break;
+// perfectly safe to compare the terminating zero with
+// any other characther in the regular fashion.
 			if (c1!=c2)
 			{
 				test = (c1>c2?1:-1);
 				break;
 			}
 		}
-	// if the string lengths are equal, we should be done
-	// but some of the symbols have trailing spaces??
-		if (((i<j)&&(test==0))&&(ptr->NAME[i]!=32))
+		if (((i<j)&&(test==0))&&(ptr->NAME[k]!=32))
 			test=-1;
 
 		if ((test<0)&&(ptr->LLINK!=NULL))
@@ -264,7 +273,7 @@ int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
 	}
 	while (quit==false);
 	n2 = ptr;
-#if 0
+#if DEBUG_TREESEARCH
 	WRITELN (OUTPUT," returning ",test);
 #endif
 	return test;
@@ -373,7 +382,7 @@ void PRINTNODE1(const CTP &n1, size_t &N)
 		WRITE(OUTPUT,"null");
 //		N+=3;l
 	}
-	WRITE(OUTPUT,")");
+//	WRITE(OUTPUT,")");
 	N--;
 //	++N;
 }

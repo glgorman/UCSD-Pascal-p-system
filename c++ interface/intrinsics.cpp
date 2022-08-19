@@ -6,6 +6,38 @@
 #define PAGESZ (4096)
 #define	BLOCKSIZE	(512)
 
+pascal_file::pascal_file ()
+{
+	blocks_read = 0;
+	_tmpfname = "";
+	m_source = new vector<char*>;
+	m_source->reserve (2048);
+}
+
+size_t pascal_file::size ()
+{
+	size_t result;
+	result = m_source->size();
+	return result;
+}
+
+void pascal_file::append (char *str)
+{
+	size_t sz = m_source->size();
+	m_source->resize(sz+1);
+	m_source->at (sz) = str;
+}
+
+char *pascal_file::get_sector (int n)
+{
+	char *str;
+	size_t sz = m_source->size();
+	if (n>=sz)
+		return NULL;
+	str = m_source->at (n);
+	return str;
+}
+
 EXIT_CODE::EXIT_CODE(char*str)
 {
 	m_edit = false;
@@ -29,15 +61,6 @@ EXIT_CODE::EXIT_CODE(int n, bool edit)
 		j++;
 	}
 }
-
-namespace SYSCOMM
-{
-using namespace std;
-	vector<char*>::iterator m_pos;
-	vector<char*>::iterator m_end;
-	vector<char*> *m_source;
-};
-
 
 // 16MB sounds good for now
 // TODO make something reasonable
@@ -461,22 +484,28 @@ void SYSCOMM::OutputDebugString (const char *str)
 //	Sleep(1);
 }
 
-void SYSCOMM::OPENNEW(struct _iobuf *,char *)
+void SYSCOMM::OPENNEW(pascal_file *file,char *)
 {
-	m_pos = (*m_source).begin();
+	vector<char*> *source = file->m_source;
+	vector<char*>::iterator &iter = source->begin();
+	file->m_pos = iter;
 }
 
-void SYSCOMM::REWRITE(struct _iobuf *,char *)
+void SYSCOMM::REWRITE(pascal_file *,char *)
 {
-	m_pos = (*m_source).begin();
+	ASSERT(false);
 }
 
-void SYSCOMM::RESET(FILE*,char*)
+void SYSCOMM::RESET(pascal_file *file,char*)
 {
-	ASSERT(0);
+	vector<char*> *source = file->m_source;
+	vector<char*>::iterator &iter = source->begin();
+	file->m_begin = iter;
+	file->m_pos = iter;
+	file->blocks_read = 0;
 }
 
-int SYSCOMM::CLOSE(FILE *f,bool)
+int SYSCOMM::CLOSE(pascal_file *f,bool)
 {
 // 	ASSERT(0);
 	return 0;
@@ -541,9 +570,12 @@ bool SYSCOMM::IORESULT(void)
 	return true;
 }
 
-void SYSCOMM::OPENOLD(struct _iobuf *,char *)
+void SYSCOMM::OPENOLD(pascal_file *file,char *)
 {
-	m_pos = (*m_source).begin();
+	vector<char*> *source = file->m_source;
+	vector<char*>::iterator &iter = source->begin();
+	file->blocks_read = 0;
+	file->m_pos = iter;
 }
 
 int SYSCOMM::UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK, DWORD MODE)
@@ -566,47 +598,87 @@ int SYSCOMM::UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK, DWOR
 // sector is 256 bytes.  m_source is based on
 // 256 byte sector style granularity.
 
-int SYSCOMM::BLOCKREAD(FILE* file, char *buf, int blocks, int &read)
+int SYSCOMM::BLOCKREAD(pascal_file *file, char *buf, int blocks, int &read)
 {
 	char *block_ptr;
-	read = 0;
+	read = blocks;
 	int i;
 	int j;
 	int result = 0;
-	vector<char*>::iterator &iter = m_pos;
-//	iter= (*m_source).begin();
-	if (iter==m_source->end())
+	size_t sz = file->size();
+	vector<char*>::iterator &iter = file->m_pos;
+	vector<char*>::iterator &end = file->m_source->end();
+	if (iter==file->m_source->end())
 	{
 		read=0;
 		return 0;
 	}
-	memset(buf,0,BLOCKSIZE);
+	memset(buf,0,BLOCKSIZE*blocks);
+	int block_pos = file->blocks_read;
 	for (i=0;i<blocks;i++)
 	{
 		for (j=0;j<2;j++)
 		{
+			if (iter==end)
+				break;
 			block_ptr = (*iter++);
 			if (block_ptr==NULL)
 				break;
 			memcpy(&(buf[BLOCKSIZE*i+(256*j)]),block_ptr,256);
 			buf[BLOCKSIZE*i+256*(j+1)]=0;
+			file->blocks_read++;
 		}
 		if (block_ptr!=NULL)
-			result++;
+		{
+			file->blocks_read++;
+			result++;		
+		}
 	}
-#if 0
 	WRITELN(OUTPUT,"SYSCOMM::BLOCKREAD(FILE*, char*, int, &int)");
-	WRITELN(OUTPUT,"BLOCK ",read,"\n\"",buf,"\"");
-#endif
+	WRITELN(OUTPUT,"BLOCK ",block_pos,"\n>>>>>>>>",buf,"<<<<<<<<");
 	return result;
 }
 
-int SYSCOMM::BLOCKWRITE(FILE* file, const char *buf, int blocks, int offset)
+int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks, int offset)
 {
 	WRITELN (OUTPUT,"SYSCOMM::BLOCKWRITE offset= ",offset);
 //	assume that we wrote a blcok
 //	todo - save the blocks in memory so we can have
 //	a hex view - or examine with the dissassembler
+	char hexbuf[32];
+	char strbuf[32];
+	char ch;
+	int i,j;
+	DWORD k;
+	char hexchar[] = "0123456789abcdef";
+	for (i=0;i<32;i++)
+	{
+		k = 512*offset+16*i;
+		sprintf_s (hexbuf,32,"%08x: ",k);
+		WRITE (OUTPUT,hexbuf);
+		for (j=0;j<16;j++)
+		{
+			ch = buf[k+j];
+			hexbuf[0]=hexchar[(0xf0&ch)>>4];
+			hexbuf[1]=hexchar[(0x0f&ch)];
+			hexbuf[2]=0;
+			WRITE(OUTPUT,hexbuf);
+		}
+		for (j=0;j<16;j++)
+		{
+			ch = buf[k+j];
+			if (ch<32)
+				ch+=32;
+#if 0
+			if ((ch==0)||(ch==9)||
+				(ch==10)||(ch==13))
+				ch = '.';
+#endif
+			strbuf[j]=ch;
+		}
+		strbuf[j]=0;
+		WRITELN(OUTPUT," --> \"",strbuf,"\"");
+	}
 	int result = 1;
 	return result;
 }

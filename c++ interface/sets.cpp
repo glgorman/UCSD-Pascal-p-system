@@ -105,7 +105,7 @@ SETOFSYS &SETOFSYS::operator -= (int val)
 	return (*this);
 }
 
-SETOFSYS &SETOFSYS::operator = (const SET &x)
+SETOFSYS &SETOFSYS::operator = (const SETOFSYS &x)
 {
 	int i;
 	for (i=0;i<SETSZ;i++)
@@ -133,21 +133,6 @@ SETOFIDS::SETOFIDS()
 
 }
 
-void SETOFIDS::debug_list (char *str1) const
-{
-	int n;
-	char *str2;
-	size_t sz = SETSZ*sizeof(DWORD)*8; 
-	WRITE(OUTPUT,"SETOFIDS ",str1,": (");
-	for (n=0;n<sz;n++)
-	if (in(n))
-	{
-		str2 = ID_NAMES1[n];
-		WRITE (OUTPUT,str2,",");
-	}
-	WRITELN(OUTPUT,")");
-}
-
 SETOFIDS::SETOFIDS(size_t n,...)
 {
 	int i,j,k,val;
@@ -164,6 +149,21 @@ SETOFIDS::SETOFIDS(size_t n,...)
 	va_end(vl);
 }
 
+void SETOFIDS::debug_list (char *str1) const
+{
+	int n;
+	char *str2;
+	size_t sz = SETSZ*sizeof(DWORD)*8; 
+	WRITE(OUTPUT,"SETOFIDS ",str1,": (");
+	for (n=0;n<sz;n++)
+	if (in(n))
+	{
+		str2 = ID_NAMES1[n];
+		WRITE (OUTPUT,str2,",");
+	}
+	WRITELN(OUTPUT,")");
+}
+
 SETOFIDS SETOFIDS::operator + (int val) const
 {
 	SETOFIDS result;
@@ -175,7 +175,7 @@ SETOFIDS SETOFIDS::operator + (int val) const
 	return result;
 }
 
-SETOFIDS &SETOFIDS::operator = (const SET &x)
+SETOFIDS &SETOFIDS::operator = (const SETOFIDS &x)
 {
 	int i;
 	for (i=0;i<SETSZ;i++)
@@ -183,3 +183,19 @@ SETOFIDS &SETOFIDS::operator = (const SET &x)
 	return (*this);
 }
 
+SETOFIDS SETOFIDS::operator + (const SETOFIDS &x) const
+{
+	SETOFIDS result;
+	result = *this;
+	int i;
+	for (i=0;i<SETSZ;i++)
+		result.bits[i]|=x.bits[i];
+	return result;
+}
+
+SETOFIDS::SETOFIDS(const SETOFIDS &x)
+{
+	int i;
+	for (i=0;i<SETSZ;i++)
+		bits[i]=x.bits[i];
+}

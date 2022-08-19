@@ -4,6 +4,8 @@
 // Permission to redistribute and make use of this
 // software under GNU/MIT license.
 //
+#include <vector>
+using namespace std;
 
 #define KEYBOARD (1)
 #define OUTPUT	 (1)
@@ -33,7 +35,25 @@ struct pascal_error
 	}
 };
 
+
 extern pascal_error error_list[];
+
+class pascal_file
+{
+public:
+	int blocks_read;
+	vector<char*> *m_source;
+	vector<char*>::iterator m_begin;
+	vector<char*>::iterator m_pos;	
+	char *_tmpfname;
+
+public:
+	pascal_file ();
+	size_t size ();
+	void append (char *);
+	char *get_sector (int n);
+	void *write_sector (int n, char *);
+};
 
 class EXIT_CODE
 {
@@ -86,22 +106,19 @@ namespace SEARCH
 namespace SYSCOMM
 {
 using namespace std;
-	extern vector<char*>::iterator m_pos;
-	extern vector<char*>::iterator m_end;
-	extern vector<char*> *m_source;
 
 	void LAUNCH_CONSOLE();
-	void REWRITE(FILE*,char*);
+	void REWRITE(pascal_file*,char*);
 	BOOL WINAPI ConsoleHandler(DWORD);
-	void RESET(FILE*,char*);
+	void RESET(pascal_file*,char*);
 	bool IORESULT(void);
-	void OPENNEW(struct _iobuf *,char *);
-	void OPENOLD(struct _iobuf *,char *);
+	void OPENNEW(pascal_file *,char *);
+	void OPENOLD(pascal_file *,char *);
 	void READ(int, char &);
-	int CLOSE(FILE*,bool lock=false);
+	int CLOSE(pascal_file*,bool lock=false);
 	int UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK=0, DWORD MODE=0);
-	int BLOCKWRITE(FILE* param1, const char *param2, int param3,int param4=0);
-	int BLOCKREAD(FILE* param1, char *param2, int param3,int &param4);
+	int BLOCKWRITE(pascal_file *, const unsigned char *param2, int param3,int param4=0);
+	int BLOCKREAD(pascal_file *, char *param2, int param3,int &param4);
 	void OutputDebugString (const char *str);
 };
 
