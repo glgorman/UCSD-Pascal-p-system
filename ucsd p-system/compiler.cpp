@@ -7,6 +7,276 @@
 #include "compiler.h"
 #include "unitpart.h"
 
+UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
+{
+	WRITELN(OUTPUT);
+	WRITELN(OUTPUT,"July ",4,", ",1776,"...");
+	PASCALCOMPILER	*p = (PASCALCOMPILER*) param;
+	try
+	{
+		p->COMPILER_MAIN(NULL);
+	}
+	catch (...)
+	{
+		WRITELN(OUTPUT,"Caught EXCEPTION");
+		WRITELN(OUTPUT,"EXIT(PASCALCOMPILER)");
+	}
+	return 0;
+}
+
+int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
+{
+	/* PASCALCOMPILER */
+	char CH;
+	int	LGTH = 0;
+	TIME(LGTH,LOWTIME);
+	SETOFSYS FSYSM = BNF::BLOCKBEGSYS+BNF::STATBEGSYS-SETOFSYS(1,SYMBOLS::CASESY);
+
+	WRITELN(OUTPUT,"PASCALCOMPILER::COMPILER_MAIN");
+#if 0
+	BNF::BLOCKBEGSYS.debug_list("BLOCKBEGSYS");
+	BNF::STATBEGSYS.debug_list("STATBEGSYS");
+	FSYSM.debug_list("FSYSM");
+#endif
+
+//	BLOCK(BLOCKBEGSYS+STATBEGSYS-SET(1,SYMBOLS::CASESY));
+	BLOCK(FSYSM);
+
+	if (SY!=SYMBOLS::PERIOD)
+		CERROR(21);
+	if (options.LIST)
+	{
+		SCREENDOTS++;
+		(*m_src.SYMBUFP)[m_src.SYMCURSOR]=(char)(EOL);
+		CH = GETC();
+		PRINTLINE();
+	}
+	USERINFO.ERRBLK=0;
+	TIME(LGTH,STARTDOTS);
+	LOWTIME=STARTDOTS-LOWTIME;
+	SYSCOMM::UNITWRITE(3,".......",7);
+	if (DLINKERINFO||CLINKERINFO)
+	{
+		SEGTABLE[(int)SEG].SEGKIND=1;
+		WRITELINKERINFO(true);
+	}
+	SYSCOMM::CLOSE(_LP,LOCK);
+	if (options.NOISY)
+		WRITELN(OUTPUT);
+	
+	::WRITE(OUTPUT,SCREENDOTS," lines");
+#if 0
+	if (LOWTIME>0)
+		WRITE(OUTPUT,", ",(LOWTIME+30)/60," secs, ",
+         ROUND((3600.0/LOWTIME)*SCREENDOTS)," lines/min");
+#endif	
+	if (options.NOISY)
+	{
+	   WRITELN(OUTPUT);
+	   char nbuf[IDENTSIZE];
+	   sprintf_s(nbuf,IDENTSIZE,"%d",SMALLESTSPACE);
+	   ::WRITE(OUTPUT,"Smallest available space = ",nbuf," words");
+	   WRITELN(OUTPUT); 
+	}
+	IC=0;
+	for (SEG=0;SEG<=MAXSEG;SEG++)		
+	{ 
+		GENWORD(SEGTABLE[SEG].DISKADDR);
+		GENWORD(SEGTABLE[SEG].CODELENGTH);
+	}
+	for (SEG=0;SEG<=MAXSEG;SEG++)
+	{
+		for (LGTH=1;LGTH<=8;LGTH++)
+			GENBYTE(ORD(SEGTABLE[SEG].SEGNAME[LGTH]));
+	}
+	for (SEG=0;SEG<=MAXSEG;SEG++)
+	   GENWORD(SEGTABLE[SEG].SEGKIND);
+	
+	for (SEG=0;SEG<=MAXSEG;SEG++)
+	   GENWORD(SEGTABLE[SEG].TEXTADDR);
+	
+	for (LGTH=1;LGTH<=80;LGTH++)
+     if (COMMENT!=NULL)
+		 GENBYTE(ORD(COMMENT[LGTH]));
+	 else
+		GENBYTE(0);
+	 
+	for (LGTH=1;LGTH<=256-8*(MAXSEG+1)-40;LGTH++)
+		GENWORD(0);
+	
+	CURBLK=0;
+	CURBYTE=0;
+	WRITECODE(true);
+	return 0;
+}
+
+void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
+{
+#if 0
+	FSYS.debug_list ("FSYS");
+#endif
+
+	SETOFSYS S1 = SETOFSYS((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY);
+	SETOFSYS S2 = SETOFSYS((4),SYMBOLS::UNITSY,
+		SYMBOLS::INTERSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY);
+	
+	SETOFSYS S3 = FSYS;
+	S3 += SYMBOLS::CASESY;
+	S3 -= SYMBOLS::ENDSY;
+	bool BFSYFOUND;
+
+	WRITELN(OUTPUT,"PASCALCOMPILER::BLOCK");
+#if 0
+	FSYS.debug_list();
+#endif
+#if 0
+	SY=PERIOD;
+#endif
+	if ((options.NOSWAP)&&(STARTINGUP))
+	{
+		BODY(FSYS,NULL);
+		return;
+	}
+	if ((S1.in(SY))&&(!options.INMODULE))
+	{
+		UNITPART(FSYS+S2);
+		if (SY==SYMBOLS::PERIOD)
+			return;
+	}
+	NEWBLOCK=true;
+	do {
+		if (!NEWBLOCK)
+		{
+			options.DP=false;
+			STMTLEV=0;
+			IC=0;
+			LINEINFO=0;
+			if ((!options.SYSCOMP)||(LEVEL>1))
+				FINDFORW(DISPLAY[TOP].FNAME);
+
+			if (options.INMODULE)
+				if ((TOS->PREVLEXSTACKP)->DFPROCP==OUTERBLOCK)
+					if (SY==SYMBOLS::ENDSY)
+					{
+						FINISHSEG();
+						return;
+					}
+					else if (SY==SYMBOLS::BEGINSY)
+					{
+						CERROR(13);
+						FINISHSEG();
+						return;
+					}
+		// what do we do about infinite
+		// loop cycling between error 13 and
+		// error 17?
+
+			if (SY==SYMBOLS::BEGINSY)
+				INSYMBOL();
+
+			else if (SY==SYMBOLS::PERIOD)
+				return; // added - now what?
+			else
+				CERROR(17);
+
+			do
+			{
+				BODY(S3, TOS->DFPROCP);
+				BFSYFOUND=(SY==TOS->BFSY)||
+					(options.INMODULE&&(SY==SYMBOLS::ENDSY));
+				if (!BFSYFOUND)
+				{
+					if (TOS->BFSY==SYMBOLS::SEMICOLON)
+						CERROR(14);  /*SEMICOLON EXPECTED*/
+					else
+						CERROR(6);  /* PERIOD EXPECTED */
+					SKIP(FSYS+TOS->BFSY);
+					BFSYFOUND=(SY==TOS->BFSY)||
+						(options.INMODULE&& (SY==SYMBOLS::ENDSY));
+				}
+			}
+			while ((!BFSYFOUND)&&(!BNF::BLOCKBEGSYS.in(SY)));
+			if (!BFSYFOUND)
+			{
+				if (TOS->BFSY==SYMBOLS::SEMICOLON)
+					CERROR(14);
+				else
+					CERROR(6); /*PERIOD EXPECTED*/
+				DECLARATIONPART::MAIN(FSYS);
+			}
+			else //BFSYFOUND
+			{
+				if (SY==SYMBOLS::SEMICOLON)
+					INSYMBOL();
+
+				if (!(SETOFSYS((4),SYMBOLS::BEGINSY,SYMBOLS::PROCSY,
+					SYMBOLS::FUNCSY,SYMBOLS::PROGSY).in(SY))&&
+				(TOS->BFSY==SYMBOLS::SEMICOLON))
+				{
+					if (!(options.INMODULE&&(SY==SYMBOLS::ENDSY)))
+					{
+						CERROR(6);
+						SKIP(FSYS);
+						DECLARATIONPART::MAIN(FSYS);
+					}
+					else
+						goto fail;
+				}
+				else
+				{
+fail:				if (TOS->DFPROCP!=NULL)
+						(TOS->DFPROCP)->INSCOPE=false;
+
+					if (TOS->ISSEGMENT)
+					{
+						if (CODEINSEG)
+							FINISHSEG();
+
+						if (DLINKERINFO&&(LEVEL==1))
+						{
+							SEGTABLE[SEG].SEGKIND=2;
+							WRITELINKERINFO(true);
+						}
+						else if (CLINKERINFO)
+						{
+							SEGTABLE[SEG].SEGKIND=2;
+							WRITELINKERINFO(false);
+						}
+						NEXTPROC=TOS->SOLDPROC;
+						SEG=TOS->DOLDSEG;
+					}
+					LEVEL=TOS->DOLDLEV;
+					TOP=TOS->DOLDTOP;
+					LC=TOS->DLLC;
+					CURPROC=TOS->POLDPROC;
+#if 0
+					//NOT USING THE PASCAL HEAP --- YET!
+					RELEASE(TOS->DMARKP);
+#endif
+					TOS=TOS->PREVLEXSTACKP;
+					NEWBLOCK=SETOFSYS((3),SYMBOLS::PROCSY,SYMBOLS::FUNCSY,
+					SYMBOLS::PROGSY).in(SY);
+				}			
+			}
+		}
+		else
+		{
+			DECLARATIONS(FSYS);
+			if (LEVEL==0)
+			if (SETOFSYS((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY).in(SY))
+			{
+				UNITPART(FSYS + SETOFSYS((4),SYMBOLS::UNITSY,
+					SYMBOLS::INTERSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY));
+				if (SETOFSYS((3),SYMBOLS::PROCSY,SYMBOLS::FUNCSY,
+					SYMBOLS::PROGSY).in(SY))
+					DECLARATIONPART::MAIN(FSYS);
+			}
+		}
+	}
+	while (!TOS==NULL);
+	FINISHSEG();
+}
+
 void COMPILERDATA::ENTERID(CTP FCP)
 {
 #if 0
@@ -34,7 +304,7 @@ void COMPILERDATA::ENTERID(CTP FCP)
 			LCP1->RLINK=FCP;
 		else
 			LCP1->LLINK=FCP;
-	};
+	}
 	FCP->LLINK=NULL;
 	FCP->RLINK=NULL;
 
@@ -241,7 +511,7 @@ void COMPINIT::ENTSTDNAMES()
 		CP->VALUES.IVAL=I;
 		m_ptr->ENTERID(CP);
 		CP1=CP;
-    };
+    }
     m_ptr->BOOLPTR->FCONST=CP;
 	CP = (identifier*) new identifier("NULL     ",NILPTR,KONST);
 	CP->NEXT=NULL;
@@ -649,7 +919,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 		m_ptr->DISPLAY[1].BLCK.FFILE=NULL;
 		m_ptr->DISPLAY[1].BLCK.FLABEL=NULL;
 		m_ptr->DISPLAY[1].OCCUR = BLCK;
-	};
+	}
 	m_ptr->LC=m_ptr->LC+2;
 	m_ptr->GLEV=3; /*KEEP STACK STRAIGHT FOR NOW*/
       
@@ -746,7 +1016,7 @@ void PASCALCOMPILER::BODY(const SETOFSYS &FSYS, CTP FPROCP)
 	char *str_exit;
 	bool except = false;
 	LPVOID ptr1 = (LPVOID) FPROCP;
-	WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART FPROCP = ", (int)ptr1);
+	WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART FPROCP ", (int)ptr1," = ",FPROCP->NAME);
 	BODYPART *ptr2;
 	ptr2 = static_cast<BODYPART*>(BODYPART::allocate((void*)this));
 	try
@@ -814,8 +1084,9 @@ void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 	WRITELN(OUTPUT);
 	::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
 	WRITELN(OUTPUT,"Searching for: \"",ID,"\" in SETOFIDS ");
+#if 0
 	TRAP1(ID,"ACTUALVARS");
-	
+#endif
 	FIDCLS.debug_list ();
 
 	for (DISX=TOP;DISX>=0;DISX--)
@@ -1223,272 +1494,9 @@ void PASCALCOMPILER::FINDFORW(CTP FCP)
 			USERINFO.ERRNUM=117;
 			WRITELN(OUTPUT);
 			::WRITELN(OUTPUT,FCP->NAME," undefined");
-		};
+		}
 		FINDFORW(FCP->RLINK);
 		FINDFORW(FCP->LLINK);
 	}
 } 
-/*FINDFORW*/ ;
-
-void PASCALCOMPILER::BLOCK(const SETOFSYS &FSYS)
-{
-#if 0
-	FSYS.debug_list ("FSYS");
-#endif
-
-	SETOFSYS S1 = SETOFSYS((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY);
-	SETOFSYS S2 = SETOFSYS((4),SYMBOLS::UNITSY,
-		SYMBOLS::INTERSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY);
-	
-	SETOFSYS S3 = FSYS;
-	S3 += SYMBOLS::CASESY;
-	S3 -= SYMBOLS::ENDSY;
-	bool BFSYFOUND;
-
-	WRITELN(OUTPUT,"PASCALCOMPILER::BLOCK");
-#if 0
-	FSYS.debug_list();
-#endif
-#if 0
-	SY=PERIOD;
-#endif
-	if ((options.NOSWAP)&&(STARTINGUP))
-	{
-		BODY(FSYS,NULL);
-		return;
-	}
-	if ((S1.in(SY))&&(!options.INMODULE))
-	{
-		UNITPART(FSYS+S2);
-		if (SY==SYMBOLS::PERIOD)
-			return;
-	}
-	NEWBLOCK=true;
-	do {
-		if (!NEWBLOCK)
-		{
-			options.DP=false;
-			STMTLEV=0;
-			IC=0;
-			LINEINFO=0;
-			if ((!options.SYSCOMP)||(LEVEL>1))
-				FINDFORW(DISPLAY[TOP].FNAME);
-			if (options.INMODULE)
-				if ((TOS->PREVLEXSTACKP)->DFPROCP==OUTERBLOCK)
-					if (SY==SYMBOLS::ENDSY)
-					{
-						FINISHSEG();
-						return;
-					}
-					else if (SY==SYMBOLS::BEGINSY)
-					{
-						CERROR(13);
-						FINISHSEG();
-						return;
-					}
-		// what do we do about infinite
-		// loop cycling between error 13 and
-		// error 17?
-
-			if (SY==SYMBOLS::BEGINSY)
-				INSYMBOL();
-			else if (SY==SYMBOLS::PERIOD)
-				return; // added - now what?
-			else
-				CERROR(17);
-			do
-			{
-				BODY(S3, TOS->DFPROCP);
-				BFSYFOUND=(SY==TOS->BFSY)||
-					(options.INMODULE&&(SY==SYMBOLS::ENDSY));
-				if (!BFSYFOUND)
-				{
-					if (TOS->BFSY==SYMBOLS::SEMICOLON)
-						CERROR(14);  /*SEMICOLON EXPECTED*/
-					else
-						CERROR(6);  /* PERIOD EXPECTED */
-					SKIP(FSYS+TOS->BFSY);
-					BFSYFOUND=(SY==TOS->BFSY)||
-						(options.INMODULE&& (SY==SYMBOLS::ENDSY));
-				}
-			}
-			while (!(BFSYFOUND)&&!(BNF::BLOCKBEGSYS.in(SY)));
-			if (!BFSYFOUND)
-			{
-				if (TOS->BFSY==SYMBOLS::SEMICOLON)
-					CERROR(14);
-				else
-					CERROR(6); /*PERIOD EXPECTED*/
-				DECLARATIONPART::MAIN(FSYS);
-			}
-			else //BFSYFOUND
-			{
-				if (SY==SYMBOLS::SEMICOLON)
-					INSYMBOL();
-				if (!(SETOFSYS((4),SYMBOLS::BEGINSY,SYMBOLS::PROCSY,
-					SYMBOLS::FUNCSY,SYMBOLS::PROGSY).in(SY))&&
-				(TOS->BFSY==SYMBOLS::SEMICOLON))
-				if (!(options.INMODULE&&(SY==SYMBOLS::ENDSY)))
-				{
-					CERROR(6);
-					SKIP(FSYS);
-					DECLARATIONPART::MAIN(FSYS);
-				}
-				else
-					goto fail;
-			else
-			{
-fail:			if (TOS->DFPROCP!=NULL)
-					(TOS->DFPROCP)->INSCOPE=false;
-				if (TOS->ISSEGMENT)
-				{
-					if (CODEINSEG)
-						FINISHSEG();
-					if (DLINKERINFO&&(LEVEL==1))
-					{
-						SEGTABLE[SEG].SEGKIND=2;
-						WRITELINKERINFO(true);
-					}
-					else if (CLINKERINFO)
-					{
-						SEGTABLE[SEG].SEGKIND=2;
-						WRITELINKERINFO(false);
-					}
-					NEXTPROC=TOS->SOLDPROC;
-					SEG=TOS->DOLDSEG;
-				}
-				LEVEL=TOS->DOLDLEV;
-				TOP=TOS->DOLDTOP;
-				LC=TOS->DLLC;
-				CURPROC=TOS->POLDPROC;
-				}
-#if 0
-	//NOT USING THE PASCAL HEAP --- YET!
-			RELEASE(TOS->DMARKP);
-			TOS=TOS->PREVLEXSTACKP;
-#endif
-			
-			NEWBLOCK=SETOFSYS((3),SYMBOLS::PROCSY,SYMBOLS::FUNCSY,
-				SYMBOLS::PROGSY).in(SY);
-			}
-		}
-		else
-		{
-			DECLARATIONS(FSYS);
-			if (LEVEL==0)
-			if (SETOFSYS((2),SYMBOLS::UNITSY,SYMBOLS::SEPARATSY).in(SY))
-			{
-				UNITPART(FSYS + SETOFSYS((4),SYMBOLS::UNITSY,
-					SYMBOLS::INTERSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY));
-				if (SETOFSYS((3),SYMBOLS::PROCSY,SYMBOLS::FUNCSY,
-					SYMBOLS::PROGSY).in(SY))
-					DECLARATIONPART::MAIN(FSYS);
-			}
-		}
-	}
-	while (!TOS==NULL);
-	FINISHSEG();
-}
-
-UINT PASCALCOMPILER::THREAD_ENTRY (LPVOID param)
-{
-	WRITELN(OUTPUT);
-	WRITELN(OUTPUT,"July ",4,", ",1776,"...");
-	PASCALCOMPILER	*p = (PASCALCOMPILER*) param;
-	try
-	{
-		p->COMPILER_MAIN(NULL);
-	}
-	catch (...)
-	{
-		WRITELN(OUTPUT,"Caught EXCEPTION");
-		WRITELN(OUTPUT,"EXIT(PASCALCOMPILER)");
-	}
-	return 0;
-}
-
-int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
-{
-	/* PASCALCOMPILER */
-	char CH;
-	int	LGTH = 0;
-	TIME(LGTH,LOWTIME);
-	SETOFSYS FSYSM = BNF::BLOCKBEGSYS+BNF::STATBEGSYS-SETOFSYS(1,SYMBOLS::CASESY);
-
-	WRITELN(OUTPUT,"PASCALCOMPILER::COMPILER_MAIN");
-#if 0
-	BNF::BLOCKBEGSYS.debug_list("BLOCKBEGSYS");
-	BNF::STATBEGSYS.debug_list("STATBEGSYS");
-	FSYSM.debug_list("FSYSM");
-#endif
-
-//	BLOCK(BLOCKBEGSYS+STATBEGSYS-SET(1,SYMBOLS::CASESY));
-	BLOCK(FSYSM);
-
-	if (SY!=SYMBOLS::PERIOD)
-		CERROR(21);
-	if (options.LIST)
-	{
-		SCREENDOTS++;
-		(*m_src.SYMBUFP)[m_src.SYMCURSOR]=(char)(EOL);
-		CH = GETC();
-		PRINTLINE();
-	};
-	USERINFO.ERRBLK=0;
-	TIME(LGTH,STARTDOTS);
-	LOWTIME=STARTDOTS-LOWTIME;
-	SYSCOMM::UNITWRITE(3,".......",7);
-	if (DLINKERINFO||CLINKERINFO)
-	{
-		SEGTABLE[(int)SEG].SEGKIND=1;
-		WRITELINKERINFO(true);
-	};
-	SYSCOMM::CLOSE(_LP,LOCK);
-	if (options.NOISY)
-		WRITELN(OUTPUT);
-	
-	::WRITE(OUTPUT,SCREENDOTS," lines");
-#if 0
-	if (LOWTIME>0)
-		WRITE(OUTPUT,", ",(LOWTIME+30)/60," secs, ",
-         ROUND((3600.0/LOWTIME)*SCREENDOTS)," lines/min");
-#endif	
-	if (options.NOISY)
-	{
-	   WRITELN(OUTPUT);
-	   char nbuf[IDENTSIZE];
-	   sprintf_s(nbuf,IDENTSIZE,"%d",SMALLESTSPACE);
-	   ::WRITE(OUTPUT,"Smallest available space = ",nbuf," words");
-	   WRITELN(OUTPUT); 
-	}
-	IC=0;
-	for (SEG=0;SEG<=MAXSEG;SEG++)		
-	{ 
-		GENWORD(SEGTABLE[SEG].DISKADDR);
-		GENWORD(SEGTABLE[SEG].CODELENGTH);
-	}
-	for (SEG=0;SEG<=MAXSEG;SEG++)
-	{
-		for (LGTH=1;LGTH<=8;LGTH++)
-			GENBYTE(ORD(SEGTABLE[SEG].SEGNAME[LGTH]));
-	}
-	for (SEG=0;SEG<=MAXSEG;SEG++)
-	   GENWORD(SEGTABLE[SEG].SEGKIND);
-	
-	for (SEG=0;SEG<=MAXSEG;SEG++)
-	   GENWORD(SEGTABLE[SEG].TEXTADDR);
-	
-	for (LGTH=1;LGTH<=80;LGTH++)
-     if (COMMENT!=NULL)
-		 GENBYTE(ORD(COMMENT[LGTH]));
-	 else
-		GENBYTE(0);
-	 
-	for (LGTH=1;LGTH<=256-8*(MAXSEG+1)-40;LGTH++)
-		GENWORD(0);
-	
-	CURBLK=0;
-	CURBYTE=0;
-	WRITECODE(true);
-	return 0;
-}
+/*FINDFORW*/

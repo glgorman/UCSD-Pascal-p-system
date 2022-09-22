@@ -151,6 +151,9 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 	DISPRANGE TTOP;
 	int LCNT = 0;
 	VALU LVALU2;
+	
+ 	WRITELN (OUTPUT,"DECLARATIONPART::SIMPLETYPE: ");
+
 	FSIZE=1;
 	LSP1 = NULL;
 	if (!BNF::SIMPTYPEBEGSYS.in(SY))
@@ -176,8 +179,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 				if (SY==SYMBOLS::IDENT)
 				{
 					LCP = (identifier*) new identifier(ID,LSP,KONST); 
-					//strcpy_s(LCP->NAME,IDENTSIZE,ID);
-					//LCP->IDTYPE=LSP;
 					LCP->NEXT=LCP1;
 					LCP->VALUES.IVAL=LCNT;
 					ENTERID(LCP);
@@ -246,6 +247,8 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 								//NEW(LSP,ARRAYS,true,true);
 								LSP = (structure*) new structure(ARRAYS);
 								LSP->AELTYPE = STRGPTR;
+								LSP->AISPACKD = true;
+								LSP->AISSTRNG = true;
 								// WITH LSP^,LVALU
 								LSP->MAXLENG=LVALU2.IVAL;
 								LSP->SIZE=(LVALU2.IVAL+CHRSPERWD)/CHRSPERWD;
@@ -262,7 +265,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 						if (SY==SYMBOLS::LBRACK)
 						{ 
 							INSYMBOL();
-					//   NEW(LSP,LONGINT);
 							LSP = (structure*) new structure(LONGINT);
 							LSP->ELTYPE=LONGINTPTR;
 							CONSTANT(FSYS+SYMBOLS::RBRACK,LSP1,LVALU2);
@@ -297,7 +299,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 					CERROR(148);
 					LSP1=NULL;
 				}
-				// WITH LSP^
 				LSP->RANGETYPE = LSP1;
 				LSP->MIN = LVALU2;
 				LSP->SIZE = INTSIZE;
@@ -320,7 +321,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 						else if (LSP->MIN.IVAL>LSP->MAX.IVAL)
 						{
 							CERROR(102);
-								LSP->MAX.IVAL=LSP->MIN.IVAL;
+							LSP->MAX.IVAL=LSP->MIN.IVAL;
 						}
 			}
 		}
@@ -335,6 +336,8 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 	}
 	else
 		FSP=NULL;
+	
+	WRITELN(OUTPUT,"FSIZE = ",(int)FSIZE);
 } /*SIMPLETYPE*/
 
 bool DECLARATIONPART::PACKABLE(stack_frame *param, STP FSP)
@@ -443,9 +446,11 @@ void DECLARATIONPART::FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &F
 	memcpy (fp,param,sizeof(stack_frame));
 
 	CTP NXT, NXT1;
+	NXT=NULL;
 	NXT1=NULL;
 	LSP=NULL;
 	LAST=NULL;
+
 	if (!SETOFSYS(2,SYMBOLS::IDENT,SYMBOLS::CASESY).in(SY))
 	{
 		CERROR(19);
@@ -519,7 +524,7 @@ void DECLARATIONPART::FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &F
 	}
 	while (!TEST);
 
-	NXT=NULL;
+//	NXT=NULL;
 	while (NXT1!=NULL)
 	{
 		// FIXME ?? crashing here with NULL ptr?
@@ -582,7 +587,7 @@ void DECLARATIONPART::ALLOCATE(stack_frame *param, CTP FCP)
 		 FCP->FLDADDR=DISPL;
 		 if (FCP->IDTYPE!=NULL)
 			DISPL=DISPL + FCP->IDTYPE->SIZE;
-	};
+	}
 	if (ONBOUND&& (LAST!=NULL))
 	if (FCP->FISPACKED)
        if (FCP->FLDRBIT==0)
@@ -1388,20 +1393,18 @@ void DECLARATIONPART::PROCDECLARATION
 					// WITH LCP1^
 				if (LCP->IDTYPE==NULL)
 					EXTONLY=true;
-				else
-					if (LCP->KLASS==FORMALVARS)
-					{
-						LCM=LCP->VADDR + PTRSIZE;
-						if (LCM>LC)
-							LC=LCM;
-					}
-					else
-						if (LCP->KLASS==ACTUALVARS)
-						{
-							LCM=LCP->VADDR+LCP->IDTYPE->SIZE;
-							if (LCM>LC)
-								LC=LCM;
-						};
+				else if (LCP->KLASS==FORMALVARS)
+				{
+					LCM=LCP->VADDR + PTRSIZE;
+					if (LCM>LC)
+						LC=LCM;
+				}
+				else if (LCP->KLASS==ACTUALVARS)
+				{
+					LCM=LCP->VADDR+LCP->IDTYPE->SIZE;
+					if (LCM>LC)
+						LC=LCM;
+				}
 				LCP1=LCP1->NEXT;
 				if (SEG!=LCP->PFSEG)
 				{
@@ -1418,7 +1421,7 @@ void DECLARATIONPART::PROCDECLARATION
 	{
 		CERROR(2);
 		LCP=UPRCPTR;
-	};
+	}
 	// WITH LLEXSTK
 	LLEXSTK.DOLDLEV = LEVEL;
 	LLEXSTK.DOLDTOP = TOP;
@@ -1468,7 +1471,7 @@ void DECLARATIONPART::PROCDECLARATION
 				{
 					CERROR(120);
 					LCP->IDTYPE=NULL;
-				};
+				}
 			INSYMBOL();
 		}
 		else {
@@ -1479,7 +1482,7 @@ void DECLARATIONPART::PROCDECLARATION
 	else
 		if (!FORW)
 			CERROR(123);
-	};
+	}
 	if (SY==SYMBOLS::SEMICOLON)
 		INSYMBOL();
 	else
@@ -1899,7 +1902,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 						GETBOUNDS(LSP1->INXTYPE,LMIN,LMAX);
 						if (LSP1->ELSPERWD==0)
 							LSP1->ELSPERWD=1;
-						if (LSP1->AISPACKD)
+							if (LSP1->AISPACKD)
 							LSIZE=(LMAX-LMIN+LSP1->ELSPERWD)/LSP1->ELSPERWD;
 						else
 							LSIZE=LSIZE*(LMAX-LMIN+1);

@@ -16,8 +16,8 @@ using namespace std;
 #define MAXINT		32767
 #define MAXDEC		36
 #define EOL			13
-#define MAXCURSOR	1023
-#define MAXCODE		4095
+#define MAXCURSOR	8191
+#define MAXCODE		2047
 
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
@@ -35,7 +35,7 @@ typedef identifier* CTP;
 class structure;
 typedef structure*	STP;
 typedef char ALPHA[IDENTSIZE+1];
-typedef char SYMBUFARRAY[MAXCURSOR+1];
+typedef char SYMBUFARRAY[MAXCURSOR+256];
 typedef unsigned char CODEARRAY[MAXCODE+1];
 
 int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);

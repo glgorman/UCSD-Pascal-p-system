@@ -25,18 +25,50 @@ struct pcode
 pcode pcodes[] =
 {
     pcode("CSP",0),
-    pcode("",1),
-    pcode("",2),
-    pcode("",3),
+    pcode("INIT",1),
+    pcode("ADI",2),
+    pcode("ADI",3),
     pcode("",4),
     pcode("",5),
-    pcode("",6),
+    pcode("TURTLE",6),
     pcode("",7),
     pcode("",8),
+	pcode("",9),
+	pcode("",10),
+	pcode("",11),
+	pcode("",12),
+	pcode("IOR",13),
+	pcode("",14),
+	pcode("",15),
+	pcode("",16),
+	pcode("",17),
+	pcode("",18),
+	pcode("",19),
+	pcode("",20),
+	pcode("GETSEG",21),
+	pcode("RELSEG",22),
+	pcode("",23),
+	pcode("SQI",24),
+	pcode("SQR",25),
+	pcode("",26),
+	pcode("IXS",27),
+	pcode("UNI",28),
+	pcode("",29),
+	pcode("CSP",30),
+	pcode("",31),
     pcode("ADJ",32),
+	pcode("",33),
+	pcode("",34),
+	pcode("IND",35),
+	pcode("",36),
+	pcode("LAO",37),
+	pcode("",38),
+	pcode("LDO",39),
     pcode("MOV",40),
     pcode("MVB",41),
     pcode("SAS",42),
+	pcode("SRO",43),
+	pcode("",44),
     pcode("RNP",45),
     pcode("CIP",46),
     pcode("EQU",47),
@@ -48,16 +80,46 @@ pcode pcodes[] =
     pcode("LES",53),
     pcode("LOD",54),
     pcode("NEQ",55),
+	pcode("",56),
     pcode("UJP",57),
+	pcode("",58),
+	pcode("",59),
     pcode("LDM",60),
     pcode("STM",61),
+	pcode("",62),
+	pcode("",63),
+	pcode("",64),
     pcode("RBP",65),
     pcode("CBP",66),
+	pcode("",67),
+	pcode("",68),
+	pcode("",69),
+	pcode("",70),
+	pcode("",71),
+	pcode("",72),
+	pcode("",73),
+	pcode("LDL",74),
+	pcode("",75),
+	pcode("",76),
     pcode("CXP",77),
     pcode("CLP",78),
     pcode("CGP",79),
+	pcode("",80),
+	pcode("",81),
+	pcode("",82),
+	pcode("",84),
     pcode("BPT",85),
-    pcode("",0),
+	pcode("XIT",86),
+	pcode("",87),
+	pcode("",88),
+	pcode("",89),
+	pcode("",90),
+	pcode("",91),
+	pcode("",92),
+	pcode("",93),
+	pcode("",94),
+	pcode("",95),
+//    pcode("",0),
 };
 
 void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
@@ -179,7 +241,6 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
         do
 		{
 			STATEMENT(FSYS+SYMBOLS::SEMICOLON+SYMBOLS::ENDSY);
-//			ASSERT(false);
 		}
 		while (BNF::STATBEGSYS.in(SY));
         TEST = SY!=SYMBOLS::SEMICOLON;
@@ -344,9 +405,11 @@ void BODYPART::GEN0(OPRANGE FOP)
     CSP &P = GATTR.CVAL.VALP;
     GENBYTE(FOP+128);
     if (FOP==38/*LCA*/)
+	{
         GENBYTE(P->SLGTH);
-     for(i=1;i<=P->SLGTH;i++)
-        GENBYTE(ORD(P->SVAL[i]));
+		for(i=1;i<=P->SLGTH;i++)
+			GENBYTE(ORD(P->SVAL[i]));
+	}
 } /*GEN0*/ ;
 
 void BODYPART::GEN1(OPRANGE FOP, int FP2)
@@ -366,7 +429,7 @@ void BODYPART::GEN1(OPRANGE FOP, int FP2)
                     break;
                 else
                     I=I-1;
-            };
+            }
             GATTR.TYPTR->SIZE=I;
             if (I>1)
             {
@@ -495,9 +558,11 @@ void BODYPART::GENJMP(OPRANGE FOP, LBP FLBP)
     }
     else
     {
-#if 0
-        MOVELEFT((const char*)FLBP->REFLIST,(char*)(&CODEP[IC]),2);
-#endif
+		// WATCHOUT FOR ENDIANNESS!!
+		char src[16];
+		src[0] = FLBP->REFLIST&0xff;
+		src[1] = (FLBP->REFLIST&0xff00)>>8;
+        MOVELEFT((const char*)src,(char*)(&CODEP[IC]),2);
         if (FOP==57/*UJP*/)
             DISP=IC+4096;
         else
@@ -519,7 +584,6 @@ void BODYPART::GENLABEL(LBP *FLBP)
 {
 	LBP	ptr = new CODELABEL;
     (*FLBP) = ptr;
-    // with FLBP
 //	(*FLBP)->DEFINED=false;
     (*FLBP)->REFLIST=MAXADDR;
 }
@@ -528,7 +592,6 @@ void BODYPART::PUTLABEL(LBP FLBP)
 {
     int LREF;
     OPRANGE LOP;
-    // with(FLBP)
     LREF=FLBP->REFLIST;
     FLBP->DEFINED=true;
     FLBP->OCCURIC=IC;
@@ -543,9 +606,7 @@ void BODYPART::PUTLABEL(LBP FLBP)
         else
             LOP=33;/*FJP*/;
         IC=LREF;
-#if 0
-        MOVELEFT((CHAR*)(&CODEP[IC]),LREF,2);
-#endif
+        MOVELEFT((char*)&CODEP[IC],(char*)&LREF,2);
         GENJMP(LOP,FLBP);
     }
     IC=FLBP->OCCURIC;
@@ -737,8 +798,7 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
         GATTR.IDPLMT=0;
         break;
 
-    case FIELD:
-        // with DISPLAY[DISX]		
+	case FIELD:	
         if (DISPLAY[DISX].OCCUR==CREC)
         {
             GATTR.ACCESS=DRCT;
@@ -954,8 +1014,7 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
                 } /*SY==IDENT*/
                 else
                     CERROR(2);
-            }
-            /*if (SY==PERIOD*/
+            } /*if (SY==PERIOD*/
             else
             {
                 if (GATTR.TYPTR!=NULL)
@@ -1321,7 +1380,6 @@ void BODYPART::MAKEPA(STP &STRGFSP, STP PAFSP)
 void BODYPART::FACTOR(const SETOFSYS &FSYS) 
 {
     CTP	LCP;
-//	CSP	LVP;
     bool VARPART,ALLCONST;
     STP	LSP;
     int HIGHVAL,LOWVAL,LIC,LOP;
@@ -1347,7 +1405,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                 GATTR.KIND=EXPR;
              }
              else if (LCP->KLASS==KONST)
-                 // with GATTR, LCP^
              {
                 GATTR.TYPTR=LCP->IDTYPE;
                 GATTR.KIND=CST;
@@ -1355,7 +1412,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
              }
              else SELECTOR(FSYS,LCP);
              if (GATTR.TYPTR!=NULL)
-               // with GATTR,TYPTR^
                if (GATTR.TYPTR->FORM==SUBRANGE)
                    GATTR.TYPTR=GATTR.TYPTR->RANGETYPE;
             break;
@@ -1368,7 +1424,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                 break;
 
          case SYMBOLS::REALCONST:
-             // with GATTR
              GATTR.TYPTR=REALPTR;
              GATTR.KIND=CST;
              GATTR.CVAL=VAL;
@@ -1376,7 +1431,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
              break;
 
          case SYMBOLS::STRINGCONST:
-             // with GATTR
             if (LGTH==1)
                 GATTR.TYPTR=CHARPTR;
             else
@@ -1393,7 +1447,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             break;
 
          case SYMBOLS::LONGCONST:
-             // with GATTR
 //			NEW(LSP,LONGINT);
              LSP = new structure(LONGINT);
             *LSP=*LONGINTPTR;
@@ -1413,7 +1466,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             break;
 
  /*NOT*/ case SYMBOLS::NOTSY:
-           // with GATTR 
             INSYMBOL();
             FACTOR(FSYS);
             if ((GATTR.KIND==CST)&&(GATTR.TYPTR==BOOLPTR))
@@ -1463,7 +1515,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                              { ALLCONST=true;
                                LOWVAL=GATTR.CVAL.IVAL;
                                HIGHVAL=LOWVAL;
-                             };
+                             }
                            LIC=IC;
                            LOAD();
                            if (SY==SYMBOLS::COLON)
@@ -1945,7 +1997,6 @@ void BODYPART::STATEMENT(const SETOFSYS &FSYS)
             LLP=DISPLAY[TTOP].BLCK.FLABEL;
             while(LLP!=NULL)
 			{
-   // with LLP^
                 if (LLP->LABVAL==VAL.IVAL)
                 {
                     if (LLP->CODELBP->DEFINED)
@@ -2117,6 +2168,8 @@ retry:
 
 void BODYPART::STRGVAR(const SETOFSYS &FSYS, bool MUSTBEVAR)
 {
+	WRITELN(OUTPUT,"BODYPART::STRGVAR");
+
     EXPRESSION(FSYS);
     // with GATTR
     if (((GATTR.KIND==CST)&&(GATTR.TYPTR==CHARPTR))
@@ -2142,7 +2195,7 @@ void BODYPART::STRGVAR(const SETOFSYS &FSYS, bool MUSTBEVAR)
                     GATTR.TYPTR = (structure*) new structure(ARRAYS);
                     *GATTR.TYPTR = *STRGPTR;
                     GATTR.TYPTR->MAXLENG=1;
-                };
+                }
                 LOADADDRESS();
             }
         }
@@ -2212,8 +2265,8 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
     ATTR LATTR;
     bool CSTRING,PAONLEFT;
     int LMIN,LMAX;
-
-    SELECTOR(FSYS+SYMBOLS::BECOMES,FCP);
+	   
+	SELECTOR(FSYS+SYMBOLS::BECOMES,FCP);
     if (SY==SYMBOLS::BECOMES)
     {
         LMAX=0;
@@ -2226,10 +2279,11 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
         LATTR=GATTR;
         INSYMBOL();
         EXPRESSION(FSYS);
-
+		
         if (GATTR.KIND==CST)
             CSTRING=(GATTR.TYPTR==CHARPTR)||STRGTYPE(GATTR.TYPTR);
 
+//		ASSERT(GATTR.CVAL.VALP!=NULL);
         if (GATTR.TYPTR!=NULL)
             if (GATTR.TYPTR->FORM<=POWER)
                 LOAD();
@@ -2266,12 +2320,18 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
                 {
                     GETBOUNDS(LATTR.TYPTR->INXTYPE,LMIN,LMAX);
                     LMAX=LMAX-LMIN+1;
+					
                     if (CSTRING&&(GATTR.TYPTR!=CHARPTR))
                     {
                         GEN0(80/*S1P*/);
-                        if (LMAX!=GATTR.TYPTR->MAXLENG)
+// if we change the != to <= then MAYBE it will be possible 
+// to do a simple assignment of a shorter string into a
+// regular packed array of char [256 whic is what a Pascal string
+// is -- or is it? ]if (LMAX<=GATTR.TYPTR->MAXLENG) GLG 2022-08-21
+
+                        if (LMAX<=GATTR.TYPTR->MAXLENG)
                             CERROR(129);
-                            GATTR.TYPTR=LATTR.TYPTR;
+						GATTR.TYPTR=LATTR.TYPTR;
                     }
                 }
             else
@@ -2489,11 +2549,11 @@ void BODYPART::COPYDELETE(const SETOFSYS &FSYS, int LKEY)
        {
            LSP=GATTR.TYPTR;
            GEN2(50/*LDA*/,0,LLC);
-       };
+       }
      if (SY==SYMBOLS::COMMA)
          INSYMBOL();
      else CERROR(20);
-   };
+   }
     EXPRESSION(FSYS+SYMBOLS::COMMA);
     LOAD();
     if (GATTR.TYPTR!=NULL)
@@ -2557,27 +2617,26 @@ void BODYPART::CLOSE(const SETOFSYS &FSYS)
     if (GATTR.TYPTR!=NULL)
         if (GATTR.TYPTR->FORM!=FILES)
             CERROR(125);
+
     if (SY==SYMBOLS::COMMA)
     {
         INSYMBOL();
-    if (SY==SYMBOLS::IDENT)
-    {
-        if (ID=="NORMAL  ")
-            GENLDC(0);
-        else
-            if (ID=="LOCK    ")
-                GENLDC(1);
-            else
-                if (ID=="PURGE   ")
-                    GENLDC(2);
-                else
-                    if (ID=="CRUNCH  ")
-                        GENLDC(3);
-                    else CERROR(2);
-                    INSYMBOL();
-    }
-    else
-        CERROR(2);
+		if (SY==SYMBOLS::IDENT)
+		{
+			if (ID=="NORMAL  ")
+				GENLDC(0);
+			else if (ID=="LOCK    ")
+				GENLDC(1);
+			else if (ID=="PURGE   ")
+				GENLDC(2);
+			else if (ID=="CRUNCH  ")
+				GENLDC(3);
+			else
+				CERROR(2);
+			INSYMBOL();
+		}
+		else
+			CERROR(2);
     }
     else GENLDC(0);
     GEN2(77/*CXP*/,0/*SYS*/,6/*FCLOSE*/);
@@ -2634,6 +2693,7 @@ void BODYPART::SCAN(const SETOFSYS &FSYS)
     if (GATTR.TYPTR!=NULL)
         if (GATTR.TYPTR!=INTPTR)
             CERROR(125);
+
     if (SY==SYMBOLS::COMMA)
         INSYMBOL();
     else
@@ -2835,101 +2895,99 @@ void BODYPART::WRITE(const SETOFSYS &FSYS, int LKEY, bool params)
                         INSYMBOL();
                 }
     }
-    if (WASLPARENT&&(SY!=SYMBOLS::RPARENT)) {
-        do
+    if (WASLPARENT&&(SY!=SYMBOLS::RPARENT))do
+	{
+        LOADIDADDR(FILEPTR);
+        EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON+SYMBOLS::RPARENT);
+        LSP=GATTR.TYPTR;
+        if (LSP!=NULL)
         {
-            LOADIDADDR(FILEPTR);
-            EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON+SYMBOLS::RPARENT);
-            LSP=GATTR.TYPTR;
-            if (LSP!=NULL)
+            if (LSP->FORM>LONGINT)
+                LOADADDRESS();
+            else
             {
-                if (LSP->FORM>LONGINT)
-                    LOADADDRESS();
-                else
+                LOAD();
+                if (LSP->FORM==LONGINT)
                 {
-                    LOAD();
-                    if (LSP->FORM==LONGINT)
-                    {
-                        GENLDC(DECSIZE(MAXDEC));
-                        GENLDC(0/*DAJ*/);
-                        GENNR(DECOPS);
-                    }
+                    GENLDC(DECSIZE(MAXDEC));
+                    GENLDC(0/*DAJ*/);
+                    GENNR(DECOPS);
                 }
             }
+        }
+        if (SY==SYMBOLS::COLON)
+        {
+            INSYMBOL();
+            EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON+SYMBOLS::RPARENT);
+            if (GATTR.TYPTR!=NULL)
+                if (GATTR.TYPTR!=INTPTR)
+                    CERROR(20);
+            LOAD();
+            DEFAULT=false;
+        }
+        else DEFAULT=true;
+        if (LSP==INTPTR)
+        {
+            if (DEFAULT)
+                GENLDC(0);
+            GEN2(77/*CXP*/,0/*SYS*/,13/*FWRI*/);
+        }
+        else if (LSP==REALPTR)
+        {
+            if (DEFAULT)GENLDC(0);
             if (SY==SYMBOLS::COLON)
             {
                 INSYMBOL();
-                EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON+SYMBOLS::RPARENT);
+                EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
+                LOAD();
                 if (GATTR.TYPTR!=NULL)
                     if (GATTR.TYPTR!=INTPTR)
-                        CERROR(20);
-                LOAD();
-                DEFAULT=false;
-            }
-            else DEFAULT=true;
-            if (LSP==INTPTR)
-            {
-                if (DEFAULT)
-                    GENLDC(0);
-                GEN2(77/*CXP*/,0/*SYS*/,13/*FWRI*/);
-            }
-            else if (LSP==REALPTR)
-            {
-                if (DEFAULT)GENLDC(0);
-                if (SY==SYMBOLS::COLON)
-                {
-                    INSYMBOL();
-                    EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
-                    LOAD();
-                    if (GATTR.TYPTR!=NULL)
-                        if (GATTR.TYPTR!=INTPTR)
-                            CERROR(125);
-                }
-                else
-                    GENLDC(0);
-                GENNR(FWRITEREAL);
-            }
-            else if (COMPTYPES(LSP,LONGINTPTR))
-            {
-                if (DEFAULT)
-                    GENLDC(0);
-                GENNR(FWRITEDEC);
-            }
-            else if (LSP==CHARPTR)
-            {
-                if (DEFAULT)
-                    GENLDC(0);
-                GEN2(77/*CXP*/,0/*SYS*/,17/*FWRC*/);
-            }
-            else if (STRGTYPE(LSP))
-            {
-                if (DEFAULT)
-                    GENLDC(0);
-                GEN2(77/*CXP*/,0/*SYS*/,19/*FWRS*/);
-            }
-            else if (PAOFCHAR(LSP))
-            {
-                LMAX=0;
-                if (LSP->INXTYPE!=NULL)
-                {
-                    GETBOUNDS(LSP->INXTYPE,LMIN,LMAX);
-                    LMAX=LMAX-LMIN+1;
-                }
-                if (DEFAULT)
-                    GENLDC(LMAX);
-                GENLDC(LMAX);
-                GEN2(77/*CXP*/,0/*SYS*/,20/*FWRB*/);
+                        CERROR(125);
             }
             else
-                CERROR(125);
-            if (options.IOCHECK)
-                GEN1(30/*CSP*/,0/*IOC*/);
-            TEST=(SY!=SYMBOLS::COMMA);
-            if (!TEST)
-                INSYMBOL();
+                GENLDC(0);
+            GENNR(FWRITEREAL);
         }
-        while(!TEST);
+        else if (COMPTYPES(LSP,LONGINTPTR))
+        {
+            if (DEFAULT)
+                GENLDC(0);
+            GENNR(FWRITEDEC);
+        }
+        else if (LSP==CHARPTR)
+        {
+            if (DEFAULT)
+                GENLDC(0);
+            GEN2(77/*CXP*/,0/*SYS*/,17/*FWRC*/);
+        }
+        else if (STRGTYPE(LSP))
+        {
+            if (DEFAULT)
+                GENLDC(0);
+            GEN2(77/*CXP*/,0/*SYS*/,19/*FWRS*/);
+        }
+        else if (PAOFCHAR(LSP))
+        {
+            LMAX=0;
+            if (LSP->INXTYPE!=NULL)
+            {
+                GETBOUNDS(LSP->INXTYPE,LMIN,LMAX);
+                LMAX=LMAX-LMIN+1;
+            }
+            if (DEFAULT)
+                GENLDC(LMAX);
+            GENLDC(LMAX);
+            GEN2(77/*CXP*/,0/*SYS*/,20/*FWRB*/);
+        }
+        else
+            CERROR(125);
+        if (options.IOCHECK)
+            GEN1(30/*CSP*/,0/*IOC*/);
+        TEST=(SY!=SYMBOLS::COMMA);
+        if (!TEST)
+            INSYMBOL();
     }
+	while(!TEST);
     if (LKEY==4)/*WRITELN*/
     {
         LOADIDADDR(FILEPTR);
@@ -3046,7 +3104,7 @@ void BODYPART::CALLNONSPECIAL(const SETOFSYS &FSYS, CTP FCP)
     } /*LPARENT*/
     if (NXT!=NULL)
         CERROR(126);
-    // with FCP^
+
     if (FCP->PFDECKIND==DECLARED)
     {
         if (FCP->KLASS==FUNC)
@@ -3110,7 +3168,6 @@ void BODYPART::GOTOSTATEMENT()
             LLP=DISPLAY[TTOP].BLCK.FLABEL;
             while((LLP!=NULL)&&!FOUND)
             {
-                // with LLP^
                 if (LLP->LABVAL==VAL.IVAL)
                 {
                     FOUND=true;
@@ -3173,7 +3230,7 @@ void BODYPART::IFSTATEMENT(const SETOFSYS &FSYS)
             CONDCOMPILE=true;
             NOTHENCLAUSE=!ODD(GATTR.CVAL.IVAL);
             LIC=IC;
-        };
+        }
     if (!CONDCOMPILE)
     {
         GENLABEL(&LCIX1);
@@ -3247,109 +3304,104 @@ void BODYPART::CASESTATEMENT(const SETOFSYS &FSYS)
             CERROR(144);
             LSP=NULL;
         }
-        if (SY==SYMBOLS::OFSY)
-            INSYMBOL();
-        else
-            CERROR(8);
-        FSTPTR=NULL;
-        GENLABEL(&LADDR);
+	if (SY==SYMBOLS::OFSY)
+		INSYMBOL();
+	else
+		CERROR(8);
+    FSTPTR=NULL;
+    GENLABEL(&LADDR);
 
+    do {
+        LPT3=NULL;
         do {
-            LPT3=NULL;
-            do {
-                CONSTANT(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON,LSP1,LVAL);
-                if (LSP!=NULL)
-                    if (COMPTYPES(LSP,LSP1))
+            CONSTANT(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON,LSP1,LVAL);
+            if (LSP!=NULL)
+                if (COMPTYPES(LSP,LSP1))
+                {
+                    LPT1=FSTPTR;
+                    LPT2=NULL;
+                    while(LPT1!=NULL)
                     {
-                        LPT1=FSTPTR;
-                        LPT2=NULL;
-                        while(LPT1!=NULL)
+                        if (LPT1->CSLAB<=LVAL.IVAL)
                         {
-                            // with LPT1^
-                            if (LPT1->CSLAB<=LVAL.IVAL)
-                            {
-                                if (LPT1->CSLAB==LVAL.IVAL)
-                                    CERROR(156);
-                                goto retry;
-                            }
-                            LPT2=LPT1;
-                            LPT1=LPT1->NEXT;
+                            if (LPT1->CSLAB==LVAL.IVAL)
+                                CERROR(156);
+                            goto retry;
                         }
-retry:       //  NEW(LPT3);
-                        LPT3 = new CASEINFO;
-                        // with LPT3^
-                        {
-                            LPT3->NEXT=LPT1; 
-                            LPT3->CSLAB=LVAL.IVAL;
-                            LPT3->CSSTART=IC;
-                        }
-                        if (LPT2==NULL)
-                            FSTPTR=LPT3;
-                        else
-                            LPT2->NEXT=LPT3;
+                        LPT2=LPT1;
+                        LPT1=LPT1->NEXT;
                     }
+retry:       //  NEW(LPT3);
+                    LPT3 = new CASEINFO;
+					LPT3->NEXT=LPT1;
+					LPT3->CSLAB=LVAL.IVAL;
+					LPT3->CSSTART=IC;
+                    if (LPT2==NULL)
+                        FSTPTR=LPT3;
                     else
-                        CERROR(147);
-                TEST=SY!=SYMBOLS::COMMA;
-                if (!TEST)
-                    INSYMBOL();
-            }
-            while(!TEST);
-
-            if (SY==SYMBOLS::COLON)
-                INSYMBOL();
-            else
-                CERROR(5);
-            do
-            STATEMENT(FSYS+SYMBOLS::SEMICOLON);
-            while(BNF::STATBEGSYS.in(SY));
-
-            if (LPT3!=NULL)
-                GENJMP(57/*UJP*/,LADDR);
-            TEST=SY!=SYMBOLS::SEMICOLON;
+                        LPT2->NEXT=LPT3;
+                }
+                else
+                    CERROR(147);
+            TEST=SY!=SYMBOLS::COMMA;
             if (!TEST)
                 INSYMBOL();
         }
-        while(!(TEST||(SY==SYMBOLS::ENDSY)));
-        PUTLABEL(LCIX);
+        while(!TEST);
 
-        if (FSTPTR!=NULL)
-        {
-            LMAX=FSTPTR->CSLAB;
-            LPT1=FSTPTR;
-            FSTPTR=NULL;
-        }
-        do
-        {
-            LPT2=LPT1->NEXT;
-            LPT1->NEXT=FSTPTR;
-            FSTPTR=LPT1;LPT1=LPT2;
-        }
-        while(LPT1!=NULL);
-        LMIN=FSTPTR->CSLAB;
-        GEN0(44/*XJP*/);
-        GENWORD(LMIN);
-        GENWORD(LMAX);
-        NULSTMT=IC;
-        GENJMP(57/*UJP*/,LADDR);
-        do // with FSTPTR^
-        {
-            while(FSTPTR->CSLAB>LMIN)
-            {
-                GENWORD(IC-NULSTMT);
-                LMIN++;
-                GENWORD(IC-FSTPTR->CSSTART);
-                FSTPTR=FSTPTR->NEXT;
-                LMIN++;
-            }
-        }
-        while(FSTPTR!=NULL);
-        PUTLABEL(LADDR);
-
-        if (SY==SYMBOLS::ENDSY)
+        if (SY==SYMBOLS::COLON)
             INSYMBOL();
         else
-            CERROR(13);
+            CERROR(5);
+        do
+        STATEMENT(FSYS+SYMBOLS::SEMICOLON);
+        while(BNF::STATBEGSYS.in(SY));
+
+        if (LPT3!=NULL)
+            GENJMP(57/*UJP*/,LADDR);
+        TEST=SY!=SYMBOLS::SEMICOLON;
+        if (!TEST)
+            INSYMBOL();
+    }
+    while(!(TEST||(SY==SYMBOLS::ENDSY)));
+    PUTLABEL(LCIX);
+
+    if (FSTPTR!=NULL)
+    {
+        LMAX=FSTPTR->CSLAB;
+        LPT1=FSTPTR;
+        FSTPTR=NULL;
+		do
+		{
+			LPT2=LPT1->NEXT;
+			LPT1->NEXT=FSTPTR;
+			FSTPTR=LPT1;LPT1=LPT2;
+		}
+		while(LPT1!=NULL);
+		LMIN=FSTPTR->CSLAB;
+		GEN0(44/*XJP*/);
+		GENWORD(LMIN);
+		GENWORD(LMAX);
+		NULSTMT=IC;
+		GENJMP(57/*UJP*/,LADDR);
+		do // with FSTPTR^
+		{
+			while(FSTPTR->CSLAB>LMIN)
+			{
+				GENWORD(IC-NULSTMT);
+				LMIN++;
+			}
+			GENWORD(IC-FSTPTR->CSSTART);
+			FSTPTR=FSTPTR->NEXT;
+			LMIN++;
+		}
+		while(FSTPTR!=NULL);
+		PUTLABEL(LADDR);
+	}
+    if (SY==SYMBOLS::ENDSY)
+        INSYMBOL();
+    else
+        CERROR(13);
 
 } /*CASESTATEMENT*/
 
@@ -3428,7 +3480,6 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
     if (SY==SYMBOLS::IDENT)
     {
         SEARCHID(BNF::VARS,LCP);
-        // with LCP^, LATTR
         {
             LATTR.TYPTR=LCP->IDTYPE;
             LATTR.KIND=VARBL;
@@ -3450,7 +3501,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
             {
                 CERROR(143);
                 LATTR.TYPTR=NULL;
-            };
+            }
         INSYMBOL();
     }
     else
@@ -3474,7 +3525,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
                         GENLDC(LATTR.TYPTR->MIN.IVAL);
                         GENLDC(LATTR.TYPTR->MAX.IVAL);
                         GEN0(8/*CHK*/);
-                    };
+                    }
                 STORE(LATTR);
             }
             else

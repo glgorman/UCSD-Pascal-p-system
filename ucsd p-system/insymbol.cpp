@@ -14,7 +14,7 @@
 
 char PASCALSOURCE::PEEK()
 {
-	if (m_src.SYMCURSOR>1023)
+	if (m_src.SYMCURSOR>MAXCURSOR)
 		return 0;
 
 	ASSERT(m_src.SYMCURSOR>=0);
@@ -36,7 +36,7 @@ char PASCALSOURCE::PEEK(int i)
 {
 	CURSRANGE POS;
 	POS = m_src.SYMCURSOR+i;
-	if (POS>1023)
+	if (POS>MAXCURSOR)
 		return 0;
 
 	char c = (*m_src.SYMBUFP)[POS];
@@ -53,7 +53,7 @@ char PASCALSOURCE::PEEK(int i)
 
 char PASCALSOURCE::GETC()
 {
-	if (m_src.SYMCURSOR>1023)
+	if (m_src.SYMCURSOR>MAXCURSOR)
 		GETNEXTPAGE();
 //		throw (m_src.SYMCURSOR);		
 	char c = (*m_src.SYMBUFP)[m_src.SYMCURSOR];
@@ -98,11 +98,14 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 	WRITELN(OUTPUT," >>>>");
 //	if (m_src.LINESTART==0)
 	{
+		char str2[256];
 		int pos = m_src.SYMCURSOR-16;
 		if (pos<0)
 			pos=0;
 		char *str1 = (char*)m_src.SYMBUFP;
-		char *str2 = &(str1[pos]);
+//		char *str2 = &(str1[pos]);
+		memcpy (str2,&(str1[pos]),255);
+		str2[255] = 0;
 		WRITE(OUTPUT,str2);
 	}
 	EXIT_CODE T(ERRORNUM,false);
@@ -157,16 +160,17 @@ void PASCALSOURCE::GETNEXTPAGE()
 	m_src.SYMCURSOR=0;
 	m_src.SYMBLK+=2;
 	m_src.LINESTART=0;
+	int BLOCKS = (MAXCURSOR+1)/512;
 	int read;
 	int blocks_read;
 	if (options.USING) {
 		if (USEFILE==WORKCODE) {
-			read = SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*m_src.SYMBUFP,2,blocks_read);
-			if (read!=2)
+			read = SYSCOMM::BLOCKREAD(USERINFO.WORKCODE,*m_src.SYMBUFP,BLOCKS,blocks_read);
+			if (read!=BLOCKS)
 				options.USING=false; }
 		else if (USEFILE==SYSLIBRARY) {
-			read = SYSCOMM::BLOCKREAD(LIBRARY,*m_src.SYMBUFP,2,blocks_read);
-			if (read!=2)
+			read = SYSCOMM::BLOCKREAD(LIBRARY,*m_src.SYMBUFP,BLOCKS,blocks_read);
+			if (read!=BLOCKS)
 				options.USING=false; }			
 		if (!options.USING) {
 			m_src.SYMBLK=m_src.PREVSYMBLK;
@@ -176,8 +180,8 @@ void PASCALSOURCE::GETNEXTPAGE()
 	if (!options.USING)
 	{
 		if (options.INCLUDING) {
-			read = SYSCOMM::BLOCKREAD(INCLFILE,*m_src.SYMBUFP,2,blocks_read);
-			if (read!=2) {
+			read = SYSCOMM::BLOCKREAD(INCLFILE,*m_src.SYMBUFP,BLOCKS,blocks_read);
+			if (read!=BLOCKS) {
 				SYSCOMM::CLOSE((pascal_file*)(INCLFILE));
 				options.INCLUDING=false;
 				m_src.SYMBLK=m_src.OLDSYMBLK;
@@ -185,7 +189,7 @@ void PASCALSOURCE::GETNEXTPAGE()
 				m_src.LINESTART=m_src.OLDLINESTART; } }
 	}
 	if (!(options.INCLUDING||options.USING)) {
-		read = SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*m_src.SYMBUFP,2,blocks_read);
+		read = SYSCOMM::BLOCKREAD(USERINFO.WORKSYM,*m_src.SYMBUFP,BLOCKS,blocks_read);
 		if (read==0)
 			CERROR(401);
 	}
@@ -197,7 +201,7 @@ void PASCALSOURCE::GETNEXTPAGE()
 		if ((*m_src.SYMBUFP)[0]==(char)(16))
 			m_src.SYMCURSOR=2;
 		m_src.SYMBLK=m_src.SYMBLK+2;
-	};
+	}
 }
 
 void PASCALSOURCE::PRINTLINE()
@@ -231,7 +235,7 @@ void PASCALSOURCE::PRINTLINE()
 		   WRITE(OUTPUT,0,USERINFO.WORKSYM->_tmpfname," ",ORD(A[1])-ORD(' '));
        LENG=LENG-2;
        MOVELEFT((const char*)&A[2],A,LENG);
-   };
+   }
    A[LENG-1]=char(EOL);
    WRITE(OUTPUT,0,USERINFO.WORKSYM->_tmpfname,&A[0],LENG);
    if ((USERINFO.ERRBLK==m_src.SYMBLK)&&(USERINFO.ERRSYM>m_src.LINESTART))
@@ -291,7 +295,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 			DEL=SW;
 			SW='+';
 			CH1 = GETC();
-		};
+		}
 		WRITELN(OUTPUT);
 		WRITELN(OUTPUT,"PASCALCOMPILER::COMMENTER() - PARSING OPTION ",CH);
 		switch (CH) {
@@ -364,7 +368,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 					SYSCOMM::OPENNEW(_LP,LTITLE);
 					options.LIST=SYSCOMM::IORESULT()==0;
 					return;
-				};
+				}
 				break;
 
 			case 'Q':
@@ -407,7 +411,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 
 			default:
 				break;
-			};
+			}
 			m_src.SYMCURSOR=m_src.SYMCURSOR+3;
 	}
 	while (DEL==',');
@@ -641,17 +645,17 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
   					LVP->LONGVAL[LVP->LLENG]=ISUM;
 					ISUM=0;
 					J=0;
-				};
+				}
 				ISUM=ISUM * 10 + ORD(PEEK(K))-ORD('0');
 				K++;
 				J++;
-			};
+			}
 			LVP->LLAST=J;
 			if (J>0)
 			{
 				LVP->LLENG++;
 				LVP->LONGVAL[LVP->LLENG]=ISUM;
-			};
+			}
 			SY=SYMBOLS::LONGCONST;
 			OP=NOOP;
 			LGTH=ENDI-IPART+1;
@@ -668,7 +672,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		for (J=IPART;J<=ENDI;J++)
 		{
 			RSUM=RSUM*10+(ORD(PEEK(J))-ORD('0'));
-		};
+		}
 		for (J=ENDF;J>=FPART;J--)
 		{
 			RSUM=RSUM+(ORD(PEEK(J))-ORD('0'))/PWROFTEN(J-FPART+1);
@@ -680,7 +684,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 					RSUM=RSUM/PWROFTEN(EXPONENT);
 				else
 					RSUM=RSUM*PWROFTEN(EXPONENT);		
-			};
+			}
 			m_src.SYMCURSOR--; /* ADJUST for (POSTERITY */
 		}
 		LVP->RVAL=RSUM;

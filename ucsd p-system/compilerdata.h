@@ -100,16 +100,13 @@ public:
 	STRUCTFORM	FORM;
 	union
 	{
-		union	//SCALAR
+		struct //SCALAR
 		{
-			struct 
+			DECLKIND SCALKIND;
+			union
 			{
-				DECLKIND SCALKIND;
-				union
-				{
-					CTP	DECLARED;
-					CTP	FCONST;
-				};
+				CTP	DECLARED;
+				CTP	FCONST;
 			};
 		};
 		struct	//SUBRANGE
@@ -130,13 +127,10 @@ public:
 			STP	AELTYPE;
 			STP INXTYPE;
 			bool AISPACKD;
-			struct
-			{
-				BITRANGE ELSPERWD;
-				BITRANGE ELWIDTH;
-				bool AISSTRNG;
-				int MAXLENG;
-			};
+			BITRANGE ELSPERWD;
+			BITRANGE ELWIDTH;
+			bool AISSTRNG;
+			int MAXLENG;
 		};
 		struct	//RECORDS
 		{
@@ -280,35 +274,21 @@ typedef enum _VACCESS
 
 //SETOFIDS==SET OF IDCLASS;
 
-struct ATTR
+class ATTR
 {
-	STP TYPTR;
-	ATTRKIND KIND;
-	union //(KIND: ATTRKIND)
-	{
-//	CST:   (CVAL: VALU);
-//	VARBL: (union (ACCESS: VACCESS)
-//	DRCT:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
-//	INDRCT: (IDPLMT: ADDRRANGE))
-		struct {
-			LEVRANGE VLEVEL; 
-			ADDRRANGE DPLMT;
-		};
-		ADDRRANGE IDPLMT;
-		VALU	CVAL;
-		VACCESS	ACCESS;
-		union // (ACCESS: VACCESS)
-		{
-//	:   (VLEVEL: LEVRANGE; DPLMT: ADDRRANGE);
-//	INDRCT: (IDPLMT: ADDRRANGE))
-			struct _DRCT
-			{
-				LEVRANGE VLEVEL;
-				ADDRRANGE DPLMT;
-			}	DRCT;
-			ADDRRANGE	INDRCT;
-		};
-	};
+public:
+  STP TYPTR;
+  ATTRKIND KIND;
+  VACCESS ACCESS;
+  VALU CVAL;
+  LEVRANGE VLEVEL;
+  ADDRRANGE DPLMT;
+  ADDRRANGE IDPLMT;
+
+  ATTR()
+  {
+	memset(this,0,sizeof(ATTR));
+  }
 };
 
 struct TESTPOINTER;

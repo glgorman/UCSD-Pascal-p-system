@@ -56,8 +56,10 @@ int PASCALSOURCE::SYMBOL_DUMP (LPVOID)
 //	end = SYMBOLS::STRINGCONST;
 //	begin = SYMBOLS::IFSY;
 //	end = SYMBOLS::THENSY;
-	begin = SYMBOLS::PROCSY;
-	end = SYMBOLS::SEMICOLON;
+//	begin = SYMBOLS::PROCSY;
+//	end = SYMBOLS::SEMICOLON;
+	begin = SYMBOLS::INTCONST;
+	end = SYMBOLS::INTCONST;
 
 	DWORD t0, t1;
 	t0 = GetTickCount();
@@ -223,10 +225,30 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::S
 	}
 }
 
+#define alias(X,...) union { struct {__VA_ARGS__}; char X[1]; }
+
 void PASCALSOURCE::build_tree ()
 {
+#if 0
+	union
+	{
+	  struct
+	  {
+		bTreeType<PSYMBOL> *root,*branch1,*branch2,*markov;
+		PSYMBOL m_pData;
+	  };
+	  char ptr[sizeof(bTreeType<PSYMBOL>)];
+	};
+	bTreeType<PSYMBOL> &tree = *reinterpret_cast<bTreeType<PSYMBOL>*> (ptr);
+#endif
 
+	alias (ptr,bTreeType<PSYMBOL> *root,*branch1,*branch2,*markov; PSYMBOL m_pData; );
+	bTreeType<PSYMBOL> *tree = new (ptr) bTreeType<PSYMBOL>;
+	SYMBOLS::SYMBOL &SY = m_pData.SY;
 
+	root = tree;	
+	SY = SYMBOLS::PROCSY;
+  	tree->branch1 = NULL;
 }
 
 int PASCALSOURCE::CREATE_SYMLIST (LPVOID)
@@ -276,7 +298,7 @@ loop:
 			throw(E);
 		else
 		{
-			WRITELN(OUTPUT,"Emd of file: <",sz,"> symbols read.");
+			WRITELN(OUTPUT,"End of file: <",sz,"> symbols read.");
 		}
 	}
 	return (int) sz;
@@ -299,6 +321,8 @@ union
   };
   char fp[sizeof(stack_frame)];
 };
+	build_tree();
+
 	WRITELN (OUTPUT,"#### ",src," ####");
 	memcpy (fp,ptr,sizeof(stack_frame));
 	char hexval[16];
