@@ -91,7 +91,7 @@ DWORD MEMAVAIL()
 	return result;
 }
 
-void MOVELEFT(char const *src, char *dest, int count)
+void MOVELEFT(const char *src, char *dest, int count)
 {
 	memcpy(dest,src,count);
 }
@@ -600,6 +600,7 @@ int SYSCOMM::UNITWRITE (int UNITNUMBER, char *ARRAY, int LENGTH, int BLOCK, DWOR
 
 int SYSCOMM::BLOCKREAD(pascal_file *file, char *buf, int blocks, int &read)
 {
+	WRITELN(OUTPUT,"SYSCOMM::BLOCKREAD(FILE*, char*, int, &int)");
 	char *block_ptr;
 	read = blocks;
 	int i;
@@ -626,7 +627,6 @@ int SYSCOMM::BLOCKREAD(pascal_file *file, char *buf, int blocks, int &read)
 				break;
 			memcpy(&(buf[BLOCKSIZE*i+(256*j)]),block_ptr,256);
 			buf[BLOCKSIZE*i+256*(j+1)]=0;
-			file->blocks_read++;
 		}
 		if (block_ptr!=NULL)
 		{
@@ -634,8 +634,7 @@ int SYSCOMM::BLOCKREAD(pascal_file *file, char *buf, int blocks, int &read)
 			result++;		
 		}
 	}
-	WRITELN(OUTPUT,"SYSCOMM::BLOCKREAD(FILE*, char*, int, &int)");
-	WRITELN(OUTPUT,"BLOCK ",block_pos,"\n>>>>>>>>",buf,"<<<<<<<<");
+//	WRITELN(OUTPUT,"BLOCK ",block_pos,"\n>>>>>>>>",buf,"<<<<<<<<");
 	return result;
 }
 
@@ -661,7 +660,8 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 			ch = buf[k+j];
 			hexbuf[0]=hexchar[(0xf0&ch)>>4];
 			hexbuf[1]=hexchar[(0x0f&ch)];
-			hexbuf[2]=0;
+			hexbuf[2]=32;
+			hexbuf[3]=0;
 			WRITE(OUTPUT,hexbuf);
 		}
 		for (j=0;j<16;j++)
@@ -669,11 +669,8 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 			ch = buf[k+j];
 			if (ch<32)
 				ch+=32;
-#if 0
-			if ((ch==0)||(ch==9)||
-				(ch==10)||(ch==13))
-				ch = '.';
-#endif
+			if (ch==0xe9)
+				ch='#';
 			strbuf[j]=ch;
 		}
 		strbuf[j]=0;

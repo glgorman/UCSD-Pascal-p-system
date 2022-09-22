@@ -143,7 +143,6 @@ namespace SEARCH
 	pascal0::key_info *get_key_info (int index);
 	void RESET_SYMBOLS();
 	int IDSEARCH(int pos, char *&str);
-//	SYMBOL SY(token *t);
 };
 
 void SEARCH::RESET_SYMBOLS()
