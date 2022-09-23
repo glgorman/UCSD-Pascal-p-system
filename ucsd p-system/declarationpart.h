@@ -8,14 +8,9 @@ protected:
 };
 #endif
 
-class DECLARATIONPART:
-	virtual public COMPILERDATA
-{
-public:
-class TYP;
 struct stack_frame
 {
-	STP			FSP;
+//	STP			FSP;
 	STP			LSP,LSP1,LSP2;
 	DISPRANGE	OLDTOP;
 	CTP			LCP,LAST;
@@ -24,10 +19,12 @@ struct stack_frame
 	bool		PACKING;
 	BITRANGE	NEXTBIT,NUMBITS;
 };
+
+class DECLARATIONPART:
+	virtual public COMPILERDATA
+{
+public:
 class USESDECLARATION;
-#if 0
-class PROCDECLARATION;
-#endif
 
 private:
 	void debug_stack (char *src, stack_frame *ptr);

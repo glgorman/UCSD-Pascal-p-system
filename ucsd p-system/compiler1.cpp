@@ -310,7 +310,7 @@ union
 {
   struct /*locals*/
   {
-	STP			FSP;
+//	STP			FSP;
 	STP			LSP,LSP1,LSP2;
 	DISPRANGE	OLDTOP;
 	CTP			LCP,LAST;
@@ -326,9 +326,11 @@ union
 	WRITELN (OUTPUT,"#### ",src," ####");
 	memcpy (fp,ptr,sizeof(stack_frame));
 	char hexval[16];
+#if 0
 	sprintf_s(hexval,"%08x",FSP);
 	if (FSP!=NULL)
 		WRITELN (OUTPUT,"FSP:     ",hexval);
+#endif
 	sprintf_s(hexval,"%08x",LSP);
 	if (LSP!=NULL)
 		WRITELN (OUTPUT,"LSP:     ",hexval);

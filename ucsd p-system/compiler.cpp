@@ -480,7 +480,7 @@ void COMPINIT::ENTSTDNAMES()
 	m_ptr->ENTERID(CP);
 	CP = (identifier*) new identifier("TEXT  ",TEXTPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("INTERACT ",INTRACTVPTR,TYPES);
+	CP = (identifier*) new identifier("INTERACTIVE",INTRACTVPTR,TYPES);
 	m_ptr->ENTERID(CP);
 	m_ptr->INPUTPTR = (identifier*) new identifier("INPUT  ",TEXTPTR,FORMALVARS);
 	m_ptr->INPUTPTR->VLEV = 0;
@@ -1080,10 +1080,12 @@ void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 {
 	CTP LCP = NULL;
 	CTP LCP1 = NULL;
-	int status = false;
+	bool status = false;
+#if 0
 	WRITELN(OUTPUT);
 	::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
 	WRITELN(OUTPUT,"Searching for: \"",ID,"\" in SETOFIDS ");
+#endif
 #if 0
 	TRAP1(ID,"ACTUALVARS");
 #endif
@@ -1093,7 +1095,7 @@ void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 	{
 		LCP=DISPLAY[DISX].FNAME;
 		LCP1 = NULL;
-		TRAP2(ID,"ACTUALVARS",LCP);
+//		TRAP2(ID,"ACTUALVARS",LCP);
 		if (LCP!=NULL)
 		{
 			status = (TREESEARCH(LCP,LCP1,ID)==0?true:false);
@@ -1130,17 +1132,19 @@ void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 found:
 	if (LCP!=NULL)
 		FCP=LCP1;
-#if 1
+#if 0
 	identifier::debug1(LCP1,false);
 #endif
 } /*SEARCHID*/ ;
 
 void PASCALCOMPILER::GETBOUNDS(STP FSP, int &FMIN, int &FMAX)
 {
+	WRITELN(OUTPUT,"PASCALCOMPILER::GETBOUNDS");
 	if (FSP->FORM==SUBRANGE)
-	{ 
+	{
 		FMIN=FSP->MIN.IVAL;
 		FMAX=FSP->MAX.IVAL;
+		::WRITE(OUTPUT,">>> type is subrange <<<");
 	}
 	else
 	{ 
@@ -1151,6 +1155,7 @@ void PASCALCOMPILER::GETBOUNDS(STP FSP, int &FMIN, int &FMAX)
 			FMAX=FSP->FCONST->VALUES.IVAL;
 		else FMAX=0;
 	}
+	WRITELN(OUTPUT," FMIN = ",FMIN,", FMAX = ",FMAX);
 }
 /*GETBOUNDS*/
 
@@ -1185,7 +1190,7 @@ int PASCALCOMPILER::DECSIZE(int I)
 	return result;
 }
 
-void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU)
+void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP &FSP, VALU &FVALU)
 {
 	int LGTH=0;
 	STP	LSP;
@@ -1313,6 +1318,7 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 	CTP	NXT1,NXT2;
 	bool COMP;
 	TESTP LTESTP1,LTESTP2;
+	WRITELN(OUTPUT,"PASCALCOMPILER::COMPTYPES:");
 
 	if ((FSP1==FSP2)||(FSP1==NULL)||(FSP2==NULL))
 		result=true;
@@ -1321,12 +1327,15 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 		switch (FSP1->FORM)
 		{
 			case SCALAR:
+				WRITELN(OUTPUT,"FSP1->FORM = <SCALAR>");
 				result=false;
 				break;
 			case SUBRANGE:
+				WRITELN(OUTPUT,"FSP1->FORM = <SUBRANGE>");
 				result=COMPTYPES(FSP1->RANGETYPE,FSP2->RANGETYPE);
 				break;
 			case POINTER:
+				WRITELN(OUTPUT,"FSP1->FORM = <POINTER>");
 				COMP=false;
 				LTESTP1=GLOBTESTP;
 				LTESTP2=GLOBTESTP;
@@ -1352,12 +1361,15 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 				GLOBTESTP=LTESTP2;
 				break;
 			case LONGINT:
+				WRITELN(OUTPUT,"FSP1->FORM = <LONGINT>");
 				result=true;
 				break;
 			case POWER:
+				WRITELN(OUTPUT,"FSP1->FORM = <POWER>");
 				result=COMPTYPES(FSP1->ELSET,FSP2->ELSET);
 				break;
 			case ARRAYS:
+				WRITELN(OUTPUT,"FSP1->FORM = <ARRAYS>");
 				COMP=COMPTYPES(FSP1->AELTYPE,FSP2->AELTYPE)
 					&& (FSP1->AISPACKD==FSP2->AISPACKD);
 				if (COMP&& FSP1->AISPACKD)
@@ -1369,6 +1381,7 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 				result=COMP;
 				break;
 			case RECORDS:
+				WRITELN(OUTPUT,"FSP1->FORM = <RECORDS>");
 				NXT1=FSP1->FSTFLD;
 				NXT2=FSP2->FSTFLD;
 				 COMP=true;
@@ -1382,6 +1395,7 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 				   &&(FSP1->RECVAR==NULL)&&(FSP2->RECVAR==NULL);
 				break;
 			case FILES:
+				WRITELN(OUTPUT,"FSP1->FORM = <FILES>");
 				result=COMPTYPES(FSP1->FILTYPE,FSP2->FILTYPE);
 				break;		
 			default:
@@ -1393,6 +1407,11 @@ bool PASCALCOMPILER::COMPTYPES(STP &FSP1, STP &FSP2)
 			result=COMPTYPES(FSP1,FSP2->RANGETYPE);
 		else
 			result=false;
+
+	if (result==false)
+		WRITELN(OUTPUT,"returnng <false>");
+	else
+		WRITELN(OUTPUT,"returnng <true>");
 	return result;
 }
 

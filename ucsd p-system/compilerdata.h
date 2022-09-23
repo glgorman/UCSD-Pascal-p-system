@@ -462,7 +462,7 @@ protected:
 
 protected: // fuctions called from DECLARATIONPART
 //	virtual void CERROR(int ERRORNUM) = 0;
-	virtual void CONSTANT(const SETOFSYS &FSYS, STP FSP, VALU &FVALU) = 0;
+	virtual void CONSTANT(const SETOFSYS &FSYS, STP &FSP, VALU &FVALU) = 0;
 	virtual void BLOCK(const SETOFSYS &FSYS) = 0;
 	virtual void GETBOUNDS(STP FSP, int &FMIN, int &FMAX) = 0;
 	virtual bool STRGTYPE(STP FSP) = 0;

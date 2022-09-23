@@ -1075,8 +1075,8 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
         if ((SET<43>(21,12,13,14,15,18,19,21,22,23,27,31,32,34,35,36,37,38,
             40,41,42,43).in(LKEY)))
             ROUTINE(FSYS,LKEY);
-        else
-            switch (LKEY)
+        else 
+			switch (LKEY)
         {
             case 1:
             case 2:
@@ -1381,10 +1381,11 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 {
     CTP	LCP;
     bool VARPART,ALLCONST;
-    STP	LSP;
+    STP	LSP;	
     int HIGHVAL,LOWVAL,LIC,LOP;
     SETOFSYS CSTPART;
-    
+	FSYS.debug_list("BODYPART::FACTOR FSYS = ");
+
     if (!(BNF::FACBEGSYS.in(SY)))
     {
         CERROR(58);
@@ -1436,7 +1437,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             else
             {
                 LSP = new structure(ARRAYS);
-//				NEW(LSP,ARRAYS,true,true);
                 *LSP=*STRGPTR;
                 LSP->MAXLENG=LGTH;
                 GATTR.TYPTR=LSP;
@@ -1447,7 +1447,6 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             break;
 
          case SYMBOLS::LONGCONST:
-//			NEW(LSP,LONGINT);
              LSP = new structure(LONGINT);
             *LSP=*LONGINTPTR;
             LSP->SIZE=DECSIZE(LGTH);
@@ -1506,7 +1505,8 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                    if (GATTR.TYPTR!=NULL)
                      if (GATTR.TYPTR->FORM!=SCALAR)
                        { CERROR(136);
-                   GATTR.TYPTR=NULL; }
+						GATTR.TYPTR=NULL;
+					}
                      else
                        if (COMPTYPES(LSP->ELSET,GATTR.TYPTR))
                          { ALLCONST=false; LOP=23/*SGS*/;
@@ -1768,8 +1768,7 @@ void BODYPART::SIMPLEEXPRESSION(const SETOFSYS &FSYS)
                 CERROR(134);
                 GATTR.TYPTR=NULL;
             }
-
-        break;
+			break;
     /*-*/
         case MINUS:
             FLOATIT(LATTR.TYPTR,false);
@@ -1847,58 +1846,61 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 			LOADADDRESS();
 
 	if ((LATTR.TYPTR!=NULL)&&(GATTR.TYPTR!=NULL))
-		if (LOP==INOP)
-			if (GATTR.TYPTR->FORM==POWER)
-				if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR->ELSET))
-					GEN0(11/*INN*/);
-				else {
-					CERROR(129);
-					GATTR.TYPTR=NULL;
-				}
-			else {
-				CERROR(130);
+	if (LOP==INOP)
+		if (GATTR.TYPTR->FORM==POWER)
+			if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR->ELSET))
+				GEN0(11/*INN*/);
+			else
+			{
+				CERROR(129);
 				GATTR.TYPTR=NULL;
 			}
-		else if (LATTR.TYPTR!=GATTR.TYPTR)
-			{
-				FLOATIT(LATTR.TYPTR,false);
-				STRETCHIT(LATTR.TYPTR);
-			}
-			if (LSTRING)
-			{
-				if (PAOFCHAR(GATTR.TYPTR))
-					if (!GATTR.TYPTR->AISSTRNG)
-					{
-						GEN0(29/*S2P*/);
-						MAKEPA(LATTR.TYPTR,GATTR.TYPTR);
-					}
-			}
-			else if (GSTRING)
-			{
-				if (PAOFCHAR(LATTR.TYPTR))
-					if (!LATTR.TYPTR->AISSTRNG)
-					{
-						GEN0(80/*S1P*/);
-						MAKEPA(GATTR.TYPTR,LATTR.TYPTR);
-					}
-			}
-			if ((LSTRING&&STRGTYPE(GATTR.TYPTR))||
-				(GSTRING&&STRGTYPE(LATTR.TYPTR)))
-				goto retry;
+		else
+		{
+			CERROR(130);
+			GATTR.TYPTR=NULL;
+		}
+	else 
+	{
+		if (LATTR.TYPTR!=GATTR.TYPTR)
+		{
+			FLOATIT(LATTR.TYPTR,false);
+			STRETCHIT(LATTR.TYPTR);
+		}
+		if (LSTRING)
+		{
+			if (PAOFCHAR(GATTR.TYPTR))
+				if (!GATTR.TYPTR->AISSTRNG)
+				{
+					GEN0(29/*S2P*/);
+					MAKEPA(LATTR.TYPTR,GATTR.TYPTR);
+				}
+		}
+		else if (GSTRING)
+		{
+			if (PAOFCHAR(LATTR.TYPTR))
+				if (!LATTR.TYPTR->AISSTRNG)
+				{
+					GEN0(80/*S1P*/);
+					MAKEPA(GATTR.TYPTR,LATTR.TYPTR);
+				}
+		}
+		if ((LSTRING&&STRGTYPE(GATTR.TYPTR))||
+			(GSTRING&&STRGTYPE(LATTR.TYPTR)))
+			goto retry;
 
 		if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 		{
-			LSIZE=LATTR.TYPTR->SIZE; /*INVALID for(LONG intS*/
+			LSIZE=LATTR.TYPTR->SIZE; /*INVALID for LONG INTS*/
 			switch (LATTR.TYPTR->FORM)
 			{
 			case SCALAR:
 				if (LATTR.TYPTR==REALPTR)
 					TYPIND=1;
+				else if (LATTR.TYPTR==BOOLPTR)
+					TYPIND=3;
 				else
-					if (LATTR.TYPTR==BOOLPTR)
-						TYPIND=3;
-					else
-						TYPIND=0;
+					TYPIND=0;
 				break;
 			case POINTER:
 				if (SET<128>(2,LTOP,LEOP,GTOP,GEOP).in(LOP))
@@ -1975,7 +1977,7 @@ retry:					TYPIND=2;
 		}
 		else
 			CERROR(129);
-
+	}
     GATTR.TYPTR=BOOLPTR;
     GATTR.KIND=EXPR;
 } /*EXPRESSION*/
@@ -2118,15 +2120,18 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
     LSIZE=0;
     if (GATTR.TYPTR!=NULL)
     {
-        if (GATTR.TYPTR->FORM!=POINTER)
-			CERROR(116);
-
-		else if (GATTR.TYPTR->ELTYPE!=NULL)
+        if (GATTR.TYPTR->FORM==POINTER)
 		{
-			LSIZE=GATTR.TYPTR->SIZE;
-			if (GATTR.TYPTR->FORM==RECORDS)
-				LSP=GATTR.TYPTR->RECVAR;
-        }
+			if (GATTR.TYPTR->ELTYPE!=NULL)
+			{
+				LSIZE=GATTR.TYPTR->SIZE;
+				if (GATTR.TYPTR->FORM==RECORDS)
+					LSP=GATTR.TYPTR->RECVAR;
+			}
+		}
+		else
+			CERROR(116);
+		
         while(SY==SYMBOLS::COMMA)
         {
             INSYMBOL();
@@ -3245,27 +3250,26 @@ void BODYPART::IFSTATEMENT(const SETOFSYS &FSYS)
         if (NOTHENCLAUSE)
             IC=LIC;
         else LIC=IC;
-        if (SY==SYMBOLS::ELSESY)
+    if (SY==SYMBOLS::ELSESY)
+    {
+        if (!CONDCOMPILE)
         {
-            if (!CONDCOMPILE)
-            {
-                GENLABEL(&LCIX2);
-                GENJMP(57/*UJP*/,LCIX2);
-                PUTLABEL(LCIX1);
-            }
-            INSYMBOL();
-            STATEMENT(FSYS);
-            if (CONDCOMPILE)
-            {
-                if (!NOTHENCLAUSE)
-                    IC=LIC;
-            }
-            else
-                PUTLABEL(LCIX2);
+            GENLABEL(&LCIX2);
+            GENJMP(57/*UJP*/,LCIX2);
+            PUTLABEL(LCIX1);
         }
+        INSYMBOL();
+        STATEMENT(FSYS);
+        if (CONDCOMPILE)
+        {
+            if (!NOTHENCLAUSE)
+                IC=LIC;
+		}
         else
-            if (!CONDCOMPILE)
-                PUTLABEL(LCIX1);
+            PUTLABEL(LCIX2);
+    }
+    else if (!CONDCOMPILE)
+        PUTLABEL(LCIX1);
 } /*if (STATEMENT*/
 
 #if 0
