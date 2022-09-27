@@ -16,14 +16,18 @@
 #define SETOFCHAR SET<256>
 
 template<size_t SETSIZE>
-class SET
+class _SET_
 {
-friend class SETOFSYS;
-friend class SETOFIDS;
 protected:
 	static const int SETSZ = (SETSIZE+(8*sizeof(DWORD)-1))/(8*sizeof(DWORD));
 	DWORD bits[SETSZ];
+};
 
+template<size_t SETSIZE>
+class SET: public _SET_<SETSIZE>
+{
+friend class SETOFSYS;
+friend class SETOFIDS;
 public:
 	SET();
 	SET(size_t,...);
@@ -67,6 +71,7 @@ public:
 	SETOFSYS &operator += (int);
 	SETOFSYS &operator -= (int);
 	SETOFSYS operator + (int) const;
+	static SETOFSYS range (int low, int high);
 	void debug_list (char *str="") const;
 };
 

@@ -646,7 +646,7 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 //	a hex view - or examine with the dissassembler
 	char hexbuf[32];
 	char strbuf[32];
-	char ch;
+	unsigned char ch;
 	int i,j;
 	DWORD k;
 	char hexchar[] = "0123456789abcdef";
@@ -660,7 +660,7 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 			ch = buf[k+j];
 			hexbuf[0]=hexchar[(0xf0&ch)>>4];
 			hexbuf[1]=hexchar[(0x0f&ch)];
-			hexbuf[2]=32;
+			hexbuf[2]=0;
 			hexbuf[3]=0;
 			WRITE(OUTPUT,hexbuf);
 		}
@@ -669,7 +669,10 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 			ch = buf[k+j];
 			if (ch<32)
 				ch+=32;
-			if (ch==0xe9)
+		// these characters are messing up the
+		// screen dump
+			if ((ch==0xe0)||(ch==0xe8)
+				||(ch==0xe9)||(ch==0xed))
 				ch='#';
 			strbuf[j]=ch;
 		}

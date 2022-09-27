@@ -113,6 +113,16 @@ SETOFSYS &SETOFSYS::operator = (const SETOFSYS &x)
 	return (*this);
 }
 
+
+SETOFSYS SETOFSYS::range (int low, int high)
+{
+	SETOFSYS result;
+	int i;
+	for (i=low;i<=high;i++)
+		result+=i;
+	return result;
+}
+
 void SETOFSYS::debug_list (char *str1) const
 {
 	int n;
