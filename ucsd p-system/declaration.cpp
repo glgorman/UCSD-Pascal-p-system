@@ -51,9 +51,10 @@ void DECLARATIONPART::MAIN (const SETOFSYS &FSYS)
 
 	SETOFSYS DECLSYS = BNF::STATBEGSYS+
 		SETOFSYS(4,SYMBOLS::SEPARATSY,SYMBOLS::UNITSY,SYMBOLS::IMPLESY,SYMBOLS::ENDSY);
+#if 0	
 	DECLSYS.debug_list ("DECLSYS");
 	FSYS.debug_list("FSYS");
-
+#endif
 	if ((options.NOSWAP)&& (STARTINGUP))
 	{
 		STARTINGUP = false; /* ALL SEGMENTS ARE IN BY THIS TIME */
@@ -557,7 +558,7 @@ void DECLARATIONPART::FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &F
 		NXT1=LCP;
 	}
 	if (SY==SYMBOLS::CASESY)
-		VARIANTLIST(param,FSYS);
+		VARIANTLIST(param,FSYS,FRECVAR);
 	else
 		FRECVAR=NULL;
 	memcpy (param,fp,sizeof(stack_frame));
@@ -621,7 +622,7 @@ void DECLARATIONPART::ALLOCATE(stack_frame *param, CTP FCP)
    memcpy (param,fp,sizeof(stack_frame));
 } /*ALLOCATE*/
 
-void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS)
+void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS, STP	&FRECVAR)
 {
 	union
 	{
@@ -642,7 +643,7 @@ void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS)
 	memcpy (fp,param,sizeof(stack_frame));
 	debug_stack ("DECLARATIONPART::VARIANTLIST",param);
 
-	STP	FRECVAR,LSP4;
+	STP	LSP4;
 	CTP	LCP1 = NULL;
 	ADDRRANGE MINSIZE,MAXSIZE;
 	BITRANGE MAXBIT,MINBIT;
@@ -820,7 +821,6 @@ void DECLARATIONPART::POINTERTYPE(stack_frame *param)
 	LSP = (structure*) new structure(POINTER);
 	LSP->ELTYPE=NULL;
 	LSP->SIZE=PTRSIZE;
-	LSP->FORM=POINTER;
 	INSYMBOL();
 	if (SY==SYMBOLS::IDENT)
 	{
@@ -1437,16 +1437,16 @@ void DECLARATIONPART::PROCDECLARATION
 						LC=LCM;
 				}
 				LCP1=LCP1->NEXT;
-				if (SEG!=LCP->PFSEG)
-				{
-					SEG=LCP->PFSEG;
-					NEXTPROC=2;
-					if (!SEGDEC)
-						CERROR(399);
-				}
 			}
-			INSYMBOL();
+			if (SEG!=LCP->PFSEG)
+			{
+				SEG=LCP->PFSEG;
+				NEXTPROC=2;
+				if (!SEGDEC)
+					CERROR(399);
+			}
 		}
+		INSYMBOL();
 	}
 	else
 	{
@@ -1485,140 +1485,139 @@ void DECLARATIONPART::PROCDECLARATION
 	else
 	{
 		PARAMETERLIST(SETOFSYS(2,SYMBOLS::SEMICOLON,SYMBOLS::COLON),FSY,LCP1,LCP,EXTONLY,FORW);
-	if (!FORW)
-		LCP->NEXT=LCP1;
-	if (SY==SYMBOLS::COLON)
-	{
-		INSYMBOL();
-		if (SY==SYMBOLS::IDENT)
+		if (!FORW)
+			LCP->NEXT=LCP1;
+		if (SY==SYMBOLS::COLON)
 		{
-			if (FORW)
-				CERROR(122);
-			SEARCHID(SETOFIDS(1,TYPES),LCP1);
-			LSP=LCP1->IDTYPE;
-			LCP->IDTYPE=LSP;
-			if (LSP!=NULL)
+			INSYMBOL();
+			if (SY==SYMBOLS::IDENT)
+			{
+				if (FORW)
+					CERROR(122);
+				SEARCHID(SETOFIDS(1,TYPES),LCP1);
+				LSP=LCP1->IDTYPE;
+				LCP->IDTYPE=LSP;
+				if (LSP!=NULL)
 				if (!(SET<128>(3,SCALAR,SUBRANGE,POINTER).in(LSP->FORM)))
 				{
 					CERROR(120);
 					LCP->IDTYPE=NULL;
 				}
-			INSYMBOL();
-		}
-		else {
-			CERROR(2);
-			SKIP(FSYS+SYMBOLS::SEMICOLON);
-		}
-	}
-	else
-		if (!FORW)
-			CERROR(123);
-	}
-	if (SY==SYMBOLS::SEMICOLON)
-		INSYMBOL();
-	else
-		CERROR(14);
-	LCP->EXTURNAL=false;
-	if ((SY==SYMBOLS::EXTERNLSY)||((options.USING)&& (LSEPPROC)))
-	{
-		if (LEVEL!=2)
-			CERROR(183); /*EXTERNAL PROCS MUST BE IN OUTERMOST BLOCK*/;
-		if (options.INMODULE)
-			if (options.ININTERFACE&&!options.USING)
-				CERROR(184); /*NO EXTERNAL DECL IN INTERFACE*/
-		if (SEGDEC)
-			CERROR(399);
-		// WITH LCP^
-
-		LCP->EXTURNAL=true;
-		LCP->FORWDECL=false;
-		WRITELN(OUTPUT);
-		char *name = &(LCP->NAME[0]);
-		DWORD mem = MEMAVAIL();
-		WRITELN(OUTPUT,name," [",mem," words]");
-		WRITE(OUTPUT,"<",SCREENDOTS,">");
-
-		PROCTABLE[CURPROC]=0;
-		DLINKERINFO=true;
-		if (SY==SYMBOLS::EXTERNLSY)
-		{
-			INSYMBOL();
-			if (SY==SYMBOLS::SEMICOLON)
 				INSYMBOL();
+			}
+			else {
+				CERROR(2);
+				SKIP(FSYS+SYMBOLS::SEMICOLON);
+			}
+		}
+		else if (!FORW)
+			CERROR(123);
+		}
+		if (SY==SYMBOLS::SEMICOLON)
+			INSYMBOL();
+		else
+			CERROR(14);
+		LCP->EXTURNAL=false;
+		if ((SY==SYMBOLS::EXTERNLSY)||((options.USING)&& (LSEPPROC)))
+		{
+			if (LEVEL!=2)
+				CERROR(183); /*EXTERNAL PROCS MUST BE IN OUTERMOST BLOCK*/;
+			if (options.INMODULE)
+				if (options.ININTERFACE&&!options.USING)
+					CERROR(184); /*NO EXTERNAL DECL IN INTERFACE*/
+			if (SEGDEC)
+				CERROR(399);
+			// WITH LCP^
+
+			LCP->EXTURNAL=true;
+			LCP->FORWDECL=false;
+			WRITELN(OUTPUT);
+			char *name = &(LCP->NAME[0]);
+			DWORD mem = MEMAVAIL();
+			WRITELN(OUTPUT,name," [",mem," words]");
+			WRITE(OUTPUT,"<",SCREENDOTS,">");
+
+			PROCTABLE[CURPROC]=0;
+			DLINKERINFO=true;
+			if (SY==SYMBOLS::EXTERNLSY)
+			{
+				INSYMBOL();
+				if (SY==SYMBOLS::SEMICOLON)
+					INSYMBOL();
+				else
+					CERROR(14);
+				if (!(FSYS.in(SY)))
+				{
+					CERROR(6);
+					SKIP(FSYS);
+				}
+			}
+		}
+		else if (options.USING)
+			LCP->FORWDECL=false;
+		else if ((SY==SYMBOLS::FORWARDSY)||options.INMODULE&& options.ININTERFACE)
+		{
+			if (FORW)
+				CERROR(161);
 			else
-				CERROR(14);
+				LCP->FORWDECL=true;
+			if (SY==SYMBOLS::FORWARDSY)
+			{
+				INSYMBOL();
+				if (SY==SYMBOLS::SEMICOLON)
+					INSYMBOL();
+				else
+					CERROR(14);
+			}
 			if (!(FSYS.in(SY)))
 			{
 				CERROR(6);
 				SKIP(FSYS);
 			}
 		}
-	}
-	else if (options.USING)
-		LCP->FORWDECL=false;
-	else if ((SY==SYMBOLS::FORWARDSY)||options.INMODULE&& options.ININTERFACE)
-	{
-		if (FORW)
-			CERROR(161);
 		else
-			LCP->FORWDECL=true;
-		if (SY==SYMBOLS::FORWARDSY)
 		{
-			INSYMBOL();
-			if (SY==SYMBOLS::SEMICOLON)
-				INSYMBOL();
-			else
-				CERROR(14);
+			if (EXTONLY)
+				CERROR(7);
+			NEWBLOCK = true;
+			NOTDONE = true;
+
+	//		MARK(DMARKP);
+			// WITH LCP^
+			LCP->FORWDECL=false;
+			LCP->INSCOPE=true;
+			LCP->EXTURNAL=false;
+
+			LLEXSTK.BFSY = SYMBOLS::SEMICOLON;
+			LLEXSTK.ISSEGMENT = SEGDEC;
+			LLEXSTK.PREVLEXSTACKP = TOS;
+
+	//		NEW(TOS);
+			TOS = (LEXSTKREC*) new LEXSTKREC; 
+			*TOS = LLEXSTK;
+			EXIT_CODE P("PROCDECLARATION");
+			throw(P);
 		}
-		if (!(FSYS.in(SY)))
-		{
-			CERROR(6);
-			SKIP(FSYS);
-		}
-	}
-	else
-	{
-		if (EXTONLY)
-			CERROR(7);
-		NEWBLOCK = true;
-		NOTDONE = true;
-
-//		MARK(DMARKP);
-		// WITH LCP^
-		LCP->FORWDECL=false;
-		LCP->INSCOPE=true;
-		LCP->EXTURNAL=false;
-
-		LLEXSTK.BFSY = SYMBOLS::SEMICOLON;
-		LLEXSTK.ISSEGMENT = SEGDEC;
-		LLEXSTK.PREVLEXSTACKP = TOS;
-
-//		NEW(TOS);
-		TOS = (LEXSTKREC*) new LEXSTKREC; 
-		*TOS = LLEXSTK;
-		EXIT_CODE P("PROCDECLARATION");
-		throw(P);
-	}
 	// WITH LLEXSTK  /* FORWARD||EXTERNAL DECLARATION, SO RESTORE STATE */
 
-	LEVEL = LLEXSTK.DOLDLEV;
-	TOP = LLEXSTK.DOLDTOP;
-	LC = LLEXSTK.DLLC;
-	CURPROC = LLEXSTK.POLDPROC;
-	if (SEGDEC)
-	{
-		NEXTPROC = LLEXSTK.SOLDPROC;
-		SEG = LLEXSTK.DOLDSEG;
-	}
+		LEVEL = LLEXSTK.DOLDLEV;
+		TOP = LLEXSTK.DOLDTOP;
+		LC = LLEXSTK.DLLC;
+		CURPROC = LLEXSTK.POLDPROC;
+		if (SEGDEC)
+		{
+			NEXTPROC = LLEXSTK.SOLDPROC;
+			SEG = LLEXSTK.DOLDSEG;
+		}
 } /* PROCDECLARATION */
 
 void DECLARATIONPART::PARAMETERLIST
 (
-	SETOFSYS FSYS,
+	const SETOFSYS &FSYS,
 	SYMBOLS::SYMBOL &FSY,
 	CTP &FPAR,
 	CTP FCP,
-	bool EXTONLY,
+	bool &EXTONLY,
 	bool FORW
 )
 {
@@ -1630,8 +1629,9 @@ void DECLARATIONPART::PARAMETERLIST
 
 	LCP1=NULL; LLC=LC;
 	WRITELN(OUTPUT,"DECLARATIONPART::PARAMETERLIST");
+#if 0
 	FSYS.debug_list ("FSYS ");
-
+#endif
 	SETOFSYS PARAMSY = FSYS+SYMBOLS::LPARENT;
 	SETOFSYS ENDPARAMS = FSYS+SYMBOLS::SEMICOLON+SYMBOLS::RPARENT;
 	// skip over identifier - error in original source?
@@ -1839,6 +1839,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 //#define NOPPOITERS
 #ifndef NOPOPINTEERS
  		POINTERTYPE(param);
+		FSP=LSP;
 #endif
 	}
 	else 
@@ -1946,7 +1947,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 							LSIZE=(LMAX-LMIN+LSP1->ELSPERWD)/LSP1->ELSPERWD;
 						else
 						{
-							ASSERT(LSIZE>0);
+ 							ASSERT(LSIZE>0);
 							LSIZE=LSIZE*(LMAX-LMIN+1);
 						}
 						if (LSIZE<=0)

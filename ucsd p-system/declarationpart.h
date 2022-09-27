@@ -32,7 +32,7 @@ private:
 		bool PACKABLE(stack_frame *param, STP FSP);
 		void FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR);
 		void ALLOCATE(stack_frame *paarm, CTP FCP);
-		void VARIANTLIST(stack_frame *param, const SETOFSYS &FSYS);
+		void VARIANTLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR);
 		void USESDECLARATION(bool MAGIC);
 		void POINTERTYPE(stack_frame *param);
 		void SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);
@@ -43,7 +43,7 @@ private:
 	void TYPEDECLARATION(const SETOFSYS &FSYS);
 	void VARDECLARATION(const SETOFSYS &FSYS);
 	void PROCDECLARATION(const SETOFSYS &,SYMBOLS::SYMBOL,bool,bool&);
-	void PARAMETERLIST(SETOFSYS, SYMBOLS::SYMBOL &, CTP &, CTP, bool, bool);
+	void PARAMETERLIST(const SETOFSYS &, SYMBOLS::SYMBOL &, CTP &, CTP, bool&, bool);
 
 public:
 	DECLARATIONPART ();

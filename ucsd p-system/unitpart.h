@@ -92,6 +92,8 @@ private:
 	void GETNEXTBLOCK();
 
 public:
+	LINKERINFO() {};
+	LINKERINFO (PASCALCOMPILER*);
 	void WRITELINKERINFO(bool DECSTUFF);
 };
 

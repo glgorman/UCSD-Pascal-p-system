@@ -51,9 +51,20 @@ identifier::identifier (char *str, STP ptr, IDCLASS idclass)
 
 void structure::debug1 (structure *stp)
 {
-	char addr[16];
+	char *tag_names[] =
+	{
+		"UNDEFINED","SCALAR","SUBRANGE","POINTER",
+		"LONGINT","POWER","ARRAYS","RECORDS","FILES",
+		"TAGFLD","VARIANT2",NULL
+	};
+	char addr[16],*tag_name;
 	sprintf_s(addr,16,"%08x",(int)stp);
-	WRITELN (OUTPUT,"structure addr: ",addr);
+	WRITE (OUTPUT,"structure addr: ",addr);
+	if (stp!=NULL)
+		tag_name = tag_names[stp->FORM];
+	else
+		tag_name = NULL;
+	WRITELN (OUTPUT," form: ",tag_name);
 //	ASSERT(false);
 }
 

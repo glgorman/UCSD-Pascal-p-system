@@ -98,6 +98,8 @@ public:
 public:
 	ADDRRANGE	SIZE;
 	STRUCTFORM	FORM;
+	bool AISPACKD;
+	bool AISSTRNG;
 	union
 	{
 		struct //SCALAR
@@ -125,11 +127,9 @@ public:
 		struct //ARRARYS
 		{
 			STP	AELTYPE;
-			STP INXTYPE;
-			bool AISPACKD;
+			STP INXTYPE;			
 			BITRANGE ELSPERWD;
 			BITRANGE ELWIDTH;
-			bool AISSTRNG;
 			int MAXLENG;
 		};
 		struct	//RECORDS

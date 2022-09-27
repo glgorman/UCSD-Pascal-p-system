@@ -45,8 +45,8 @@ private:
 		void SIZEOF();
 	
 	void LOADIDADDR(CTP);
-	void READ(const SETOFSYS &, int);
-	void WRITE(const SETOFSYS &, int);
+	void READ(const SETOFSYS &, int, bool param);
+	void WRITE(const SETOFSYS &, int, bool params);
 	void CALLNONSPECIAL(const SETOFSYS &,CTP);
 
 	void EXPRESSION(const SETOFSYS &);
@@ -60,6 +60,7 @@ private:
 
 	void STATEMENT(const SETOFSYS &FSYS);
 //	called from statement
+		void LABEL();
 		void ASSIGNMENT(const SETOFSYS &, CTP);
 		void GOTOSTATEMENT();
 		void COMPOUNDSTATEMENT(const SETOFSYS &);

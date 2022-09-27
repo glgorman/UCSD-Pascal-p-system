@@ -97,15 +97,14 @@ public:
 	int	 LLENG,LLAST;
 	union
 	{
+		_SET_<128>	PVAL;
 		char	SLGTH;
 		int		LONG;
 		int		LONGVAL[10];
 		int		CSTVAL[8];
 		float	REEL;
 		float	RVAL;
-//				PSET;
 		char	SVAL[STRGLGTH];
-		int		PVAL[4]; // should be SET[0..127];
 	};
 };
 
