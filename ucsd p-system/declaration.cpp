@@ -177,7 +177,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 			while (DISPLAY[TOP].OCCUR!=BLCK)
 				TOP=TOP - 1;
 
-			LSP = (structure*) new structure(SCALAR);
+			LSP = (structure*) new (NULL) structure(SCALAR);
 			LSP->SIZE=INTSIZE;
 			LSP->SCALKIND=DECLARED;
 			LCP1=NULL;
@@ -218,7 +218,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 				INSYMBOL();
 				if (LCP->KLASS==KONST)
 				{
-					LSP = (structure*) new structure(SUBRANGE);
+					LSP = (structure*) new (NULL) structure(SUBRANGE);
 					LSP->RANGETYPE=LCP->IDTYPE;
 					if (STRGTYPE(LSP->RANGETYPE))
 					{
@@ -254,7 +254,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 							if (LVALU2.IVAL!=DEFSTRGLGTH)
 							{
 								//NEW(LSP,ARRAYS,true,true);
-								LSP = (structure*) new structure(ARRAYS);
+								LSP = (structure*) new (NULL) structure(ARRAYS);
 								LSP->AELTYPE = STRGPTR;
 								LSP->AISPACKD = true;
 								LSP->AISSTRNG = true;
@@ -274,7 +274,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 						if (SY==SYMBOLS::LBRACK)
 						{ 
 							INSYMBOL();
-							LSP = (structure*) new structure(LONGINT);
+							LSP = (structure*) new (NULL) structure(LONGINT);
 							LSP->ELTYPE=LONGINTPTR;
 							CONSTANT(FSYS+SYMBOLS::RBRACK,LSP1,LVALU2);
 							if (LSP1==INTPTR)
@@ -301,7 +301,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 			} /*SY==IDENT*/
 			else
 			{ 
-				LSP = (structure*) new structure(SUBRANGE);
+				LSP = (structure*) new (NULL) structure(SUBRANGE);
 				LSP->FORM=SUBRANGE;
 				CONSTANT(FSYS+SYMBOLS::COLON,LSP1,LVALU2);
 				if (STRGTYPE(LSP1))
@@ -650,7 +650,7 @@ void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS, STP	&
 	VALU LVALU1;
 
 	bool GOTTAGNAME;
-	LSP = (structure*) new structure(TAGFLD);
+	LSP = (structure*) new (NULL) structure(TAGFLD);
 	LSP->TAGFIELDP=NULL;
 	LSP->FSTVAR=NULL;
 	FRECVAR=LSP;
@@ -732,7 +732,7 @@ void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS, STP	&
 				if (!COMPTYPES(LSP->TAGFIELDP->IDTYPE,LSP3))
 					CERROR(111);
 				//     NEW(LSP3,VARIANT);
-				LSP3 = (structure*) new structure(VARIANT2);
+				LSP3 = (structure*) new (NULL) structure(VARIANT2);
 				LSP3->NXTVAR=LSP1;
 				LSP3->SUBVAR=LSP2;
 				LSP3->VARVAL=LVALU1;
@@ -818,7 +818,7 @@ void DECLARATIONPART::POINTERTYPE(stack_frame *param)
 	debug_stack ("DECLARATIONPART::POINTERTYPE",param);
 
 //	FSP=LSP;
-	LSP = (structure*) new structure(POINTER);
+	LSP = (structure*) new (NULL) structure(POINTER);
 	LSP->ELTYPE=NULL;
 	LSP->SIZE=PTRSIZE;
 	INSYMBOL();
@@ -1871,7 +1871,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 					CERROR(11);
 				LSP1=NULL;
 				do {
-					LSP = (STP) new structure(ARRAYS);
+					LSP = (STP) new (NULL) structure(ARRAYS);
 					LSP->AELTYPE=LSP1;
 					LSP->INXTYPE=NULL;
 					LSP->AISSTRNG=false;
@@ -1982,7 +1982,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				NEXTBIT=0;			
 				FIELDLIST(param,S4,LSP1);
 				DISPL=DISPL + ORD(NEXTBIT>0);
-				LSP = (STP) new structure(RECORDS);
+				LSP = (STP) new (NULL) structure(RECORDS);
 				LSP->FSTFLD=DISPLAY[TOP].FNAME;
 				LSP->RECVAR=LSP1;
 				LSP->SIZE=DISPL;
@@ -2015,7 +2015,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 						CERROR(114);
 						LSP1=NULL;
 					}
-				LSP = (STP) new structure(POWER);
+				LSP = (STP) new (NULL) structure(POWER);
 				LSP->ELSET=LSP1;
 				if (LSP1!=NULL)
 				{
@@ -2039,7 +2039,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 					if (!options.ININTERFACE)
 						CERROR(191); /*NO PRIVATE FILES*/
 				INSYMBOL();
-				LSP = (STP) new structure(FILES);
+				LSP = (STP) new (NULL) structure(FILES);
 				LSP->FILTYPE=NULL;
 				if (SY==SYMBOLS::OFSY)
 				{

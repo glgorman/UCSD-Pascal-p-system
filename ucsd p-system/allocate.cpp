@@ -68,9 +68,24 @@ void structure::debug1 (structure *stp)
 //	ASSERT(false);
 }
 
+void *structure::operator new (size_t sz1,void* ptr2)
+{
+	char fill_char = 0xff;
+	size_t sz2;
+	sz2 = sizeof(structure);
+	structure *ptr;
+
+	if (ptr2==NULL)
+		ptr = reinterpret_cast<structure*> (malloc (sz2));
+	else
+		ptr = reinterpret_cast<structure*> (ptr2);
+
+	memset(ptr,fill_char,sizeof(structure));
+	return ptr;
+}
+
 structure::structure (STRUCTFORM form)
 {
-	memset(this,0,sizeof(structure));
 	this->FORM = form;
 	debug1 (this);
 }

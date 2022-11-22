@@ -1440,7 +1440,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
                 GATTR.TYPTR=CHARPTR;
             else
             {
-                LSP = new structure(ARRAYS);
+                LSP = new (NULL) structure(ARRAYS);
                 *LSP=*STRGPTR;
                 LSP->MAXLENG=LGTH;
                 GATTR.TYPTR=LSP;
@@ -1451,7 +1451,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             break;
 
          case SYMBOLS::LONGCONST:
-             LSP = new structure(LONGINT);
+             LSP = new (NULL) structure(LONGINT);
             *LSP=*LONGINTPTR;
             LSP->SIZE=DECSIZE(LGTH);
             GATTR.TYPTR=LSP;
@@ -1491,7 +1491,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
             CSTPART=SETOFSYS(0);
             VARPART=false;
  //           NEW(LSP,POWER);
-            LSP = new structure(POWER);
+            LSP = new (NULL) structure(POWER);
              // with LSP^
             LSP->ELSET=NULL;
             LSP->SIZE=0;
@@ -2139,7 +2139,7 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
         INSYMBOL();
         CONSTANT(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT,LSP1,LVAL);
 		// error in original source?
-		LSP = LSP1; // added - GLG 2022-09-23
+		// LSP = LSP1; // added - GLG 2022-09-23
         VARTS=VARTS+1;
         if (LSP==NULL)
             CERROR(158);
@@ -2202,7 +2202,7 @@ void BODYPART::STRGVAR(const SETOFSYS &FSYS, bool MUSTBEVAR)
                     }
                     GATTR.CVAL.VALP=SCONST;
 //					NEW(TYPTR,ARRAYS,true,true);
-                    GATTR.TYPTR = (structure*) new structure(ARRAYS);
+                    GATTR.TYPTR = (structure*) new (NULL) structure(ARRAYS);
                     *GATTR.TYPTR = *STRGPTR;
                     GATTR.TYPTR->MAXLENG=1;
                 }
@@ -2539,7 +2539,7 @@ void BODYPART::CONCAT(const SETOFSYS &FSYS)
  // with GATTR
     {
 //		NEW(TYPTR,ARRAYS,true,true);
-        GATTR.TYPTR = new structure(ARRAYS); 
+        GATTR.TYPTR = new (NULL) structure(ARRAYS); 
         *GATTR.TYPTR=*STRGPTR;
         GATTR.TYPTR->MAXLENG=TEMPLGTH;
     }

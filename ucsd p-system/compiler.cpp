@@ -396,42 +396,42 @@ void COMPINIT::ENTSTDTYPES()
 	WRITELN(OUTPUT,"COMPINIT::ENTSTDTYPES()");
 //	NEW(INTPTR,SCALAR,STANDARD);
 	structure *INTPTR;
-	INTPTR = (structure*) new structure(SCALAR);
+	INTPTR = (structure*) new (NULL) structure(SCALAR);
 	INTPTR->SIZE = INTSIZE;
 	INTPTR->SCALKIND=STANDARD;
 	m_ptr->INTPTR = INTPTR;
 
 	structure *REALPTR;
-	REALPTR = (structure*) new structure(SCALAR);
+	REALPTR = (structure*) new (NULL) structure(SCALAR);
 	REALPTR->SIZE = REALSIZE;
 	REALPTR->SCALKIND=STANDARD;
 	m_ptr->REALPTR = REALPTR;
 
 	structure *LONGINTPTR;
-	LONGINTPTR = (structure*) new structure(SCALAR);
+	LONGINTPTR = (structure*) new (NULL) structure(SCALAR);
 	LONGINTPTR->SIZE = INTSIZE;
 	LONGINTPTR->SCALKIND=STANDARD;
 	m_ptr->LONGINTPTR = LONGINTPTR;
 
-	m_ptr->CHARPTR = (structure*) new structure(SCALAR);
+	m_ptr->CHARPTR = (structure*) new (NULL) structure(SCALAR);
 	m_ptr->CHARPTR->SIZE = CHARSIZE;
 	m_ptr->CHARPTR->SCALKIND=STANDARD;
 
-	m_ptr->BOOLPTR = (structure*) new structure(SCALAR);
+	m_ptr->BOOLPTR = (structure*) new (NULL) structure(SCALAR);
 	m_ptr->BOOLPTR->SIZE = BOOLSIZE;
 	m_ptr->BOOLPTR->SCALKIND=DECLARED;
 
-	m_ptr->NILPTR = (structure*) new structure(POINTER);
+	m_ptr->NILPTR = (structure*) new (NULL) structure(POINTER);
 	m_ptr->NILPTR->SIZE = PTRSIZE;
 	m_ptr->NILPTR->ELTYPE=NULL ;
    
-	m_ptr->TEXTPTR = (structure*) new structure(FILES);
+	m_ptr->TEXTPTR = (structure*) new (NULL) structure(FILES);
 	m_ptr->TEXTPTR->SIZE = FILESIZE+CHARSIZE;
 	m_ptr->TEXTPTR->FILTYPE=m_ptr->CHARPTR;
 	
 	// NEW(INTRACTVPTR,FILES);
 	structure *INTRACTVPTR; 
-	INTRACTVPTR = (structure*) new structure(FILES);
+	INTRACTVPTR = (structure*) new (NULL) structure(FILES);
 	INTRACTVPTR->SIZE=FILESIZE+CHARSIZE;
 	// FIXME? weird??
 	INTRACTVPTR->FILTYPE = m_ptr->CHARPTR;
@@ -439,7 +439,7 @@ void COMPINIT::ENTSTDTYPES()
 	
 	// NEW(STRGPTR,ARRAYS,true,true);
 	structure *STRGPTR; 
-	STRGPTR = new structure(ARRAYS);
+	STRGPTR = new (NULL) structure(ARRAYS);
 	STRGPTR->SIZE=(DEFSTRGLGTH + CHRSPERWD)/CHRSPERWD;
 	STRGPTR->AISPACKD=true;
 	STRGPTR->AISSTRNG=true;
@@ -710,7 +710,7 @@ void COMPINIT::ENTSTDPROCS()
 		case 12:
 			FTYPE=NULL;
 			PARAM = (identifier*) new identifier(FORMALVARS);
-			LSP = (structure*) new structure(POINTER);
+			LSP = (structure*) new (NULL) structure(POINTER);
 			LSP->SIZE=PTRSIZE;
 			LSP->ELTYPE=NULL;
 			PARAM->IDTYPE=LSP;
@@ -1218,7 +1218,7 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP &FSP, VALU &FVALU)
 				LSP=CHARPTR;
 			else
 			{
-				LSP = (structure*) new structure(ARRAYS);
+				LSP = (structure*) new (NULL) structure(ARRAYS);
 				*LSP=*STRGPTR;
 				LSP->AISPACKD=true;
 				LSP->AISSTRNG=true;
@@ -1296,7 +1296,7 @@ void PASCALCOMPILER::CONSTANT(const SETOFSYS &FSYS, STP &FSP, VALU &FVALU)
 			{
                if (SIGN==NEG) {
 				   VAL.VALP->LONGVAL[1]=- VAL.VALP->LONGVAL[1];
-				   LSP = (structure*) new structure(LONGINT);
+				   LSP = (structure*) new (NULL) structure(LONGINT);
                    LSP->SIZE=DECSIZE(LGTH);
                    FVALU=VAL;
                    INSYMBOL();
@@ -1462,7 +1462,9 @@ void PASCALCOMPILER::WRITECODE(bool FORCEBUF)
 	CODEINX=0;
 	LIC=IC;
 	char *ptr1, *ptr2;
-	WRITELN(OUTPUT,"PASCALCOMPILER::WRITECODE");
+	char fill_byte = '#';
+	
+	WRITELN(OUTPUT,"PASCALCOMPILER::WRITECODE: IC = ",(int)IC," CURBYTE = ",CURBYTE);
 	do {
        I=512-CURBYTE;
        if (I>LIC)
@@ -1477,6 +1479,8 @@ void PASCALCOMPILER::WRITECODE(bool FORCEBUF)
 #ifndef FORCE_OUTPUT
 		   if (USERINFO.ERRNUM==0)
 #endif
+	    if (FORCEBUF)
+			memset(&(DISKBUF[CURBYTE]),fill_byte,512-CURBYTE);
 		if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,&(DISKBUF[0]),CURBLK)!=1)
 				CERROR(402);
            CURBLK=CURBLK+1;

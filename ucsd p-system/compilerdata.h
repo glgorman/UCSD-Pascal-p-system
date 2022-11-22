@@ -92,6 +92,7 @@ protected:
 	structure();
 
 public:
+	void *operator new (size_t,void*);
 	structure(STRUCTFORM);
 	static void debug1 (structure *stp);
 
@@ -388,9 +389,43 @@ public:
     SETOFIDS	VARS;
 };
 
+class structures
+{
+	/*POINTERS FIXME?? STANDARD IDS*/
+protected:
+	STP	INTPTR;
+	STP REALPTR;
+	STP LONGINTPTR;
+	STP CHARPTR;
+	STP BOOLPTR;
+	STP TEXTPTR;
+	STP NILPTR;
+	STP INTRACTVPTR;
+	STP STRGPTR;	
+};
+
+class identifiers
+{
+protected:
+	CTP UTYPPTR;
+	CTP UCSTPTR;
+	CTP UVARPTR;
+	CTP	UFLDPTR;
+	CTP UPRCPTR;
+	CTP UFCTPTR;       
+	CTP	MODPTR;
+	CTP INPUTPTR;
+	CTP OUTPUTPTR;
+	CTP	OUTERBLOCK;
+	CTP	FWPTR;
+	CTP	USINGLIST;
+};
+
 class COMPILERDATA:
 	public PASCALSOURCE,
-	public BNF
+	public BNF,
+	public structures,
+	public identifiers
 {
 public:
 	static void *allocate(void*);
@@ -411,18 +446,6 @@ protected:
     bool	STARTINGUP;
 	bool	PUBLICPROCS;
 	
-	/*POINTERS:*/
-	STP	INTPTR,REALPTR,LONGINTPTR,
-		CHARPTR,BOOLPTR,TEXTPTR,
-		NILPTR,INTRACTVPTR,STRGPTR;	/*POINTERS; /*FIXME STANDARD IDS*/
-
-	CTP UTYPPTR,UCSTPTR,UVARPTR,
-	UFLDPTR,UPRCPTR,UFCTPTR,        /*POINTERS; /*FIXME* UNDECLARED IDS*/
-	MODPTR,INPUTPTR,OUTPUTPTR;
-	
-	CTP			OUTERBLOCK;
-	CTP			FWPTR;
-	CTP			USINGLIST;
 	TESTP		GLOBTESTP;		/*LAST TESTPOINTER*/
 	
 	void		*MARKP;			/*for MARKING HEAP*/
