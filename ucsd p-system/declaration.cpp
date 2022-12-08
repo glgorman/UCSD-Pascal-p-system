@@ -1221,6 +1221,8 @@ void DECLARATIONPART::TYPEDECLARATION(const SETOFSYS &FSYS)
 	if (FWPTR!=NULL)
 	{
 		CERROR(117);
+		identifier::debug1 (FWPTR,false);
+
 		FWPTR=NULL;
 	}
 } /*TYPEDECLARATION*/ 
@@ -1812,7 +1814,10 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 	};
 	memset(fp,0,sizeof(stack_frame));
 	stack_frame *param = reinterpret_cast<stack_frame*>(fp);
+#if 0
 	debug_stack ("DECLARATIONPART::TYP1",param);
+#endif
+
 	SETOFSYS S4 = FSYS;
 	S4+=SYMBOLS::ENDSY;
 	S4-=SYMBOLS::SEMICOLON;

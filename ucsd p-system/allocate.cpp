@@ -16,6 +16,21 @@
 
 using namespace std;
 
+bool structures::m_bTracing;
+bool identifiers::m_bTracing;
+
+LPVOID sandbox::allocate_p(size_t size)
+{
+	BOOL b_valid;
+	LPVOID	p_addr;
+	size_t allocation = size;
+	p_addr = (LPVOID) VirtualAlloc(NULL,allocation,
+    MEM_COMMIT,PAGE_READWRITE|PAGE_NOCACHE);
+	ASSERT (p_addr!=NULL);
+	b_valid = (BOOL) VirtualLock (p_addr,allocation);
+	return p_addr;
+}
+
 CONSTREC::CONSTREC(enum _CSTCLASS _cst)
 {
 	memset(this,0,sizeof(CONSTREC));
@@ -36,7 +51,8 @@ identifier::identifier (IDCLASS idclass)
 {
 	memset(this,0,sizeof(identifier));
 	KLASS = idclass;
-	debug1(this,true);
+	if (identifiers::m_bTracing==true)
+		debug1 (this,true);
 }
 
 identifier::identifier (char *str, STP ptr, IDCLASS idclass)
@@ -46,14 +62,15 @@ identifier::identifier (char *str, STP ptr, IDCLASS idclass)
 		strcpy_s(NAME,IDENTSIZE,str);
 	IDTYPE = ptr;
 	KLASS = idclass;
-	debug1(this,true);
+	if (identifiers::m_bTracing==true)
+		debug1 (this,true);
 }
 
 void structure::debug1 (structure *stp)
 {
 	char *tag_names[] =
 	{
-		"UNDEFINED","SCALAR","SUBRANGE","POINTER",
+ 		"UNDEFINED","SCALAR","SUBRANGE","POINTER",
 		"LONGINT","POWER","ARRAYS","RECORDS","FILES",
 		"TAGFLD","VARIANT2",NULL
 	};
@@ -65,6 +82,7 @@ void structure::debug1 (structure *stp)
 	else
 		tag_name = NULL;
 	WRITELN (OUTPUT," form: ",tag_name);
+	WRITELN (OUTPUT);
 //	ASSERT(false);
 }
 
@@ -87,7 +105,8 @@ void *structure::operator new (size_t sz1,void* ptr2)
 structure::structure (STRUCTFORM form)
 {
 	this->FORM = form;
-	debug1 (this);
+	if (structures::m_bTracing==true)
+		debug1 (this);
 }
 
 #if 0

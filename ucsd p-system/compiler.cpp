@@ -1013,10 +1013,14 @@ void PASCALCOMPILER::DECLARATIONS(SETOFSYS FSYS)
 
 void PASCALCOMPILER::BODY(const SETOFSYS &FSYS, CTP FPROCP)
 {
-	char *str_exit;
+	char *str_exit, *str_name;
 	bool except = false;
 	LPVOID ptr1 = (LPVOID) FPROCP;
-	WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART FPROCP ", (int)ptr1," = ",FPROCP->NAME);
+	if (ptr1!=NULL)
+		str_name = FPROCP->NAME;
+	else
+		str_name = NULL;
+	WRITELN(OUTPUT,"PASCALCOMPILER::BODYPART FPROCP ", (int)ptr1," = ",str_name);
 	BODYPART *ptr2;
 	ptr2 = static_cast<BODYPART*>(BODYPART::allocate((void*)this));
 	try
@@ -1078,17 +1082,25 @@ void TRAP2 (char *str1, char *str2, CTP LCP0)
 		PRINTTREE1(LCP0);
 }
 
+void TRAP3 (char *str1, char *str2)
+{
+//	WRITELN(OUTPUT);
+	if (strcmp(str1,str2)==0)
+	{
+		::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
+		WRITELN(OUTPUT,"Searching for: \"",str1,"\" in SETOFIDS ");
+	}
+}
+
 void PASCALCOMPILER::SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP)
 {
 	CTP LCP = NULL;
 	CTP LCP1 = NULL;
 	bool status = false;
 #if 1
-	WRITELN(OUTPUT);
-	::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
-	WRITELN(OUTPUT,"Searching for: \"",ID,"\" in SETOFIDS ");
+	TRAP3 ("LEXSTKREC",ID);
 #endif
-#if 1
+#if 0
 	TRAP1(ID,"STRUCTURE");
 	TRAP1(ID,"SIZE");
 #endif

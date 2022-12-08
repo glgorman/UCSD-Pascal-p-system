@@ -144,6 +144,7 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 	}
 	if (CH==USERINFO.ALTMODE)
 	{
+
 		ASSERT(false);
 	}
 	if ((ERRORNUM>400)||(CH==(char)(27)))

@@ -187,11 +187,11 @@ public:
 	static void debug1 (identifier *stp, bool);
 
 public:
-	ALPHA NAME;
 	CTP LLINK;
 	CTP RLINK;
-	STP IDTYPE;
 	CTP NEXT;
+	STP IDTYPE;
+	ALPHA NAME;
 	struct
 	{
 		IDCLASS KLASS;
@@ -391,7 +391,23 @@ public:
 
 class structures
 {
-	/*POINTERS FIXME?? STANDARD IDS*/
+friend class structure;
+
+protected:
+	static bool	m_bTracing;
+	structures ()
+	{
+		m_bTracing = false;
+	}
+	void tron ()
+	{
+		m_bTracing = true;
+	}
+	void troff ()
+	{
+		m_bTracing = false;
+	}
+
 protected:
 	STP	INTPTR;
 	STP REALPTR;
@@ -401,11 +417,28 @@ protected:
 	STP TEXTPTR;
 	STP NILPTR;
 	STP INTRACTVPTR;
-	STP STRGPTR;	
+	STP STRGPTR;
 };
 
 class identifiers
 {
+friend class identifier;
+
+protected:
+	static bool	m_bTracing;
+	identifiers ()
+	{
+		m_bTracing = false;
+	}
+	void tron ()
+	{
+		m_bTracing = true;
+	}
+	void troff ()
+	{
+		m_bTracing = false;
+	}
+
 protected:
 	CTP UTYPPTR;
 	CTP UCSTPTR;
