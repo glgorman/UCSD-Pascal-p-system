@@ -113,7 +113,6 @@ SETOFSYS &SETOFSYS::operator = (const SETOFSYS &x)
 	return (*this);
 }
 
-
 SETOFSYS SETOFSYS::range (int low, int high)
 {
 	SETOFSYS result;

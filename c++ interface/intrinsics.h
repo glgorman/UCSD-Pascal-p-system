@@ -22,6 +22,12 @@ typedef char *TEXT;
 
 typedef	enum { CHAR1, CHARPTR1, DOUBLE1, DWORD1, FLOAT1, INT1, SIZE1, ULONG1, VOID1 } PTYPE;
 
+class sandbox
+{
+public:
+	static LPVOID allocate_p(size_t size);
+};
+
 struct pascal_error
 {
 	char *errstr;
@@ -41,6 +47,7 @@ extern pascal_error error_list[];
 class pascal_file
 {
 public:
+	int blocks_written;
 	int blocks_read;
 	vector<char*> *m_source;
 	vector<char*>::iterator m_begin;

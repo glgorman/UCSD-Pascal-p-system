@@ -8,6 +8,7 @@
 
 pascal_file::pascal_file ()
 {
+	blocks_written = 0;
 	blocks_read = 0;
 	_tmpfname = "";
 	m_source = new vector<char*>;
@@ -434,7 +435,6 @@ void _WRITELN(int uid, size_t sz,...)
 	va_end(vl);
 }
 
-
 void SYSCOMM::LAUNCH_CONSOLE()
 {
 #ifdef HAS_CONSOLE
@@ -489,6 +489,7 @@ void SYSCOMM::OPENNEW(pascal_file *file,char *)
 	vector<char*> *source = file->m_source;
 	vector<char*>::iterator &iter = source->begin();
 	file->m_pos = iter;
+	file->blocks_written = 0;
 }
 
 void SYSCOMM::REWRITE(pascal_file *,char *)
@@ -503,6 +504,7 @@ void SYSCOMM::RESET(pascal_file *file,char*)
 	file->m_begin = iter;
 	file->m_pos = iter;
 	file->blocks_read = 0;
+	file->blocks_written = 0;
 }
 
 int SYSCOMM::CLOSE(pascal_file *f,bool)
@@ -554,17 +556,6 @@ void SYSCOMM::READ(int id, char &a)
 	a = buffer[0];
 }
 
-#if 0
-void SYSCOMM::READ(int id, char &a)
-{
-	UINT res = AfxMessageBox(_T("INPUT EXPECTED"),IDOK);
-	if (res==IDCANCEL)
-		a = 'E';
-	else
-		a = ' ';
-}
-#endif
-
 bool SYSCOMM::IORESULT(void)
 {
 	return true;
@@ -575,6 +566,7 @@ void SYSCOMM::OPENOLD(pascal_file *file,char *)
 	vector<char*> *source = file->m_source;
 	vector<char*>::iterator &iter = source->begin();
 	file->blocks_read = 0;
+	file->blocks_written = 0;
 	file->m_pos = iter;
 }
 
@@ -647,13 +639,15 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 	char hexbuf[32];
 	char strbuf[32];
 	unsigned char ch;
-	int i,j;
-	DWORD k;
+	int h,i,j;
+	DWORD k,position;
 	char hexchar[] = "0123456789abcdef";
+//	for (h=0;h<blocks;h++)
 	for (i=0;i<32;i++)
 	{
 		k = 512*offset+16*i;
-		sprintf_s (hexbuf,32,"%08x: ",k);
+		position = file->blocks_written*512+k;
+		sprintf_s (hexbuf,32,"%08x: ",position);
 		WRITE (OUTPUT,hexbuf);
 		for (j=0;j<16;j++)
 		{
@@ -679,6 +673,7 @@ int SYSCOMM::BLOCKWRITE(pascal_file *file, const unsigned char *buf, int blocks,
 		strbuf[j]=0;
 		WRITELN(OUTPUT," --> \"",strbuf,"\"");
 	}
+	file->blocks_written++;
 	int result = 1;
 	return result;
 }

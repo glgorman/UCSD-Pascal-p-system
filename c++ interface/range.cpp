@@ -23,7 +23,6 @@ RANGE::RANGE(int min=0, int max=0x7FFFFFFF)
 }
 #endif
 
-
 JTABRANGE &JTABRANGE::operator = (int arg)
 {
 	val = arg;

@@ -52,12 +52,39 @@ public:
 	rational (fraction);
 };
 
-typedef enum operation
+typedef enum opcodes
 {	
-	add,subtract,multiply,divide,
-	modulus,symbol,none,left,right,null
+	null,identifier,integer,real,frac,
+	add,subtract,multiply,divide,and,or,
+	nand,nor,xor,not,modulus,symbol,
+	left,right,function,
 
-} operation;
+} opcodes;
+
+class operation
+{
+private:
+	opcodes m_opcode;
+
+public:
+	inline operation &operator = (opcodes x)
+	{
+		m_opcode = x;
+		return *this;
+	};
+	inline bool operator == (opcodes x)
+	{
+		bool result;
+		result = (m_opcode==x?true:false);
+		return result;
+	};
+	inline bool operator != (opcodes x)
+	{
+		bool result;
+		result = (m_opcode!=x?true:false);
+		return result;
+	};
+};
 
 class EXPRESSION
 {
@@ -69,7 +96,7 @@ class EQUATIOM
 	EXPRESSION *expr1, *expr2;
 };
 
-class mathObj
+class math_object
 {
 	text_object *result;
 
@@ -78,8 +105,8 @@ private:
 	int lex_level, output_count;
 
 public:
-	mathObj ();
-	~mathObj ();
+	math_object ();
+	~math_object ();
 	operation detect (char *theToken);
 	void push (operation &the);
 	fraction evaluate (text_object program);
