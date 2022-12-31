@@ -179,11 +179,13 @@ typedef enum _IDKIND
 class identifier
 {
 protected:
+	void *operator new (size_t,void*);
 	identifier();
-
+	
 public:
-	identifier(char*,STP,IDCLASS);
-	identifier(IDCLASS);
+	static identifier *allocate ();
+	static identifier *allocate (IDCLASS);
+	static identifier *allocate (char*,STP,IDCLASS);
 	static void debug1 (identifier *stp, bool);
 
 public:

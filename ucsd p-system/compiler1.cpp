@@ -9,6 +9,8 @@
 #include "bodypart.h"
 #include "compiler.h"
 
+#define alias(X,...) union { struct {__VA_ARGS__}; char X[1]; }
+
 bTreeType<PSYMBOL> *p_symbols;
 
 extern subst pascal2c [];
@@ -225,8 +227,6 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::S
 	}
 }
 
-#define alias(X,...) union { struct {__VA_ARGS__}; char X[1]; }
-
 void PASCALSOURCE::build_tree ()
 {
 #if 0
@@ -321,7 +321,7 @@ union
   };
   char fp[sizeof(stack_frame)];
 };
-	build_tree();
+//	build_tree();
 
 	WRITELN (OUTPUT,"#### ",src," ####");
 	memcpy (fp,ptr,sizeof(stack_frame));

@@ -79,22 +79,29 @@ int PASCALCOMPILER::COMPILER_MAIN (LPVOID)
 	   WRITELN(OUTPUT); 
 	}
 	IC=0;
-	for (SEG=0;SEG<=MAXSEG;SEG++)		
-	{ 
+	int index;
+	for (index=0;index<=MAXSEG;index++)		
+	{
+		SEG = index;
 		GENWORD(SEGTABLE[SEG].DISKADDR);
 		GENWORD(SEGTABLE[SEG].CODELENGTH);
 	}
-	for (SEG=0;SEG<=MAXSEG;SEG++)
+	for (index=0;index<=MAXSEG;index++)		
 	{
+		SEG = index;
 		for (LGTH=0;LGTH<8;LGTH++)
 			GENBYTE(ORD(SEGTABLE[SEG].SEGNAME[LGTH]));
 	}
-	for (SEG=0;SEG<=MAXSEG;SEG++)
-	   GENWORD(SEGTABLE[SEG].SEGKIND);
-	
-	for (SEG=0;SEG<=MAXSEG;SEG++)
-	   GENWORD(SEGTABLE[SEG].TEXTADDR);
-	
+	for (index=0;index<=MAXSEG;index++)		
+	{
+		SEG = index;
+		GENWORD(SEGTABLE[SEG].SEGKIND);
+	}
+	for (index=0;index<=MAXSEG;index++)		
+	{
+		SEG = index;
+		GENWORD(SEGTABLE[SEG].TEXTADDR);
+	}
 	for (LGTH=0;LGTH<80;LGTH++)
      if (COMMENT!=NULL)
 		 GENBYTE(ORD(COMMENT[LGTH]));
@@ -468,31 +475,31 @@ void COMPINIT::ENTSTDNAMES()
 	STP &INTRACTVPTR = m_ptr->INTRACTVPTR;
 	STP &NILPTR = m_ptr->NILPTR;
 
-	CP = (identifier*) new identifier("INTEGER ",INTPTR,TYPES);
+	CP = (identifier*) identifier::allocate("INTEGER ",INTPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("REAL    ",REALPTR,TYPES);
+	CP = (identifier*) identifier::allocate("REAL    ",REALPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("CHAR    ",CHARPTR,TYPES);
+	CP = (identifier*) identifier::allocate("CHAR    ",CHARPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("BOOLEAN ",BOOLPTR,TYPES);
+	CP = (identifier*) identifier::allocate("BOOLEAN ",BOOLPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("STRING  ",STRGPTR,TYPES);
+	CP = (identifier*) identifier::allocate("STRING  ",STRGPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("TEXT  ",TEXTPTR,TYPES);
+	CP = (identifier*) identifier::allocate("TEXT  ",TEXTPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("INTERACTIVE",INTRACTVPTR,TYPES);
+	CP = (identifier*) identifier::allocate("INTERACTIVE",INTRACTVPTR,TYPES);
 	m_ptr->ENTERID(CP);
-	m_ptr->INPUTPTR = (identifier*) new identifier("INPUT  ",TEXTPTR,FORMALVARS);
+	m_ptr->INPUTPTR = (identifier*) identifier::allocate("INPUT  ",TEXTPTR,FORMALVARS);
 	m_ptr->INPUTPTR->VLEV = 0;
 	m_ptr->INPUTPTR->VADDR = 2;
 	m_ptr->ENTERID(m_ptr->INPUTPTR);
-	m_ptr->OUTPUTPTR = (identifier*) new identifier("OUTPUT  ",TEXTPTR,FORMALVARS);
+	m_ptr->OUTPUTPTR = (identifier*) identifier::allocate("OUTPUT  ",TEXTPTR,FORMALVARS);
 	m_ptr->OUTPUTPTR->IDTYPE = TEXTPTR;
 	m_ptr->OUTPUTPTR->VLEV = 0;
 	m_ptr->OUTPUTPTR->VADDR = 3;
 	m_ptr->ENTERID(m_ptr->OUTPUTPTR);
 
-	CP = (identifier*) new identifier(FORMALVARS);
+	CP = (identifier*) identifier::allocate(FORMALVARS);
 	strcpy_s(CP->NAME,IDENTSIZE,"KEYBOARD ");
 	CP->IDTYPE = TEXTPTR;
 	CP->VLEV = 0;
@@ -502,7 +509,7 @@ void COMPINIT::ENTSTDNAMES()
 	CP1=NULL;
 	for (I=0;I<=1;I++)
 	{
-		CP = (identifier*) new identifier(NULL,BOOLPTR,KONST);
+		CP = (identifier*) identifier::allocate(NULL,BOOLPTR,KONST);
         if (I==0)
 			strcpy_s(CP->NAME,IDENTSIZE,"FALSE   ");
 		else 
@@ -513,11 +520,11 @@ void COMPINIT::ENTSTDNAMES()
 		CP1=CP;
     }
     m_ptr->BOOLPTR->FCONST=CP;
-	CP = (identifier*) new identifier("NULL     ",NILPTR,KONST);
+	CP = (identifier*) identifier::allocate("NULL     ",NILPTR,KONST);
 	CP->NEXT=NULL;
 	CP->VALUES.IVAL=0;
 	m_ptr->ENTERID(CP);
-	CP = (identifier*) new identifier("MAXINT  ",INTPTR,KONST);
+	CP = (identifier*) identifier::allocate("MAXINT  ",INTPTR,KONST);
 	CP->VALUES.IVAL=MAXINT;
 	m_ptr->ENTERID(CP);
 } /*ENTSTDNAMES*/ ;
@@ -525,30 +532,30 @@ void COMPINIT::ENTSTDNAMES()
 void COMPINIT::ENTUNDECL()
 {
 	WRITELN(OUTPUT,"COMPINIT::ENTUNDECL()");
-	m_ptr->UTYPPTR = (identifier*) new identifier(TYPES);
+	m_ptr->UTYPPTR = (identifier*) identifier::allocate(TYPES);
 	strcpy_s(m_ptr->UTYPPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UTYPPTR->IDTYPE=NULL;
 
-	m_ptr->UCSTPTR = (identifier*) new identifier(KONST);
+	m_ptr->UCSTPTR = (identifier*) identifier::allocate(KONST);
 	strcpy_s(m_ptr->UCSTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UCSTPTR->IDTYPE=NULL;
 	m_ptr->UCSTPTR->VALUES.IVAL = NULL;
 	m_ptr->UCSTPTR->NEXT=NULL;
 
-	m_ptr->UVARPTR = (identifier*) new identifier(ACTUALVARS);
+	m_ptr->UVARPTR = (identifier*) identifier::allocate(ACTUALVARS);
 	strcpy_s(m_ptr->UVARPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UVARPTR->IDTYPE=NULL;
 	m_ptr->UCSTPTR->NEXT = NULL;
 	m_ptr->UCSTPTR->VLEV = 0;
 	m_ptr->UCSTPTR->VADDR = 0;
 
-	m_ptr->UFLDPTR = (identifier*) new identifier(FIELD);
+	m_ptr->UFLDPTR = (identifier*) identifier::allocate(FIELD);
 	strcpy_s(m_ptr->UFLDPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFLDPTR->IDTYPE=NULL;
 	m_ptr->UFLDPTR->NEXT = NULL;
 	m_ptr->UFLDPTR->FLDADDR = 0;
 
-	m_ptr->UPRCPTR = (identifier*) new identifier(PROC1);
+	m_ptr->UPRCPTR = (identifier*) identifier::allocate(PROC1);
 	strcpy_s(m_ptr->UPRCPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UPRCPTR->IDTYPE=NULL;
 	m_ptr->UPRCPTR->FORWDECL=false;
@@ -559,7 +566,7 @@ void COMPINIT::ENTUNDECL()
 	m_ptr->UPRCPTR->PFDECKIND=DECLARED;
 	m_ptr->UPRCPTR->PFKIND=ACTUAL;
 
-	m_ptr->UFCTPTR = (identifier*) new identifier(FUNC);
+	m_ptr->UFCTPTR = (identifier*) identifier::allocate(FUNC);
 	strcpy_s(m_ptr->UFCTPTR->NAME,IDENTSIZE,"        ");
 	m_ptr->UFCTPTR->IDTYPE=NULL;
 	m_ptr->UFCTPTR->NEXT = NULL;
@@ -636,7 +643,7 @@ void COMPINIT::ENTSPCPROCS()
 			idclass=FUNC;
 		else
 			idclass=PROC1;
-		LCP = (identifier*) new identifier(NA[I],NULL,idclass);
+		LCP = (identifier*) identifier::allocate(NA[I],NULL,idclass);
 		LCP->PFDECKIND = SPECIAL;
 		//LCP->NEXT=NULL;
 		//LCP->IDTYPE=NULL;
@@ -684,7 +691,7 @@ void COMPINIT::ENTSTDPROCS()
 		{
 		case 1:
 			FTYPE=m_ptr->BOOLPTR;;
-			PARAM =  (identifier*) new identifier(ACTUALVARS);
+			PARAM =  (identifier*) identifier::allocate(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->INTPTR;
 			break;
 
@@ -699,7 +706,7 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 4:
 			FTYPE=m_ptr->INTPTR;
-			PARAM =  (identifier*) new identifier(ACTUALVARS);
+			PARAM =  (identifier*) identifier::allocate(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->REALPTR;
 			break;
 
@@ -709,7 +716,7 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 12:
 			FTYPE=NULL;
-			PARAM = (identifier*) new identifier(FORMALVARS);
+			PARAM = (identifier*) identifier::allocate(FORMALVARS);
 			LSP = (structure*) new (NULL) structure(POINTER);
 			LSP->SIZE=PTRSIZE;
 			LSP->ELTYPE=NULL;
@@ -723,7 +730,7 @@ void COMPINIT::ENTSTDPROCS()
 
 		case 15:
 			FTYPE=m_ptr->BOOLPTR; 
-			PARAM = (identifier*) new identifier(ACTUALVARS);
+			PARAM = (identifier*) identifier::allocate(ACTUALVARS);
 			PARAM->IDTYPE=m_ptr->INTPTR;
 			break;
 
@@ -748,7 +755,7 @@ void COMPINIT::ENTSTDPROCS()
 			idclass=PROC1;
 		else
 			idclass=FUNC;
-		LCP = (identifier*) new identifier((char*)NA[i],NULL,idclass);		
+		LCP = (identifier*) identifier::allocate((char*)NA[i],NULL,idclass);		
 		LCP->PFDECKIND=STANDARD;
 		LCP->CSPNUM=i + 20;
 		
@@ -775,13 +782,15 @@ void COMPINIT::INITSCALARS()
      m_ptr->m_src.SYMBLK=0;
 	 m_ptr->SCREENDOTS=0;
 	 m_ptr->STARTDOTS=0;
-     for (m_ptr->SEG=0;m_ptr->SEG<=MAXSEG;m_ptr->SEG++)
+	 int index;
+     for (index=0;index<=MAXSEG;index++)
 	 {
-		m_ptr->SEGTABLE[m_ptr->SEG].DISKADDR=0;
-		m_ptr->SEGTABLE[m_ptr->SEG].CODELENGTH=0;
-		strcpy_s(m_ptr->SEGTABLE[m_ptr->SEG].SEGNAME,IDENTSIZE,"        ");
-		m_ptr->SEGTABLE[m_ptr->SEG].SEGKIND=0;
-		m_ptr->SEGTABLE[m_ptr->SEG].TEXTADDR=0;
+		m_ptr->SEG=index;
+		m_ptr->SEGTABLE[index].DISKADDR=0;
+		m_ptr->SEGTABLE[index].CODELENGTH=0;
+		strcpy_s(m_ptr->SEGTABLE[index].SEGNAME,IDENTSIZE,"        ");
+		m_ptr->SEGTABLE[index].SEGKIND=0;
+		m_ptr->SEGTABLE[index].TEXTADDR=0;
 	 }
      m_ptr->USINGLIST=NULL;
      if (m_ptr->USERINFO.STUPID)
@@ -923,7 +932,7 @@ void COMPINIT::INIT(PASCALCOMPILER *p)
 	m_ptr->LC=m_ptr->LC+2;
 	m_ptr->GLEV=3; /*KEEP STACK STRAIGHT FOR NOW*/
       
-	m_ptr->OUTERBLOCK = new identifier("PROGRAM ",NULL,PROC1);
+	m_ptr->OUTERBLOCK = identifier::allocate("PROGRAM ",NULL,PROC1);
 	m_ptr->OUTERBLOCK->PFDECKIND=DECLARED;
 	m_ptr->OUTERBLOCK->PFKIND=ACTUAL;
 	m_ptr->OUTERBLOCK->NEXT=NULL;

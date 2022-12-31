@@ -224,7 +224,7 @@ void UNITPART::UNITDECLARATION(SETOFSYS FSYS, TESTP &UMARKP)
 			}
 			if (!FOUND)
 			{
-				LCP = new identifier(ID,NULL,MODULE);
+				LCP = identifier::allocate(ID,NULL,MODULE);
 				LCP->NEXT=MODPTR;
 				LCP->SEGID=SEG;
 				MODPTR=LCP;

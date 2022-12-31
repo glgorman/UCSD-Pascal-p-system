@@ -38,6 +38,10 @@ DECLARATIONPART::~DECLARATIONPART()
 	
 }
 
+void DECLARATIONPART::USESDECLARATION(bool MAGIC)
+{
+	ASSERT(false);
+}
 
 void DECLARATIONPART::MAIN (const SETOFSYS &FSYS)
 {
@@ -186,7 +190,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 				INSYMBOL();
 				if (SY==SYMBOLS::IDENT)
 				{
-					LCP = (identifier*) new identifier(ID,LSP,KONST); 
+					LCP = (identifier*) identifier::allocate(ID,LSP,KONST); 
 					LCP->NEXT=LCP1;
 					LCP->VALUES.IVAL=LCNT;
 					ENTERID(LCP);
@@ -484,7 +488,7 @@ void DECLARATIONPART::FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &F
 		{
 			if (SY==SYMBOLS::IDENT)
 			{
-				LCP = (identifier*) new identifier(ID,NULL,FIELD);
+				LCP = (identifier*) identifier::allocate(ID,NULL,FIELD);
 				LCP->NEXT=NXT;
 				if (PACKING)
 					LCP->FISPACKED=true;
@@ -657,7 +661,7 @@ void DECLARATIONPART::VARIANTLIST(stack_frame *param,const SETOFSYS &FSYS, STP	&
 	INSYMBOL();
 	if (SY==SYMBOLS::IDENT)
 	{
-		LCP = (identifier*) new identifier(FIELD);
+		LCP = (identifier*) identifier::allocate(FIELD);
 		LCP->IDTYPE=NULL;
 		LCP->NEXT=NULL;
 		if (PACKING)
@@ -830,7 +834,7 @@ void DECLARATIONPART::POINTERTYPE(stack_frame *param)
 		PRTERR=true;
 		if (LCP==NULL) /*FORWARD REFERENCED TYPE ID*/
 		{
-			LCP = (identifier*) new identifier(ID,LSP,TYPES);
+			LCP = (identifier*) identifier::allocate(ID,LSP,TYPES);
 			LCP->NEXT=FWPTR;
 			FWPTR=LCP;
 		}
@@ -1018,7 +1022,7 @@ DECLARATIONPART::USESDECLARATION::USESDECLARATION(const SETOFSYS &FSYS, bool MAG
 			GETTEXT(FOUND);
 			if (FOUND)
 			{
-				LCP = (identifier*) new identifier(LNAME,NULL,MODULE);
+				LCP = (identifier*) identifier::allocate(LNAME,NULL,MODULE);
 				LCP->NEXT=USINGLIST;
 				if (LSEPPROC)
 					LCP->SEGID=-1; /*NO SEG*/
@@ -1133,7 +1137,7 @@ void DECLARATIONPART::CONSTDECLARATION(const SETOFSYS &FSYS)
 	while (SY==SYMBOLS::IDENT)
 	{
 		ID[IDENTSIZE-1]=0; // sanity check
-		LCP = (identifier*) new identifier(ID,NULL,KONST);
+		LCP = (identifier*) identifier::allocate(ID,NULL,KONST);
 		INSYMBOL();
 		if ((SY==SYMBOLS::RELOP)&& (OP==EQOP))
 			INSYMBOL();
@@ -1178,7 +1182,7 @@ void DECLARATIONPART::TYPEDECLARATION(const SETOFSYS &FSYS)
 	S0+=SYMBOLS::SEMICOLON;
 	while (SY==SYMBOLS::IDENT)
 	{
-		LCP = (identifier*) new identifier(ID,NULL,TYPES);
+		LCP = (identifier*) identifier::allocate(ID,NULL,TYPES);
 		INSYMBOL();
 		if ((SY==SYMBOLS::RELOP)&&(OP==EQOP))
 			INSYMBOL();
@@ -1240,7 +1244,7 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 		do {
 			if (SY==SYMBOLS::IDENT)
 			{
-				LCP = (identifier*) new identifier(ID,NULL,ACTUALVARS);
+				LCP = (identifier*) identifier::allocate(ID,NULL,ACTUALVARS);
 				LCP->NEXT=NXT;
 				LCP->VLEV=LEVEL;
 				if (options.INMODULE)
@@ -1385,7 +1389,7 @@ void DECLARATIONPART::PROCDECLARATION
 		}
 		if (!FORW)
 		{
-			LCP = (identifier*) new identifier(ID,NULL,NONE);
+			LCP = (identifier*) identifier::allocate(ID,NULL,NONE);
 			LCP->LOCALLC=LC;
 			LCP->PFDECKIND=DECLARED;
 			LCP->PFKIND=ACTUAL;
@@ -1673,7 +1677,7 @@ void DECLARATIONPART::PARAMETERLIST
 				else
 				{
 //					NEW(LCP,FORMALVARS,false);/*MAY BE ACTUAL(SAME SIZE)*/
-					LCP = (identifier*) new identifier(ID,NULL,NONE);
+					LCP = (identifier*) identifier::allocate(ID,NULL,NONE);
 					LCP->NEXT=LCP2;
 					if (LKIND==FORMAL)
 						LCP->KLASS=FORMALVARS;

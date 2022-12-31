@@ -37,6 +37,62 @@ CONSTREC::CONSTREC(enum _CSTCLASS _cst)
 	this->CCLASS = _cst;
 }
 
+void *identifier::operator new (size_t sz1,void* ptr2)
+{
+	char fill_char = 0x0;
+	size_t sz2;
+	sz2 = sizeof(identifier);
+	identifier *ptr;
+
+	if (ptr2==NULL)
+		ptr = reinterpret_cast<identifier*> (malloc (sz2));
+	else
+		ptr = reinterpret_cast<identifier*> (ptr2);
+
+	memset(ptr,fill_char,sizeof(identifier));
+	return ptr;
+}
+
+identifier::identifier ()
+{
+	
+}
+
+identifier *identifier::allocate ()
+{
+	identifier *id;
+	void *pascal_heap = NULL;
+	id = new (pascal_heap) identifier;
+	if (identifiers::m_bTracing==true)
+		debug1 (id,true);
+	return id;
+}
+
+identifier *identifier::allocate (IDCLASS idclass)
+{
+	identifier *id;
+	void *pascal_heap = NULL;
+	id = new (pascal_heap) identifier;
+	id->KLASS = idclass;
+	if (identifiers::m_bTracing==true)
+		debug1 (id,true);
+	return id;
+}
+
+identifier *identifier::allocate (char *str, STP ptr, IDCLASS idclass)
+{
+	identifier *id;
+	void *pascal_heap = NULL;
+	id = new (pascal_heap) identifier;
+	if (str!=NULL)
+		strcpy_s(id->NAME,IDENTSIZE,str);
+	id->IDTYPE = ptr;
+	id->KLASS = idclass;
+	if (identifiers::m_bTracing==true)
+		debug1 (id,true);
+	return id;
+}
+
 void identifier::debug1 (identifier *stp, bool alloc)
 {
 	char addr_str[16];
@@ -45,25 +101,6 @@ void identifier::debug1 (identifier *stp, bool alloc)
 	if (alloc==true)
 		::WRITE (OUTPUT,"new ");
 	WRITELN (OUTPUT,"identifier addr: 0x",addr_str," ",(char*)stp->NAME);
-}
-
-identifier::identifier (IDCLASS idclass)
-{
-	memset(this,0,sizeof(identifier));
-	KLASS = idclass;
-	if (identifiers::m_bTracing==true)
-		debug1 (this,true);
-}
-
-identifier::identifier (char *str, STP ptr, IDCLASS idclass)
-{
-	memset(this,0,sizeof(identifier));
-	if (str!=NULL)
-		strcpy_s(NAME,IDENTSIZE,str);
-	IDTYPE = ptr;
-	KLASS = idclass;
-	if (identifiers::m_bTracing==true)
-		debug1 (this,true);
 }
 
 void structure::debug1 (structure *stp)
