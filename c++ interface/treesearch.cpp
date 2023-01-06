@@ -2,16 +2,8 @@
 #include "stdafx.h"
 #include "afxmt.h"
 #include <iostream>
-#include "../Frame Lisp/defines.h"
-#include "../Frame Lisp/symbol_table.h"
-#include "../Frame Lisp/btreetype.h"
-#include "../Frame Lisp/node_list.h"
-#include "../Frame Lisp/text_object.h"
-#include "../Frame Lisp/scripts.h"
-#include "../Frame Lisp/frames.h"
-#include "../Frame Lisp/frames1.h"
-#include "../Frame Lisp/extras.h"
-
+#include "../Frame Lisp/framelisp.h"
+#include "../p-system compiler/insymbol.h"
 #include "../p-system compiler/compilerdata.h"
 #include "../p-system compiler/declarationpart.h"
 #include "../p-system compiler/bodypart.h"
@@ -197,7 +189,7 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 		len = strlen(t->ascii);
 		if (strcmp(buf,t->ascii)==0)
 		{
-			strcpy_s(result.ID,IDENTSIZE,t->ascii);
+			result.ID = t->ascii;
 			found = true;
 			syid = t->m_index;
 			break;
@@ -212,10 +204,48 @@ int SEARCH::IDSEARCH(int pos, char *&str)
 	return syid;
 }
 
-int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
+int treesearch::compare (ALPHA &str1, ALPHA &str2)
+{
+	char c1, c2;
+	int i,j,k,l;
+	int test = 0;
+	i = str1.length();
+	j = str2.length();
+	if (i>j)
+		l=i;
+	else
+		l=j;
+
+	for (k=0;k<l;k++)
+	{
+		test = 0;
+		c1 = tolower(str1[k]);
+		c2 = tolower(str2[k]);
+// some of the symbols have trailing spaces, which means
+// that one string will have a terminatinng null while
+// the other will have a trailing space, but only when
+// the lengths are unequal.
+		if ((c1==0)&&(c2==32)
+			||(c2==0)&&(c1==32))
+			break;
+// perfectly safe to compare the terminating zero with
+// any other characther in the regular fashion.
+		if (c1!=c2)
+		{
+			test = (c1>c2?1:-1);
+			break;
+		}
+	}
+	if (((i<j)&&(test==0))&&(str2[k]!=32))
+		test=-1;
+
+	return test;
+}
+
+int treesearch::search(const CTP& n1, CTP& n2, ALPHA &str)
 {
 #ifdef DEBUG_TREESEARCH
-	WRITE(OUTPUT,"TREESEARCH(CTP& n1, CTP& n2,\"",(char*)str,"\")");
+	WRITE(OUTPUT,"treesearch(CTP& n1, CTP& n2,\"",(char*)str,"\")");
 #endif
 
 	CTP ptr = n1;
@@ -223,51 +253,21 @@ int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str)
 	bool quit = false;
 	int test;
 	int i,j,k,l;
-	char c1, c2;
-	i = strlen(str);
+	
 	do {
-		j = strlen(ptr->NAME);
-		if (i>j)
-			l=i;
-		else
-			l=j;
-	
-	
-		for (k=0;k<l;k++)
-		{
-			test = 0;
-			c1 = tolower(str[k]);
-			c2 = tolower(ptr->NAME[k]);
-// some of the symbols have trailing spaces, which means
-// that one string will have a terminatinng null while
-// the other will have a trailing space, but only when
-// the lengths are unequal.
-			if ((c1==0)&&(c2==32)
-				||(c2==0)&&(c1==32))
-				break;
-// perfectly safe to compare the terminating zero with
-// any other characther in the regular fashion.
-			if (c1!=c2)
-			{
-				test = (c1>c2?1:-1);
-				break;
-			}
-		}
-		if (((i<j)&&(test==0))&&(ptr->NAME[k]!=32))
-			test=-1;
-
-		if ((test<0)&&(ptr->LLINK!=NULL))
-			ptr = ptr->LLINK;
-		else if ((test>0)&&(ptr->RLINK!=NULL))
-			ptr = ptr->RLINK;
+		test = compare (str,ptr->NAME);
+		if ((test<0)&&(ptr->LLINK()!=NULL))
+			ptr = ptr->LLINK();
+		else if ((test>0)&&(ptr->RLINK()!=NULL))
+			ptr = ptr->RLINK();
 		else if (test==0)
 		{
 			found=true;
 			quit = true;
 		}
-		else if ((test<0)&&(ptr->LLINK==NULL))
+		else if ((test<0)&&(ptr->LLINK()==NULL))
 			quit = true;
-		else if ((test>0)&&(ptr->RLINK==NULL))
+		else if ((test>0)&&(ptr->RLINK()==NULL))
 			quit = true;
 	}
 	while (quit==false);
@@ -296,65 +296,70 @@ void INDENT_NEWLINE (int i)
 	  WRITE(OUTPUT,"--");
 }
 
-void PRINTNODE(const CTP &n1, size_t &N)
+void PRINTNODE(const CTP &n1, size_t &N, bool verbose)
 {
 	CTP node;
 	node = n1;
 //	ADJUST_LINE(N);
 //	INDENT_NEWLINE((int)N);
 	N++;
-	WRITE(OUTPUT,"NODE(");
+	if (verbose==true)
+		WRITE(OUTPUT,"NODE(");
 //	N+=5;
-	if (node->LLINK!=NULL)
+	if (node->LLINK()!=NULL)
 	{
-		PRINTNODE(node->LLINK,N);			
+		PRINTNODE(node->LLINK(),N,verbose);			
 	}
 	else
 	{
 //		N += 3;
-		WRITE(OUTPUT,"nil");
+		if (verbose==true)
+		  WRITE(OUTPUT,"nil,");
 	}
-	WRITE (OUTPUT,",\"",node->NAME,"\",");
+	WRITE (OUTPUT,"\"",node->NAME,"\",");
 //	N+= (strlen(node->NAME)+4);
-	if (node->RLINK!=NULL)
+	if (node->RLINK()!=NULL)
 	{
-		PRINTNODE(node->RLINK,N);	
+		PRINTNODE(node->RLINK(),N,verbose);	
 	}
 	else
 	{
-		WRITE(OUTPUT,"nil");
+		if (verbose==true)
+		  WRITE(OUTPUT,"nil,");
 //		N+=3;
 	}
-	WRITE(OUTPUT,")");
+	if (verbose==true)
+	  WRITE(OUTPUT,")");
 	N--;
 //	++N;
 }
 
-void PRINTTREE(const CTP &n1)
+void treesearch::printtree(char *tag, const CTP &n1, bool verbose)
 {
 	CTP node;
 //	size_t J  = 5;
 	size_t lex = 0;
 	node = n1;
+	WRITE(OUTPUT,tag,": ");
 	if (node==NULL)
 	{
 	WRITELN(OUTPUT,"TREE = NULL");
 	return;
 	}
-	WRITE(OUTPUT,"TREE(");
-	if (node->LLINK!=NULL)
+		WRITE(OUTPUT,"TREE(");
+	if (node->LLINK()!=NULL)
 	{
-		PRINTNODE(node->LLINK,lex);	
+		PRINTNODE(node->LLINK(),lex,verbose);	
 	}
-	else
-		WRITE(OUTPUT,"nil");
-	WRITE (OUTPUT,",\"",node->NAME,"\",");
-	if (node->RLINK!=NULL)
+	else if (verbose==true)
+		WRITE(OUTPUT,"nil,");
+	WRITE (OUTPUT,"\"",node->NAME,"\",");
+	if (node->RLINK()!=NULL)
 	{
-		PRINTNODE(node->RLINK,lex);	
+		PRINTNODE(node->RLINK(),lex,verbose);	
 	}
-	else
-		WRITE(OUTPUT,"nil");
+	else if (verbose==true)
+		WRITE(OUTPUT,"nil,");
 	WRITELN(OUTPUT,")");
 }
 
@@ -363,18 +368,18 @@ void PRINTNODE1(const CTP &n1, size_t &N)
 	CTP node;
 	node = n1;
 
-	if (node->LLINK!=NULL)
+	if (node->LLINK()!=NULL)
 	{
-		PRINTNODE1(node->LLINK,N);			
+		PRINTNODE1(node->LLINK(),N);			
 	}
 	else
 	{
 		WRITE(OUTPUT,"<null>");
 	}
 	WRITE (OUTPUT,",\"",node->NAME,"\",");
-	if (node->RLINK!=NULL)
+	if (node->RLINK()!=NULL)
 	{
-		PRINTNODE1(node->RLINK,N);	
+		PRINTNODE1(node->RLINK(),N);	
 	}
 	else
 	{
@@ -386,7 +391,7 @@ void PRINTNODE1(const CTP &n1, size_t &N)
 //	++N;
 }
 
-void PRINTTREE1(const CTP &n1)
+void treesearch::printtree1(const CTP &n1)
 {
 	CTP node;
 	size_t lex = 0;
@@ -397,17 +402,17 @@ void PRINTTREE1(const CTP &n1)
 	return;
 	}
 	WRITELN(OUTPUT,"TREE: IDTYPE = ",(int)n1->IDTYPE);
-	if (node->LLINK!=NULL)
+	if (node->LLINK()!=NULL)
 	{
-		PRINTNODE1(node->LLINK,lex);	
+		PRINTNODE1(node->LLINK(),lex);	
 	}
 	else
 		WRITE(OUTPUT,"null");
 
 	WRITE (OUTPUT,",\"",node->NAME,"\",");
-	if (node->RLINK!=NULL)
+	if (node->RLINK()!=NULL)
 	{
-		PRINTNODE1(node->RLINK,lex);	
+		PRINTNODE1(node->RLINK(),lex);	
 	}
 	else
 		WRITE(OUTPUT,"nulll");

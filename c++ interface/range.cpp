@@ -4,24 +4,18 @@
 #include "range.h"
 
 #if 0
-RANGE BITRANGE(0,BITSPERWD);
-RANGE OPRANGE(0,80);
-RANGE CURSRANGE(0,MAXCURSOR);
-RANGE PROCRANGE(0,MAXPROCNUM);
-RANGE LEVRANGE(0,MAXLEVEL);
-RANGE ADDRRANGE(0,MAXADDR);
-RANGE JTABRANGE(0,MAXJTAB);
-RANGE SEGRANGE(0,MAXSEG);
-RANGE DISPRANGE(0,DISPLIMIT);
-#endif
-
-#if 0
 RANGE::RANGE(int min=0, int max=0x7FFFFFFF)
 {
 	m_min=min;
 	m_max=max;
 }
 #endif
+
+BITRANGE &BITRANGE::operator = (int arg)
+{
+	val = arg;
+	return (*this);
+}
 
 JTABRANGE &JTABRANGE::operator = (int arg)
 {

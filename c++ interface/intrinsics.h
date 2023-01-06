@@ -5,6 +5,8 @@
 // software under GNU/MIT license.
 //
 #include <vector>
+#include "pstring.h"
+
 using namespace std;
 
 #define KEYBOARD (1)
@@ -24,8 +26,16 @@ typedef	enum { CHAR1, CHARPTR1, DOUBLE1, DWORD1, FLOAT1, INT1, SIZE1, ULONG1, VO
 
 class sandbox
 {
+	LPVOID	m_buffer;
+	size_t	m_size;
+	size_t	m_pos;
+
 public:
+	sandbox ();
 	static LPVOID allocate_p(size_t size);
+	LPVOID pascal_new (size_t sz);
+	void pascal_mark (LPVOID &ptr);
+	void pascal_release (LPVOID ptr);
 };
 
 struct pascal_error
@@ -40,7 +50,6 @@ struct pascal_error
 		errstr = str;
 	}
 };
-
 
 extern pascal_error error_list[];
 
@@ -87,9 +96,11 @@ public:
 		int		i;
 		size_t	sz;
 	};
+
 	s_param (DWORD arg);
 	s_param (char arg);
 	s_param (char* arg);
+	s_param (ALPHA &arg);
 	s_param (double arg);
 	s_param (float arg);
 	s_param (int arg);

@@ -11,8 +11,6 @@ using namespace std;
 #include "symbol_table.h"
 #include "bTreeType.h"
 
-
-
 //	simple string comparison called from
 //	bTreeNode routines -- throws an exception
 //	if either argument is NULL;
@@ -45,7 +43,6 @@ void test_btree_allocate ()
 	ptr0 =  malloc(sz);
 	bTreeType<char*> *str1;
 	str1 = new (ptr0)bTreeType<char*>;
-
 }
 
 

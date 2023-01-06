@@ -7,6 +7,16 @@
 //	the LGPL library license or the MIT license
 //	
 //
+/////////////////////////////////////////////////////
+
+#define BITSPERCHR	8
+#define	DISPLIMIT	12
+#define MAXADDR		65535
+#define MAXJTAB		24
+#define MAXLEVEL	8
+#define MAXPROCNUM	255
+#define MAXSEG		15
+#define MAXOPCODE	255
 
 template <size_t MIN, size_t MAX>
 class RANGE
@@ -20,17 +30,19 @@ public:
 	RANGE(int min, int max);
 #endif
 
-	RANGE &operator = (int);
-	RANGE operator + (int);
-	RANGE operator - (int);
-	RANGE &operator ++ (int);
-	RANGE &operator -- (int);
+	inline RANGE &operator = (int);
+	inline RANGE operator + (int);
+	inline RANGE operator - (int);
+	inline RANGE &operator ++ (int);
+	inline RANGE &operator -- (int);
 	inline operator int ()
 	{
 		return val;
 	}
-	bool operator == (int);
-	bool operator <= (int);
+	inline bool operator == (int);
+	inline bool operator != (int);
+	inline bool operator >= (int);
+	inline bool operator <= (int);
 };
 
 template <size_t MIN, size_t MAX>
@@ -88,6 +100,28 @@ bool RANGE<MIN,MAX>::operator == (int arg)
 }
 
 template <size_t MIN, size_t MAX>
+bool RANGE<MIN,MAX>::operator != (int arg)
+{
+	bool result;
+	if (val!=arg)
+		result=true;
+	else
+		result=false;
+	return result;
+}
+
+template <size_t MIN, size_t MAX>
+bool RANGE<MIN,MAX>::operator>=(int arg)
+{
+	bool result;
+	if (val>=arg)
+		result=true;
+	else
+		result=false;
+	return result;
+}
+
+template <size_t MIN, size_t MAX>
 bool RANGE<MIN,MAX>::operator<=(int arg)
 {
 	bool result;
@@ -98,7 +132,7 @@ bool RANGE<MIN,MAX>::operator<=(int arg)
 	return result;
 }
 
-class OPRANGE: public RANGE<0,255>
+class OPRANGE: public RANGE<0,MAXOPCODE>
 {
 protected:
 //	static int min, max;
@@ -110,70 +144,55 @@ public:
 	OPRANGE operator + (int);
 };
 
+class BITRANGE: public RANGE<0,BITSPERCHR>
+{
+public:
+	BITRANGE &operator = (int);
+};
+
 class CURSRANGE: public RANGE<0,65535>
 {
-protected:
-//	static int min, max;
-
 public:
 	CURSRANGE &operator = (int);
 };
 
-class JTABRANGE: public RANGE<0,65535>
+class JTABRANGE: public RANGE<0,MAXJTAB>
 {
-protected:
-//	static int min, max;
-
 public:
 	JTABRANGE &operator = (int);
 };
 
-class DISPRANGE: public RANGE<0,65535>
+class DISPRANGE: public RANGE<0,DISPLIMIT>
 {
-protected:
-//	static int min, max;
-
 public:
 	DISPRANGE &operator = (int);
 	DISPRANGE &operator --(int)
 	{
 		val--;
 		return (*this);
-	}// post fix
+	}
 };
 
-class ADDRRANGE: public RANGE<0,65535>
+class ADDRRANGE: public RANGE<0,MAXADDR>
 {
-protected:
-//	static int min, max;
-
 public:
 	ADDRRANGE &operator = (int);
 };
 
-class PROCRANGE: public RANGE<0,65535>
+class PROCRANGE: public RANGE<0,MAXPROCNUM>
 {
-protected:
-//	static int min, max;
-
 public:
 	PROCRANGE &operator = (int);
 };
 
-class SEGRANGE: public RANGE<0,65535>
+class SEGRANGE: public RANGE<0,MAXSEG>
 {
-protected:
-//	static int min, max;
-
 public:
 	SEGRANGE &operator = (int);
 };
 
-class LEVRANGE: public RANGE<0,65535>
+class LEVRANGE: public RANGE<0,MAXLEVEL>
 {
-protected:
-//	static int min, max;
-
 public:
 	LEVRANGE &operator = (int);
 };

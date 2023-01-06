@@ -39,11 +39,11 @@ mStream::mStream (int length1, text_object &theImage)
 //	markov tree.
 
 template<class X>
-void bTreeType<X>::linkNode (X theWord)
+void bTreeType<X>::link_node (X &str)
 {
 	bTreeType<X> *theMarkov;
 	theMarkov = new (NULL) bTreeType<X> ();
-	theMarkov->m_pData = theWord;
+	theMarkov->m_pData = str;
 	markov = theMarkov;
 	theMarkov->root = this;
 }
@@ -58,20 +58,26 @@ void mStream::indexWordList (bTreeType<char*> *theTree)
 {
 	int depth=0;
 	char *thisWord, *nextWord;
-	bTreeType<char*> *theMarkov, *theBranch = theTree;
+	bTreeType<char*> *theMarkov;
+	bTreeType<char*> *theBranch = theTree;
 
 	findPenultimate (thisWord);
-	theBranch = theBranch->getNode (thisWord);
+	theBranch = theBranch->find_node (thisWord);
 	rewind ();
 	while (m_bEnd==false) {
 		get (nextWord);
 		if (theBranch->markov==NULL) {	
-			theBranch->linkNode (nextWord);
-			theBranch = theBranch->markov;
+			theBranch->link_node (nextWord);
+#if 0 //FIXME!
+			theBranch = reinterpret_cast<bTreeType<char*> >(theBranch->markov);
+#endif
 		}
 		else {
+#if 0
 			theMarkov = theBranch->markov;
-			theBranch = theMarkov->getNode (nextWord); }
+			theBranch = theMarkov->getNode (nextWord);
+#endif
+		}
 	}
 	char *test;
 	((text_object)*this) >> test;

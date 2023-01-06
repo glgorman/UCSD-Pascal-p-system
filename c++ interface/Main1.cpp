@@ -27,7 +27,7 @@ debugTest<char*> debugTrace;
 
 
 template<class X>
-int bTreeType<X>::indexMarkovians (X hansen)
+int bTreeType<X>::indexMarkovians (X &hansen)
 {	
 	bTreeType *buggy;
 	char gretal [512];

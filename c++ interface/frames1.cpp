@@ -52,12 +52,6 @@ template<class nodeType>
 bTreeType<nodeType>::bTreeType  (script *theScript)
 {
 	theScript->m_index.owner = false;
-#if 0
-#ifdef debug
-	strcpy (m_tagid,"bTreeRoot");
-#endif
-#endif
-
 	m_pData = NULL;	
 	bTreeType<nodeType> *theNode;
 	int wordNum, needed = theScript->m_index.size();
@@ -76,7 +70,7 @@ bTreeType<nodeType>::bTreeType  (script *theScript)
 #ifdef trace_additions
 		DEBUG_STR << "adding node \"" << aNode << "\"\n";
 #endif
-		theNode = getNode (aNode);
+		theNode = get_node (aNode);
 		if (aNode!=theNode->m_pData) {
 			delete aNode;
 			theScript->m_index._symbols[wordNum].ascii = theNode->m_pData; }
@@ -84,7 +78,7 @@ bTreeType<nodeType>::bTreeType  (script *theScript)
 //	Sanity test on tree to see if every token was added!
 	for (wordNum=1;wordNum<needed;wordNum++) {
 		aNode = theScript->m_index._symbols[wordNum].ascii;
-		theNode = findNode (aNode);
+		theNode = find_node (aNode);
 		if (compare(aNode,theNode->m_pData)!=0)
 		{
 #ifdef HAS_CONSOLE

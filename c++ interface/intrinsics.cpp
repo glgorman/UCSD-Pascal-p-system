@@ -160,15 +160,20 @@ s_param::s_param(char arg)
 	m_type = CHAR1;
 	ch = arg;
 }
-s_param::s_param(unsigned long arg)
-{
-	m_type = ULONG1;
-	ch = arg;
-}
 s_param::s_param(char* arg)
 {
 	m_type = CHARPTR1;
 	str = arg;
+}
+s_param::s_param(ALPHA &arg)
+{
+	m_type = CHARPTR1;
+	str = (char*)arg;
+}
+s_param::s_param(unsigned long arg)
+{
+	m_type = ULONG1;
+	ch = arg;
 }
 s_param::s_param(double arg)
 {
