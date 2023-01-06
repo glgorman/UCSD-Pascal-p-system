@@ -3,7 +3,7 @@
 #include "stdafx.h"
 #include <vector>
 #include "../eliza/eliza.h"
-
+#include "insymbol.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -198,7 +198,7 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::S
 			WRITELN (OUTPUT);
 			WRITE(OUTPUT,count,": ");
 		}
-		WRITE (OUTPUT," \"",(char*)&(p.ID),"\"");
+		WRITE (OUTPUT," \"",(char*)&p.ID,"\"");
 	}
 	else if (debug_key==true)
 	{
@@ -304,6 +304,15 @@ loop:
 	return (int) sz;
 }
 
+class hexstr: public pstring<16>
+{
+public:
+	void convert(int arg)
+	{
+		sprintf_s(str,"%08x",arg);
+	}
+};
+
 void DECLARATIONPART::debug_stack (char *src, stack_frame *ptr)
 {
 union
@@ -347,13 +356,13 @@ union
 	{
 		sprintf_s(hexval,"%08x",LCP);
 		WRITELN (OUTPUT,"LCP:     ",hexval);
-		PRINTTREE1(LCP);
+		treesearch::printtree1(LCP);
 	}
 	if (LAST!=NULL)
 	{
 		sprintf_s(hexval,"%08x",LAST);
 		WRITELN (OUTPUT,"LAST:     ",hexval);
-		PRINTTREE1(LAST);
+		treesearch::printtree1(LAST);
 	}
 	sprintf_s(hexval,"%08x",LSIZE);
 	if (LSIZE!=NULL)

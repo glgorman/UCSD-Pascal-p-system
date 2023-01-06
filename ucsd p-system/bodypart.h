@@ -25,6 +25,10 @@ private:
 	void STORE(ATTR &FATTR);
 	void LOADADDRESS();
 	void SELECTOR(const SETOFSYS &FSYS, CTP FCP);
+	void SELECTOR0 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR1 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR2 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR3 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
 
 	void CALL(const SETOFSYS &, CTP);
 //	nested procedures within call

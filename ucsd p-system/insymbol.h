@@ -10,14 +10,13 @@
 
 using namespace std;
 
-#define IDENTSIZE	63
+
 #define STRGLGTH	255
 #define MAXDIRLEN	40
 #define MAXINT		32767
 #define MAXDEC		36
 #define EOL			13
-#define MAXCURSOR	8191
-#define MAXCODE		2047
+
 
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
@@ -29,18 +28,20 @@ struct key_info;
 extern key_info operators[];
 };
 
-typedef	DWORD BITRANGE;
+
 class identifier;
 typedef identifier* CTP;
 class structure;
 typedef structure*	STP;
-typedef char ALPHA[IDENTSIZE+1];
-typedef char SYMBUFARRAY[MAXCURSOR+256];
-typedef unsigned char CODEARRAY[MAXCODE+1];
 
-int TREESEARCH(const CTP& n1, CTP& n2, ALPHA &str);
-void PRINTTREE(const CTP &n1);
-void PRINTTREE1(const CTP &n1);
+namespace treesearch
+{
+	int compare (ALPHA &str1, ALPHA &str2);
+	int search (const CTP& n1, CTP& n2, ALPHA &str);
+	void printtree (char *tag, const CTP &n1, bool verbose);
+	void printtree1(const CTP &n1);
+	void symbol_dump ();
+};
 
 namespace SYMBOLS
 {
@@ -141,7 +142,7 @@ struct key_info
 	key_info() { };
 	key_info(char *STR, SYMBOLS::SYMBOL _SY, OPERATOR _OP)
 	{
-		strcpy_s(ID,IDENTSIZE,STR);
+		ID = STR;
 		SY = _SY;
 		OP = _OP;
 	}

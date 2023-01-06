@@ -1,6 +1,8 @@
 
 class PASCALCOMPILER;
 
+
+
 class COMPINIT
 {
 protected:

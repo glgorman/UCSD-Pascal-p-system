@@ -1,11 +1,8 @@
 
 #include "stdafx.h"
 
-//#include "../Frame Lisp/symbol_table.h"
 #include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
+#include "insymbol.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -171,13 +168,13 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
 		{
 			if (LCP->IDTYPE!=NULL)
 			if ((LCP->KLASS==ACTUALVARS))
-			if ((LCP->IDTYPE->FORM > POWER))
+			if ((LCP->IDTYPE->form() > POWER))
 			{ 
 				LLC1 = LLC1 - PTRSIZE;
 				GEN2(50/*LDA*/,0,LCP->VADDR);
 				GEN2(54/*LOD*/,0,LLC1);
 				if (PAOFCHAR(LCP->IDTYPE))
-				if (LCP->IDTYPE->AISSTRNG)
+				if (LCP->IDTYPE->is_string())
 					GEN1(42/*SAS*/,LCP->IDTYPE->MAXLENG);
 				else if (LCP->IDTYPE->INXTYPE!=NULL)
 				{ 
@@ -186,10 +183,10 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
 				}
 				else;
 				else
-					GEN1(40/*MOV*/,LCP->IDTYPE->SIZE);
+					GEN1(40/*MOV*/,LCP->IDTYPE->size());
 			}
 			else
-				LLC1 = LLC1 - LCP->IDTYPE->SIZE;
+				LLC1 = LLC1 - (int)LCP->IDTYPE->size();
 			else if (LCP->KLASS==FORMALVARS)
 				LLC1 = LLC1 - PTRSIZE;
 			LCP = LCP->NEXT;
@@ -230,7 +227,7 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
 			GENLDC(0);
 		else if (LCP->IDTYPE->FILTYPE==CHARPTR)
 			GENLDC(-2);
-		else GENLDC(LCP->IDTYPE->FILTYPE->SIZE);
+		else GENLDC(LCP->IDTYPE->FILTYPE->size());
 		GEN2(77/*CXP*/,0/*SYS*/,3/*FINIT*/);
 		LCP = LCP->NEXT;
 	}
@@ -292,7 +289,7 @@ void BODYPART::MAIN(const SETOFSYS &FSYS, CTP FPROCP)
 		if (FPROCP->IDTYPE==NULL)
 			GEN1(LOP,0);
 		else
-			GEN1(LOP,FPROCP->IDTYPE->SIZE);
+			GEN1(LOP,FPROCP->IDTYPE->size());
 	}
 	LLP = DISPLAY[TOP].BLCK.FLABEL;  /* CHECK UNDEFINED LABELS */
 	while (LLP!=NULL)
@@ -366,7 +363,7 @@ void BODYPART::LINKERREF(IDCLASS KLASS, int ID, int ADDR)
 void BODYPART::GENLDC(INT_PTR IVAL)
 {
 	char src[16];
-	unsigned char *dest = *CODEP;
+	char *dest = *CODEP;
 	if ((IVAL>=0)&&(IVAL<=127))
 		GENBYTE(IVAL);
 	else
@@ -383,7 +380,7 @@ void BODYPART::GENBIG(INT_PTR IVAL)
 {
 	char LOWORDER;
 	char src[16];
-	unsigned char *dest = *CODEP;
+	char *dest = *CODEP;
 	if (IVAL<=127)
 		GENBYTE(IVAL);
 	else
@@ -430,7 +427,7 @@ void BODYPART::GEN1(OPRANGE FOP, int FP2)
 				else
 					I=I-1;
 			}
-			GATTR.TYPTR->SIZE=I;
+			GATTR.TYPTR->resize(I);
 			if (I>1)
 			{
 				GENBYTE(I);
@@ -621,7 +618,7 @@ void BODYPART::LOAD()
 	switch (GATTR.KIND)
 	{
 	case CST:
-		if (GATTR.TYPTR->FORM==LONGINT)
+		if (GATTR.TYPTR->is_long())
 			// with GATTR.CVAL.VALP^
 		{
 			M=10000;
@@ -641,7 +638,7 @@ void BODYPART::LOAD()
 				GENNR(DECOPS);
 			}
 		}
-		else if ((GATTR.TYPTR->FORM==SCALAR)&&(GATTR.TYPTR!=REALPTR))
+		else if ((GATTR.TYPTR->is_scalar())&&(GATTR.TYPTR!=REALPTR))
 			GENLDC(GATTR.CVAL.IVAL);
 		else if (GATTR.TYPTR==NILPTR)
 			GEN0(31/*LDCN*/);
@@ -666,17 +663,17 @@ void BODYPART::LOAD()
 			GEN0(58/*LDP*/);
 			break;
 		case MULTI:
-			GEN1(60/*LDM*/,GATTR.TYPTR->SIZE);
+			GEN1(60/*LDM*/,GATTR.TYPTR->size());
 			break;
 		case BYTE1:
 			GEN0(62/*LDB*/);
 			break;
 		case EXPR1:
 			// with TYPTR^
-			if (((GATTR.TYPTR->FORM==POWER)||
-				(GATTR.TYPTR->FORM==LONGINT)&&(GATTR.KIND!=CST))
+			if (((GATTR.TYPTR->is_power())||
+				(GATTR.TYPTR->is_long())&&(GATTR.KIND!=CST))
 				&&(GATTR.KIND!=EXPR))
-				GENLDC(GATTR.TYPTR->SIZE);
+				GENLDC(GATTR.TYPTR->size());
 			GATTR.KIND=EXPR;
 			break;
 		default:
@@ -711,7 +708,7 @@ void BODYPART::STORE(ATTR &FATTR)
 			GEN0(59/*STP*/);
 			break;
 		case MULTI: 
-			GEN1(61/*STM*/,FATTR.TYPTR->SIZE);
+			GEN1(61/*STM*/,FATTR.TYPTR->size());
 			break;
 		case BYTE1:
 			GEN0(63/*STB*/);
@@ -761,23 +758,14 @@ void BODYPART::LOADADDRESS()
 	GATTR.IDPLMT=0;
 } /*LOADADDRESS*/ ;
 
-#if 0
-void BODYPART::SELECTOR(SETOFSYS,identifier *)
-{
-	ASSERT(false);
-}
-#endif
 
-void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
+void BODYPART::SELECTOR0 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX)
 {
-	ATTR	LATTR;
-	CTP		LCP;
-	int LMIN, LMAX;
-	// with FCP^, GATTR
 	GATTR.TYPTR=FCP->IDTYPE;
 	GATTR.KIND=VARBL;
 	WRITELN (OUTPUT,"BODYPART::SELECTOR");
 
+	// with FCP, GATPTR
 	switch (FCP->KLASS)
 	{
 	case ACTUALVARS:
@@ -786,7 +774,7 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
 		GATTR.ACCESS=DRCT;
 		if (options.INMODULE)
 			if (GATTR.TYPTR!=NULL)
-				if ((FCP->VLEV==1)&&(GATTR.TYPTR->FORM==RECORDS))
+				if ((FCP->VLEV==1)&&(GATTR.TYPTR->form()==RECORDS))
 					LOADADDRESS();
 		break;
 
@@ -852,7 +840,7 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
 	} /*switch /*/
 
 	if (GATTR.TYPTR!=NULL)
-		if ((GATTR.TYPTR->FORM<=POWER)&&(GATTR.TYPTR->SIZE>PTRSIZE))
+		if ((GATTR.TYPTR->form()<=POWER)&&(GATTR.TYPTR->size()>PTRSIZE))
 		{
 			LOADADDRESS();
 			GATTR.ACCESS=MULTI;
@@ -863,193 +851,221 @@ void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
 			CERROR(59);
 			SKIP(BNF::SELECTSYS+FSYS);
 		}
+}
 
-		while(BNF::SELECTSYS.in(SY))
+void BODYPART::SELECTOR1 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX)
+{
+	do {
+		LATTR=GATTR;
+		if (LATTR.TYPTR!=NULL)
+		if (LATTR.TYPTR->form()!=ARRAYS)
 		{
-			if (SY==SYMBOLS::LBRACK)
+			CERROR(138);
+			LATTR.TYPTR=NULL; 
+		}
+		LOADADDRESS();
+		INSYMBOL();
+		EXPRESSION(FSYS+SETOFSYS(2,SYMBOLS::COMMA,SYMBOLS::RBRACK));
+		LOAD();
+		if (GATTR.TYPTR!=NULL)
+			if (GATTR.TYPTR->form()!=SCALAR)
+				CERROR(113);
+		if (LATTR.TYPTR!=NULL)
+			// with LATTR.TYPTR^
+		{
+		if (COMPTYPES(GATTR.TYPTR->INXTYPE,GATTR.TYPTR))
+		{
+			if ((GATTR.TYPTR->INXTYPE!=NULL)&&
+				!STRGTYPE(LATTR.TYPTR))
 			{
-				do {
-					LATTR=GATTR;
-					if (LATTR.TYPTR!=NULL)
-						if (LATTR.TYPTR->FORM!=ARRAYS)
-						{
-							CERROR(138);
-							LATTR.TYPTR=NULL; 
-						}
-						LOADADDRESS();
-						INSYMBOL();
-						EXPRESSION(FSYS+SETOFSYS(2,SYMBOLS::COMMA,SYMBOLS::RBRACK));
-						LOAD();
-						if (GATTR.TYPTR!=NULL)
-							if (GATTR.TYPTR->FORM!=SCALAR)
-								CERROR(113);
-						if (LATTR.TYPTR!=NULL)
-							// with LATTR.TYPTR^
-						{
-						if (COMPTYPES(GATTR.TYPTR->INXTYPE,GATTR.TYPTR))
-						{
-							if ((GATTR.TYPTR->INXTYPE!=NULL)&&
-								!STRGTYPE(LATTR.TYPTR))
-							{
-								GETBOUNDS(GATTR.TYPTR->INXTYPE,LMIN,LMAX);
-								if (options.RANGECHECK)
-								{ 
-									GENLDC(LMIN);
-									GENLDC(LMAX);
-									GEN0(8/*CHK*/);
-								}
-								if (LMIN!=0)
-								{ GENLDC(abs(LMIN));
-								if (LMIN>0)
-									GEN0(21/*SBI*/);
-								else
-									GEN0(2/*ADI*/);
-								}
-							}
-						}
-						else
-							CERROR(139);
-						// with GATTR
-						GATTR.TYPTR=GATTR.TYPTR->AELTYPE;
-						GATTR.KIND=VARBL;
-						GATTR.ACCESS=INDRCT;
-						GATTR.IDPLMT=0;
-						if (GATTR.TYPTR!=NULL)
-							if (GATTR.TYPTR->AISPACKD)
-								if (GATTR.TYPTR->ELWIDTH==8)
-								{
-									GATTR.ACCESS=BYTE1;
-									if (STRGTYPE(LATTR.TYPTR)&&options.RANGECHECK)
-										GEN0(27/*IXS*/);
-									else
-										GEN0(2/*ADI*/);
-								}
-								else
-								{
-									GATTR.ACCESS=PACKD;
-									GEN2((OPRANGE)64/*IXP*/,GATTR.TYPTR->ELSPERWD,GATTR.TYPTR->ELWIDTH);
-								}
-							else
-							{
-								GEN1(36/*IXA*/,GATTR.TYPTR->SIZE);
-								if ((GATTR.TYPTR->FORM<=POWER)&&
-									(GATTR.TYPTR->SIZE>PTRSIZE))
-									GATTR.ACCESS=MULTI;
-							}
-						}
-					}
-					while(SY==SYMBOLS::COMMA);
-					if (SY==SYMBOLS::RBRACK)
-						INSYMBOL();
-					else
-						CERROR(12);
+				GETBOUNDS(GATTR.TYPTR->INXTYPE,LMIN,LMAX);
+				if (options.RANGECHECK)
+				{ 
+					GENLDC(LMIN);
+					GENLDC(LMAX);
+					GEN0(8/*CHK*/);
+				}
+				if (LMIN!=0)
+				{ GENLDC(abs(LMIN));
+				if (LMIN>0)
+					GEN0(21/*SBI*/);
+				else
+					GEN0(2/*ADI*/);
+				}
 			}
-			else if (SY==SYMBOLS::PERIOD)
-			{
-				if (GATTR.TYPTR!=NULL)
-				if (GATTR.TYPTR->FORM!=RECORDS)
+		}
+		else
+			CERROR(139);
+		// with GATTR
+		GATTR.TYPTR=GATTR.TYPTR->AELTYPE;
+		GATTR.KIND=VARBL;
+		GATTR.ACCESS=INDRCT;
+		GATTR.IDPLMT=0;
+		if (GATTR.TYPTR!=NULL)
+			if (GATTR.TYPTR->is_packed())
+				if (GATTR.TYPTR->ELWIDTH==8)
 				{
-					 CERROR(140);
-					GATTR.TYPTR=NULL;
-				}
-				INSYMBOL();
-
-				if (SY==SYMBOLS::IDENT)
-				{
-					if (GATTR.TYPTR!=NULL)
-					{
-						SEARCHSECTION(GATTR.TYPTR->FSTFLD,LCP);
-						if (LCP==NULL)
-						{
-							CERROR(152);
-							GATTR.TYPTR=NULL;
-						}
-						else 
-						{
-							GATTR.TYPTR=FCP->IDTYPE;
-
-							switch (GATTR.ACCESS)
-							{
-							case DRCT:
-								GATTR.DPLMT=GATTR.DPLMT+FCP->FLDADDR;
-								break;
-
-							case INDRCT:
-								GATTR.IDPLMT=GATTR.IDPLMT+FCP->FLDADDR;
-								break;
-
-							case MULTI:
-							case BYTE1:
-							case PACKD:
-								CERROR(400);
-								break;
-
-							default:
-								break;
-							} /*switch (ACCESS*/
-
-							if (FCP->FISPACKED)
-							{
-								LOADADDRESS();
-								if (((FCP->FLDRBIT==0)||(FCP->FLDRBIT==8))
-									&&(FCP->FLDWIDTH==8))
-								{ GATTR.ACCESS=BYTE1;
-								if (FCP->FLDRBIT==8)
-									GEN1(34/*INC*/,1);
-								}
-								else
-								{ GATTR.ACCESS=PACKD;
-								GENLDC(FCP->FLDWIDTH);
-								GENLDC(FCP->FLDRBIT);
-								}
-							}
-							if (GATTR.TYPTR!=NULL)
-								if ((GATTR.TYPTR->FORM<=POWER)&&
-									(GATTR.TYPTR->SIZE>PTRSIZE))
-								{
-									LOADADDRESS();
-									GATTR.ACCESS=MULTI;
-								}	
-								INSYMBOL();
-						}
-					} /*SY==IDENT*/
+					GATTR.ACCESS=BYTE1;
+					if (STRGTYPE(LATTR.TYPTR)&&options.RANGECHECK)
+						GEN0(27/*IXS*/);
 					else
-						CERROR(2);
-				}
-			} /*if (SY==PERIOD*/
-			else
-			{
-				if (GATTR.TYPTR!=NULL)
-				// with GATTR,TYPTR^
-				if ((GATTR.TYPTR->FORM==POINTER)||(GATTR.TYPTR->FORM==FILES))
-				{
-					LOAD();
-					GATTR.KIND=VARBL;
-					GATTR.ACCESS=INDRCT;
-					GATTR.IDPLMT=0;
-					if (GATTR.TYPTR->FORM==POINTER)
-						GATTR.TYPTR=GATTR.TYPTR->ELTYPE;
-					else
-					{
-						GATTR.TYPTR=GATTR.TYPTR->FILTYPE;
-						if (GATTR.TYPTR==NULL)
-							CERROR(399);
-					}
-					if (GATTR.TYPTR!=NULL)
-						if ((GATTR.TYPTR->FORM<=POWER)&&
-							(GATTR.TYPTR->SIZE>PTRSIZE))
-							GATTR.ACCESS=MULTI;
+						GEN0(2/*ADI*/);
 				}
 				else
-					CERROR(141);
-				INSYMBOL();
-			}
-			SETOFSYS S0 = FSYS+BNF::SELECTSYS;
-			if (!(S0).in(SY))
+				{
+					GATTR.ACCESS=PACKD;
+					GEN2((OPRANGE)64/*IXP*/,GATTR.TYPTR->ELSPERWD,GATTR.TYPTR->ELWIDTH);
+				}
+			else
 			{
-				CERROR(6);
-				SKIP(FSYS+BNF::SELECTSYS);
+				GEN1(36/*IXA*/,GATTR.TYPTR->size());
+				if ((GATTR.TYPTR->form()<=POWER)&&
+					(GATTR.TYPTR->size()>PTRSIZE))
+					GATTR.ACCESS=MULTI;
 			}
+		}
+	}
+	while(SY==SYMBOLS::COMMA);
+}
+
+void BODYPART::SELECTOR2 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX)
+{
+	if (GATTR.TYPTR!=NULL)
+	if (GATTR.TYPTR->form()!=RECORDS)
+	{
+		CERROR(140);
+		GATTR.TYPTR=NULL;
+	}
+	INSYMBOL();
+	if (SY==SYMBOLS::IDENT)
+	{
+		if (GATTR.TYPTR!=NULL)
+		{
+			SEARCHSECTION(GATTR.TYPTR->FSTFLD,LCP);
+			if (LCP==NULL)
+			{
+				CERROR(152);
+				GATTR.TYPTR=NULL;
+			}
+			else 
+			{
+				GATTR.TYPTR=FCP->IDTYPE;
+				switch (GATTR.ACCESS)
+				{
+				case DRCT:
+					GATTR.DPLMT=GATTR.DPLMT+FCP->FLDADDR;
+					break;
+
+				case INDRCT:
+					GATTR.IDPLMT=GATTR.IDPLMT+FCP->FLDADDR;
+					break;
+
+				case MULTI:
+				case BYTE1:
+				case PACKD:
+					CERROR(400);
+					break;
+
+				default:
+					break;
+				} /*switch (ACCESS*/
+
+				if (FCP->FISPACKED)
+				{
+					LOADADDRESS();
+					if (((FCP->FLDRBIT==0)||(FCP->FLDRBIT==8))
+						&&(FCP->FLDWIDTH==8))
+					{
+						GATTR.ACCESS=BYTE1;
+						if (FCP->FLDRBIT==8)
+						GEN1(34/*INC*/,1);
+					}
+					else
+					{	
+						GATTR.ACCESS=PACKD;
+						GENLDC(FCP->FLDWIDTH);
+						GENLDC(FCP->FLDRBIT);
+					}
+				}
+
+				if (GATTR.TYPTR!=NULL)
+					if ((GATTR.TYPTR->form()<=POWER)&&
+						(GATTR.TYPTR->size()>PTRSIZE))
+					{
+						LOADADDRESS();
+						GATTR.ACCESS=MULTI;
+					}
+				}
+			}
+			INSYMBOL();
+	} /*SY==IDENT*/
+	else
+		CERROR(2);
+}
+
+void BODYPART::SELECTOR3 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX)
+{
+	if (GATTR.TYPTR!=NULL) // with GATTR,TYPTR^
+		if ((GATTR.TYPTR->is_pointer())||(GATTR.TYPTR->is_file()==true))
+		{
+			LOAD();
+			GATTR.KIND=VARBL;
+			GATTR.ACCESS=INDRCT;
+			GATTR.IDPLMT=0;
+			if (GATTR.TYPTR->is_pointer())
+				GATTR.TYPTR=GATTR.TYPTR->ELTYPE;
+			else
+			{
+				GATTR.TYPTR=GATTR.TYPTR->FILTYPE;
+				if (GATTR.TYPTR==NULL)
+					CERROR(399);
+			}
+			if (GATTR.TYPTR!=NULL)
+				if ((GATTR.TYPTR->form()<=POWER)&&
+					(GATTR.TYPTR->size()>PTRSIZE))
+					GATTR.ACCESS=MULTI;
+		}
+		else
+			CERROR(141);
+		INSYMBOL();
+}
+
+void BODYPART::SELECTOR(const SETOFSYS &FSYS, CTP FCP)
+{
+	ATTR	LATTR;
+	CTP		LCP;
+	int LMIN, LMAX;
+	// with FCP^, GATTR
+	GATTR.TYPTR=FCP->IDTYPE;
+	GATTR.KIND=VARBL; 
+	WRITELN (OUTPUT,"BODYPART::SELECTOR");
+
+	SELECTOR0 (FSYS,FCP,LATTR,LCP,LMIN,LMAX);
+
+	while(BNF::SELECTSYS.in(SY))
+	{
+		if (SY==SYMBOLS::LBRACK)
+		{
+			SELECTOR1 (FSYS,FCP,LATTR,LCP,LMIN,LMAX);
+			if (SY==SYMBOLS::RBRACK)
+				INSYMBOL();
+			else
+				CERROR(12);
+		}
+		else if (SY==SYMBOLS::PERIOD)
+		{
+			SELECTOR2 (FSYS,FCP,LATTR,LCP,LMIN,LMAX);		
+		}
+		else
+		{
+			SELECTOR3 (FSYS,FCP,LATTR,LCP,LMIN,LMAX);
+		}
+		SETOFSYS S0 = FSYS+BNF::SELECTSYS;
+		if (!(S0).in(SY))
+		{
+			CERROR(6);
+			SKIP(FSYS+BNF::SELECTSYS);
+		}
 	} /*while /*/
 } /*SELECTOR*/
 
@@ -1095,7 +1111,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 					VARIABLE(FSYS+SYMBOLS::RPARENT);
 					LOADADDRESS();
 					if (GATTR.TYPTR!=NULL)
-						if (GATTR.TYPTR->FORM!=FILES)
+						if (GATTR.TYPTR->is_file()==false)
 							CERROR(125);
 						else if ((GATTR.TYPTR->FILTYPE!=CHARPTR)&&
 								(LKEY==6))
@@ -1114,7 +1130,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 			case 7:
 			case 8: GENLDC(1); /*PREDSUCC*/
 				if (GATTR.TYPTR!=NULL)
-					if (GATTR.TYPTR->FORM==SCALAR)
+					if (GATTR.TYPTR->is_scalar())
 						if (LKEY==8)
 							GEN0(2/*ADI*/);
 						else
@@ -1125,7 +1141,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 				break;
 			case 9: /*ORD*/
 				if (GATTR.TYPTR!=NULL)
-					if (GATTR.TYPTR->FORM>=POWER)
+					if (GATTR.TYPTR->form()>=POWER)
 						CERROR(125);
 				GATTR.TYPTR=INTPTR;
 					/*ORD*/ ;
@@ -1204,7 +1220,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 				GEN1(30/*CSP*/,7/*IDS*/);
 					/*IDSEARCH*/
 				break;
-			case 25: /*TREESEARCH*/
+			case 25: /*treesearch*/
 				if (SY==SYMBOLS::COMMA)
 					INSYMBOL();
 				else
@@ -1219,7 +1235,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 				LOADADDRESS();
 				GATTR.TYPTR=INTPTR;
 				GEN1(30/*CSP*/,8/*TRS*/);
-					/*TREESEARCH*/
+					/*treesearch*/
 				break;
 			case 26: /*TIME*/
 				VARIABLE(FSYS+SYMBOLS::COMMA);
@@ -1247,7 +1263,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 				VARIABLE(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
 				LOADADDRESS();
 				if (GATTR.TYPTR!=NULL)
-					if (GATTR.TYPTR->FORM!=FILES)
+					if (GATTR.TYPTR->is_file()==false)
 						CERROR(125);
 				if (SY!=SYMBOLS::COMMA)
 					if (LKEY==33)
@@ -1279,7 +1295,7 @@ void BODYPART::CALL(const SETOFSYS &FSYS, CTP FCP)
 					if (GATTR.TYPTR==REALPTR)
 						GEN1(30/*CSP*/,23/*TRUNC*/); /*** TEMPORARY --
 													 TRUNC WILL BE CSP 14 IN II.0 ***/
-					else if (GATTR.TYPTR->FORM==LONGINT)
+					else if (GATTR.TYPTR->is_long())
 						{
 							GENLDC(INTSIZE);
 							GENLDC(0 /*DAJ*/);
@@ -1353,7 +1369,7 @@ void BODYPART::FLOATIT(STP &FSP, bool FORCEFLOAT)
 
 void BODYPART::STRETCHIT(STP &FSP)
 {
-	if ((FSP->FORM==LONGINT)||(GATTR.TYPTR->FORM==LONGINT))
+	if ((FSP->is_long())||(GATTR.TYPTR->is_long()))
 	if (GATTR.TYPTR==INTPTR)
 	{
 	   GENLDC(INTSIZE);
@@ -1417,7 +1433,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 			 }
 			 else SELECTOR(FSYS,LCP);
 			 if (GATTR.TYPTR!=NULL)
-			   if (GATTR.TYPTR->FORM==SUBRANGE)
+			   if (GATTR.TYPTR->form()==SUBRANGE)
 				   GATTR.TYPTR=GATTR.TYPTR->RANGETYPE;
 			break;
 		
@@ -1440,7 +1456,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 				GATTR.TYPTR=CHARPTR;
 			else
 			{
-				LSP = new (NULL) structure(ARRAYS);
+				LSP = structure::allocate (ARRAYS);
 				*LSP=*STRGPTR;
 				LSP->MAXLENG=LGTH;
 				GATTR.TYPTR=LSP;
@@ -1451,9 +1467,9 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 			break;
 
 		 case SYMBOLS::LONGCONST:
-			 LSP = new (NULL) structure(LONGINT);
+			 LSP = structure::allocate (LONGINT);
 			*LSP=*LONGINTPTR;
-			LSP->SIZE=DECSIZE(LGTH);
+			LSP->resize(DECSIZE(LGTH));
 			GATTR.TYPTR=LSP;
 			GATTR.KIND=CST;
 			GATTR.CVAL=VAL;
@@ -1491,10 +1507,10 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 			CSTPART=SETOFSYS(0);
 			VARPART=false;
  //           NEW(LSP,POWER);
-			LSP = new (NULL) structure(POWER);
+			LSP = structure::allocate (POWER);
 			 // with LSP^
 			LSP->ELSET=NULL;
-			LSP->SIZE=0;
+			LSP->resize(0);
 			if (SY==SYMBOLS::RBRACK)
 			{
 				 // with GATTR
@@ -1507,7 +1523,7 @@ void BODYPART::FACTOR(const SETOFSYS &FSYS)
 			   do {
 				   EXPRESSION(FSYS+SYMBOLS::COMMA+SYMBOLS::RBRACK+SYMBOLS::COLON);
 				   if (GATTR.TYPTR!=NULL)
-					 if (GATTR.TYPTR->FORM!=SCALAR)
+					 if (GATTR.TYPTR->form()!=SCALAR)
 					   { CERROR(136);
 						GATTR.TYPTR=NULL;
 					}
@@ -1634,13 +1650,13 @@ void BODYPART::TERM(const SETOFSYS &FSYS)
 			else if ((LATTR.TYPTR==REALPTR)&&
 					 (GATTR.TYPTR==REALPTR))
 				GEN0(16/*MPR*/);
-			else if ((GATTR.TYPTR->FORM==LONGINT)&&
-					(LATTR.TYPTR->FORM==LONGINT))
+			else if ((GATTR.TYPTR->is_long())&&
+					(LATTR.TYPTR->is_long()))
 			{
 				GENLDC(8/*DMP*/);
 				GENNR(DECOPS);
 			}
-			else if ((LATTR.TYPTR->FORM==POWER)
+			else if ((LATTR.TYPTR->is_power())
 				&&COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 				GEN0(12/*INT*/);
 			else {
@@ -1664,8 +1680,8 @@ void BODYPART::TERM(const SETOFSYS &FSYS)
 				 if ((LATTR.TYPTR==INTPTR)&&
 				   (GATTR.TYPTR==INTPTR))
 					GEN0(6/*DVI*/);
-				 else if ((LATTR.TYPTR->FORM==LONGINT)&&
-					 (GATTR.TYPTR->FORM==LONGINT))
+				 else if ((LATTR.TYPTR->is_long())&&
+					 (GATTR.TYPTR->is_long()))
 					 {
 						 GENLDC(10/*DDV*/);
 						 GENNR(DECOPS);
@@ -1727,7 +1743,7 @@ void BODYPART::SIMPLEEXPRESSION(const SETOFSYS &FSYS)
 			GEN0(17/*NGI*/);
 		else if (GATTR.TYPTR==REALPTR)
 			GEN0(18/*NGR*/);
-		else if (GATTR.TYPTR->FORM==LONGINT)
+		else if (GATTR.TYPTR->is_long())
 		{
 			GENLDC(6/*DNG*/);
 			GENNR(DECOPS);
@@ -1755,13 +1771,13 @@ void BODYPART::SIMPLEEXPRESSION(const SETOFSYS &FSYS)
 				GEN0(2/*ADI*/);
 			else if ((LATTR.TYPTR==REALPTR)&&(GATTR.TYPTR==REALPTR))
 				GEN0(3/*ADR*/);
-			else if ((GATTR.TYPTR->FORM==LONGINT)&&
-				(LATTR.TYPTR->FORM==LONGINT))
+			else if ((GATTR.TYPTR->is_long())&&
+				(LATTR.TYPTR->is_long()))
 			{
 				GENLDC(2/*DAD*/);
 				GENNR(DECOPS);
 			}
-			else if ((LATTR.TYPTR->FORM==POWER)
+			else if ((LATTR.TYPTR->is_power())
 					&&COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 				GEN0(28/*UNI*/);
 			else {
@@ -1778,13 +1794,13 @@ void BODYPART::SIMPLEEXPRESSION(const SETOFSYS &FSYS)
 			else if ((LATTR.TYPTR==REALPTR)
 				&&(GATTR.TYPTR==REALPTR))
 				GEN0(22/*SBR*/);
-			else if ((GATTR.TYPTR->FORM==LONGINT)&&
-					(LATTR.TYPTR->FORM==LONGINT))
+			else if ((GATTR.TYPTR->is_long())&&
+					(LATTR.TYPTR->is_long()))
 			{ 
 				GENLDC(4/*DSB*/);
 				GENNR(DECOPS);
 			}
-			else if ((LATTR.TYPTR->FORM==POWER)
+			else if ((LATTR.TYPTR->is_power())
 					&&COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 				GEN0(5/*Dif /*/);
 			else {
@@ -1828,7 +1844,7 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 	LSTRING=(GATTR.KIND==CST)&&
 		(STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
 	if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM<=POWER)
+		if (GATTR.TYPTR->form()<=POWER)
 			LOAD();
 		else
 			LOADADDRESS();
@@ -1840,14 +1856,14 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 		(STRGTYPE(GATTR.TYPTR)||(GATTR.TYPTR==CHARPTR));
 
 	if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM<=POWER)
+		if (GATTR.TYPTR->form()<=POWER)
 			LOAD();
 		else
 			LOADADDRESS();
 
 	if ((LATTR.TYPTR!=NULL)&&(GATTR.TYPTR!=NULL))
 	if (LOP==INOP)
-		if (GATTR.TYPTR->FORM==POWER)
+		if (GATTR.TYPTR->is_power())
 			if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR->ELSET))
 				GEN0(11/*INN*/);
 			else
@@ -1870,7 +1886,7 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 		if (LSTRING)
 		{
 			if (PAOFCHAR(GATTR.TYPTR))
-				if (!GATTR.TYPTR->AISSTRNG)
+				if (!GATTR.TYPTR->is_string())
 				{
 					GEN0(29/*S2P*/);
 					MAKEPA(LATTR.TYPTR,GATTR.TYPTR);
@@ -1879,7 +1895,7 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 		else if (GSTRING)
 		{
 			if (PAOFCHAR(LATTR.TYPTR))
-				if (!LATTR.TYPTR->AISSTRNG)
+				if (!LATTR.TYPTR->is_string())
 				{
 					GEN0(80/*S1P*/);
 					MAKEPA(GATTR.TYPTR,LATTR.TYPTR);
@@ -1891,8 +1907,8 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 
 		if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 		{
-			LSIZE=LATTR.TYPTR->SIZE; /*INVALID for LONG INTS*/
-			switch (LATTR.TYPTR->FORM)
+			LSIZE=LATTR.TYPTR->size(); /*INVALID for LONG INTS*/
+			switch (LATTR.TYPTR->form())
 			{
 			case SCALAR:
 				if (LATTR.TYPTR==REALPTR)
@@ -1918,7 +1934,7 @@ void BODYPART::EXPRESSION(const SETOFSYS &FSYS)
 			case ARRAYS:
 				TYPIND=6;
 				if (PAOFCHAR(LATTR.TYPTR))
-					if (LATTR.TYPTR->AISSTRNG)
+					if (LATTR.TYPTR->is_string())
 retry:					TYPIND=2;
 					else
 					{
@@ -2114,9 +2130,16 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
 	ADDRRANGE	LSIZE;
 	VALU		LVAL;
 	WRITELN(OUTPUT,"BODYPART::NEWSTMT");
+	
 	structures::tron();
 	identifiers::tron();
-
+	identifiers::symbol_dump ();
+	for (int i=0;i<3;i++)
+	{
+		WRITELN (OUTPUT,"IDENTIFIERS LEVEL = ",i);
+		treesearch::printtree("TREE: ",DISPLAY[i].FNAME,false);
+		WRITELN (OUTPUT);
+	}
 	VARIABLE(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
 	LOADADDRESS();
 	LSP=NULL;
@@ -2125,12 +2148,12 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
 	LSIZE=0;
 	if (GATTR.TYPTR!=NULL)
 	{
-		if (GATTR.TYPTR->FORM==POINTER)
+		if (GATTR.TYPTR->is_pointer())
 		{
 			if (GATTR.TYPTR->ELTYPE!=NULL)
 			{
-				LSIZE=GATTR.TYPTR->ELTYPE->SIZE;
-				if (GATTR.TYPTR->ELTYPE->FORM==RECORDS)
+				LSIZE=GATTR.TYPTR->ELTYPE->size();
+				if (GATTR.TYPTR->ELTYPE->form()==RECORDS)
 					LSP=GATTR.TYPTR->ELTYPE->RECVAR;
 			}
 		}
@@ -2146,7 +2169,7 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
 		VARTS=VARTS+1;
 		if (LSP==NULL)
 			CERROR(158);
-		else if (LSP->FORM!=TAGFLD)
+		else if (LSP->form()!=TAGFLD)
 			CERROR(162);
 		else if (LSP->TAGFIELDP!=NULL)
 			if (STRGTYPE(LSP1)||(LSP1==REALPTR))
@@ -2160,14 +2183,14 @@ void BODYPART::NEWSTMT(const SETOFSYS &FSYS)
 				// with LSP1^
 				if (LSP1->VARVAL.IVAL==LVAL.IVAL)
 				{
-					LSIZE=LSP1->SIZE;
+					LSIZE=LSP1->size();
 					LSP=LSP1->SUBVAR;
 					goto retry;
 				}
 				else
 					LSP1=LSP1->NXTVAR;    
 			}
-			LSIZE=LSP->SIZE;
+			LSIZE=LSP->size();
 			LSP=NULL;
 		}
 		else
@@ -2205,7 +2228,7 @@ void BODYPART::STRGVAR(const SETOFSYS &FSYS, bool MUSTBEVAR)
 					}
 					GATTR.CVAL.VALP=SCONST;
 //					NEW(TYPTR,ARRAYS,true,true);
-					GATTR.TYPTR = (structure*) new (NULL) structure(ARRAYS);
+					GATTR.TYPTR = structure::allocate (ARRAYS);
 					*GATTR.TYPTR = *STRGPTR;
 					GATTR.TYPTR->MAXLENG=1;
 				}
@@ -2286,7 +2309,7 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 		LMAX=0;
 		CSTRING=false;
 		if (GATTR.TYPTR!=NULL)
-			if ((GATTR.ACCESS==INDRCT)||(GATTR.TYPTR->FORM>POWER))
+			if ((GATTR.ACCESS==INDRCT)||(GATTR.TYPTR->form()>POWER))
 				LOADADDRESS();
 
 		PAONLEFT=PAOFCHAR(GATTR.TYPTR);
@@ -2299,7 +2322,7 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 
 //		ASSERT(GATTR.CVAL.VALP!=NULL);
 		if (GATTR.TYPTR!=NULL)
-			if (GATTR.TYPTR->FORM<=POWER)
+			if (GATTR.TYPTR->form()<=POWER)
 				LOAD();
 			else
 				LOADADDRESS();
@@ -2319,14 +2342,14 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 					GENLDC(INTSIZE);
 					GATTR.TYPTR=LONGINTPTR;
 				}
-				if (GATTR.TYPTR->FORM!=LONGINT)
+				if (GATTR.TYPTR->form()!=LONGINT)
 				{
 					CERROR(129);
 					GATTR.TYPTR=LONGINTPTR;
 				}
 			}
 			if (PAONLEFT)
-				if (LATTR.TYPTR->AISSTRNG)
+				if (LATTR.TYPTR->is_string())
 					if (CSTRING&&(GATTR.TYPTR==CHARPTR))
 						GATTR.TYPTR=STRGPTR;
 					else;
@@ -2352,7 +2375,7 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 					GATTR.TYPTR=LATTR.TYPTR;
 
 			if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
-			switch (LATTR.TYPTR->FORM)
+			switch (LATTR.TYPTR->form())
 			{
 			case SUBRANGE:
 			   if (options.RANGECHECK)
@@ -2365,7 +2388,7 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 			   break;
 
 			case POWER:
-			   GEN1(32/*ADJ*/,LATTR.TYPTR->SIZE);
+			   GEN1(32/*ADJ*/,LATTR.TYPTR->size());
 			   STORE(LATTR);
 			   break;
 
@@ -2375,7 +2398,7 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 			   break;
 
 			case LONGINT:
-			   GENLDC(LATTR.TYPTR->SIZE);
+			   GENLDC(LATTR.TYPTR->size());
 			   GENLDC(0/*DAJ*/);
 			   GENNR(DECOPS);
 			   STORE(LATTR);
@@ -2383,16 +2406,16 @@ void BODYPART::ASSIGNMENT(const SETOFSYS &FSYS, CTP FCP)
 
 			case ARRAYS:
 			   if (PAONLEFT)
-				   if (LATTR.TYPTR->AISSTRNG)
+				   if (LATTR.TYPTR->is_string())
 					   GEN1(42/*SAS*/,LATTR.TYPTR->MAXLENG);
 				   else
 					   GEN1(41/*MVB*/,LMAX);
 			   else
-				   GEN1(40/*MOV*/,LATTR.TYPTR->SIZE);
+				   GEN1(40/*MOV*/,LATTR.TYPTR->size());
 			   break;
 			
 			case RECORDS:
-			   GEN1(40/*MOV*/,LATTR.TYPTR->SIZE);
+			   GEN1(40/*MOV*/,LATTR.TYPTR->size());
 			   break;
 			
 			case FILES:
@@ -2542,7 +2565,7 @@ void BODYPART::CONCAT(const SETOFSYS &FSYS)
  // with GATTR
 	{
 //		NEW(TYPTR,ARRAYS,true,true);
-		GATTR.TYPTR = new (NULL) structure(ARRAYS); 
+		GATTR.TYPTR = structure::allocate (ARRAYS); 
 		*GATTR.TYPTR=*STRGPTR;
 		GATTR.TYPTR->MAXLENG=TEMPLGTH;
 	}
@@ -2631,7 +2654,7 @@ void BODYPART::CLOSE(const SETOFSYS &FSYS)
 	VARIABLE(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
 	LOADADDRESS();
 	if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM!=FILES)
+		if (GATTR.TYPTR->is_file()==false)
 			CERROR(125);
 
 	if (SY==SYMBOLS::COMMA)
@@ -2665,7 +2688,7 @@ void BODYPART::GETPUTETC(const SETOFSYS &FSYS, int LKEY)
 	VARIABLE(FSYS+SYMBOLS::COMMA+SYMBOLS::RPARENT);
 	LOADADDRESS();
 	if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM!=FILES)
+		if (GATTR.TYPTR->is_file()==false)
 			CERROR(125);
 		else
 			if (GATTR.TYPTR->FILTYPE==NULL)
@@ -2754,7 +2777,7 @@ void BODYPART::BLOCKIO(const SETOFSYS &FSYS, int LKEY)
 	VARIABLE(FSYS+SYMBOLS::COMMA);
 	LOADADDRESS();
 	if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM!=FILES)
+		if (GATTR.TYPTR->is_file()==false)
 			CERROR(125);
 		else if (GATTR.TYPTR->FILTYPE!=NULL)
 				CERROR(399);
@@ -2800,7 +2823,7 @@ void BODYPART::SIZEOF()
 		SEARCHID(BNF::VARS+TYPES+FIELD,LCP);
 		INSYMBOL();
 		if (LCP->IDTYPE!=NULL)
-			GENLDC(LCP->IDTYPE->SIZE*CHRSPERWD);
+			GENLDC(LCP->IDTYPE->size()*CHRSPERWD);
 	}
 	GATTR.TYPTR=INTPTR;
 } /*SIZEOF*/
@@ -2830,7 +2853,7 @@ void BODYPART::READ(const SETOFSYS &FSYS, int LKEY, bool param)
 	{
 		SEARCHID(BNF::VARS+FIELD,LCP);
 		if (LCP->IDTYPE!=NULL)
-			if (LCP->IDTYPE->FORM==FILES)
+			if (LCP->IDTYPE->is_file()==true)
 				if (LCP->IDTYPE->FILTYPE==CHARPTR)
 				{
 					INSYMBOL();
@@ -2858,7 +2881,7 @@ void BODYPART::READ(const SETOFSYS &FSYS, int LKEY, bool param)
 				GENNR(FREADREAL);
 				else if (COMPTYPES(LONGINTPTR,GATTR.TYPTR))
 				{
-					GENLDC(GATTR.TYPTR->SIZE);
+					GENLDC(GATTR.TYPTR->size());
 					GENNR(FREADDEC);
 				}
 				else if (COMPTYPES(CHARPTR,GATTR.TYPTR))
@@ -2900,7 +2923,7 @@ void BODYPART::WRITE(const SETOFSYS &FSYS, int LKEY, bool params)
 	{
 		SEARCHID(BNF::VARS+FIELD+KONST+FUNC,LCP);
 		if (LCP->IDTYPE!=NULL)
-			if (LCP->IDTYPE->FORM==FILES)
+			if (LCP->IDTYPE->is_file()==true)
 				if (LCP->IDTYPE->FILTYPE==CHARPTR)
 				{
 					INSYMBOL();
@@ -2918,12 +2941,12 @@ void BODYPART::WRITE(const SETOFSYS &FSYS, int LKEY, bool params)
 		LSP=GATTR.TYPTR;
 		if (LSP!=NULL)
 		{
-			if (LSP->FORM>LONGINT)
+			if (LSP->form()>LONGINT)
 				LOADADDRESS();
 			else
 			{
 				LOAD();
-				if (LSP->FORM==LONGINT)
+				if (LSP->is_long())
 				{
 					GENLDC(DECSIZE(MAXDEC));
 					GENLDC(0/*DAJ*/);
@@ -3040,24 +3063,24 @@ void BODYPART::CALLNONSPECIAL(const SETOFSYS &FSYS, CTP FCP)
 			if ((NXT->KLASS==FORMALVARS)||(LSP!=NULL))
 			{
 				if (NXT->KLASS==ACTUALVARS)
-					if (GATTR.TYPTR->FORM<=POWER)
+					if (GATTR.TYPTR->form()<=POWER)
 					{ LB=(GATTR.TYPTR==CHARPTR)
 					&&(GATTR.KIND==CST);
 				LOAD();
-				if (LSP->FORM==POWER)
-					GEN1(32/*ADJ*/,LSP->SIZE);
-				else if (LSP->FORM==LONGINT)
+				if (LSP->is_power())
+					GEN1(32/*ADJ*/,LSP->size());
+				else if (LSP->is_long())
 				{
 					if (GATTR.TYPTR==INTPTR)
 					{ 
 						GENLDC(INTSIZE);
 						GATTR.TYPTR=LONGINTPTR;
 					}
-					GENLDC(LSP->SIZE);
+					GENLDC(LSP->size());
 					GENLDC(0/*DAJ*/);
 					GENNR(DECOPS);
 				}
-				else if ((LSP->FORM==SUBRANGE)
+				else if ((LSP->form()==SUBRANGE)
 							&&options.RANGECHECK)
 				{
 					GENLDC(LSP->MIN.IVAL);
@@ -3079,7 +3102,7 @@ void BODYPART::CALLNONSPECIAL(const SETOFSYS &FSYS, CTP FCP)
 					&&(GATTR.KIND==CST);
 					LOADADDRESS();
 					if (LB&&PAOFCHAR(LSP))
-					if (!LSP->AISSTRNG)
+					if (LSP->is_string()==false)
 					{
 						GEN0(80/*S1P*/);
 						if (LSP->INXTYPE!=NULL)
@@ -3098,8 +3121,8 @@ void BODYPART::CALLNONSPECIAL(const SETOFSYS &FSYS, CTP FCP)
 						CERROR(103);
 						LOADADDRESS();
 						if (LSP!=NULL)
-							if (SET<128>(2,POWER,LONGINT).in(LSP->FORM))
-								if (GATTR.TYPTR->SIZE!=LSP->SIZE)
+							if (SET<128>(2,POWER,LONGINT).in(LSP->form()))
+								if (GATTR.TYPTR->size()!=LSP->size())
 									CERROR(142);
 				}
 				else
@@ -3315,7 +3338,7 @@ void BODYPART::CASESTATEMENT(const SETOFSYS &FSYS)
 	GENJMP(57/*UJP*/,LCIX);
 	LSP=GATTR.TYPTR;
 	if (LSP!=NULL)
-		if ((LSP->FORM!=SCALAR)||(LSP==REALPTR))
+		if ((LSP->form()!=SCALAR)||(LSP==REALPTR))
 		{
 			CERROR(144);
 			LSP=NULL;
@@ -3512,7 +3535,7 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
 			}
 		}
 		if (LATTR.TYPTR!=NULL)
-			if ((LATTR.TYPTR->FORM>SUBRANGE)
+			if ((LATTR.TYPTR->form()>SUBRANGE)
 				||COMPTYPES(REALPTR,LATTR.TYPTR))
 			{
 				CERROR(143);
@@ -3530,13 +3553,13 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
 		INSYMBOL();
 		EXPRESSION(FSYS+SYMBOLS::TOSY+SYMBOLS::DOWNTOSY+SYMBOLS::DOSY);
 		if (GATTR.TYPTR!=NULL)
-			if (GATTR.TYPTR->FORM!=SCALAR)
+			if (GATTR.TYPTR->form()!=SCALAR)
 				CERROR(144);
 			else if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 			{
 				LOAD();
 				if (LATTR.TYPTR!=NULL)
-					if ((LATTR.TYPTR->FORM==SUBRANGE)&&options.RANGECHECK)
+					if ((LATTR.TYPTR->form()==SUBRANGE)&&options.RANGECHECK)
 					{
 						GENLDC(LATTR.TYPTR->MIN.IVAL);
 						GENLDC(LATTR.TYPTR->MAX.IVAL);
@@ -3559,13 +3582,13 @@ void BODYPART::FORSTATEMENT(const SETOFSYS &FSYS, CTP &LCP)
 		INSYMBOL();
 		EXPRESSION(FSYS+SYMBOLS::DOSY);
 		if (GATTR.TYPTR!=NULL)
-			if (GATTR.TYPTR->FORM!=SCALAR)
+			if (GATTR.TYPTR->form()!=SCALAR)
 				CERROR(144);
 			else if (COMPTYPES(LATTR.TYPTR,GATTR.TYPTR))
 			{
 				LOAD();
 				if (LATTR.TYPTR!=NULL)
-					if ((LATTR.TYPTR->FORM==SUBRANGE)&&options.RANGECHECK)
+					if ((LATTR.TYPTR->form()==SUBRANGE)&&options.RANGECHECK)
 					{
 						GENLDC(LATTR.TYPTR->MIN.IVAL);
 						GENLDC(LATTR.TYPTR->MAX.IVAL);
@@ -3638,7 +3661,7 @@ void BODYPART::WITHSTATEMENT(const SETOFSYS &FSYS)
 		}
 		SELECTOR(FSYS+SYMBOLS::COMMA+SYMBOLS::DOSY,LCP);
 		if (GATTR.TYPTR!=NULL)
-		if (GATTR.TYPTR->FORM==RECORDS)
+		if (GATTR.TYPTR->form()==RECORDS)
 			if (TOP < DISPLIMIT)
 			{
 				TOP=TOP+1;
@@ -3679,3 +3702,4 @@ void BODYPART::WITHSTATEMENT(const SETOFSYS &FSYS)
 	TOP=TOP-LCNT1;
 	LC=LC-LCNT2;
 } /*WITHSTATEMENT*/
+ 

@@ -2,6 +2,7 @@
 #include "stdafx.h"
 #include <vector>
 #include "../Frame Lisp/btreetype.h"
+#include "insymbol.h"
 #include "compilerdata.h"
 
 //#define DEBUG_GETIDENT `1
@@ -144,7 +145,6 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 	}
 	if (CH==USERINFO.ALTMODE)
 	{
-
 		ASSERT(false);
 	}
 	if ((ERRORNUM>400)||(CH==(char)(27)))
@@ -696,9 +696,11 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 
 void PASCALSOURCE::WRITETEXT()
 {
+	char *src;
+	src = *CODEP;
 	MOVELEFT(m_src.SYMBUFP[m_src.SYMCURSOR],(char*)CODEP[0],1024);
 	if (USERINFO.ERRNUM==0)
-       if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,*CODEP,2,CURBLK)!=2)
+       if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,(unsigned char*)src,2,CURBLK)!=2)
          CERROR(402);
      CURBLK=CURBLK+2;
 } /*WRITETEXT*/
@@ -721,8 +723,8 @@ void PASCALSOURCE::GETIDENT()
 		ASSERT((key->SY>=0)&&(key->SY<SYMBOLS::MAXSYMBOL));
 		SY = key->SY;
 		OP = key->OP;
-		len = strlen(key->ID);
-		strcpy_s(ID,IDENTSIZE,key->ID);
+		len = key->ID.length();
+		ID = key->ID;
  		m_src.SYMCURSOR = m_src.SYMCURSOR+(int)len;
 #ifdef DEBUG_GETIDENT
 		WRITELN(OUTPUT,"found keyword: \"",ID,"\" ");
@@ -780,7 +782,7 @@ bool PASCALSOURCE::GETOPERATOR()
 		if ((ch3==0)||(ch1==ch3))
 		{
 			found = true;
-			strcpy_s (ID,IDENTSIZE,key->ID);
+			ID = key->ID;
 #ifdef DEBUG_INSYMBOL
 			WRITELN (OUTPUT,"GETOPERATOR () - found SY = ",SYMBOL_NAMES1[SY]," \"",ID,"\"");
 #endif

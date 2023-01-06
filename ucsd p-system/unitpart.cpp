@@ -1,10 +1,7 @@
 #include "stdafx.h"
 
-//#include "../Frame Lisp/symbol_table.h"
 #include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
+#include "insymbol.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -99,32 +96,32 @@ void LINKERINFO::WRITELINKERINFO(bool DECSTUFF)
 			switch (I)
 			{
 			case SEEK:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"FSEEK   ");
+				LIREC.LINAME = "FSEEK   ";
 				LIREC.NPARAMS=2;
 				break;
 
 			case FREADREAL:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"FREADREA");
+				LIREC.LINAME = "FREADREA";
 				LIREC.NPARAMS=2;
 				break;
 
 			case FWRITEREAL:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"FWRITERE");
+				LIREC.LINAME = "FWRITERE";
 				LIREC.NPARAMS=5;
 				break;
 
 			case FREADDEC:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"FREADDEC");
+				LIREC.LINAME = "FREADDEC";
 				LIREC.NPARAMS=3;
 				break;
 
 			case FWRITEDEC:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"FWRITEDE");
+				LIREC.LINAME = "FWRITEDE";
 				LIREC.NPARAMS=10;
 				break;
 
 			case DECOPS:
-				strcpy_s(LIREC.LINAME,IDENTSIZE,"DECOPS  ");
+				LIREC.LINAME = "DECOPS  ";
 				LIREC.NPARAMS=0;
 
 			default:
@@ -361,7 +358,7 @@ void LINKERINFO::GLOBALSEARCH(CTP FCP)
 	}
 	if (NEEDEDBYLINKER)
 	{
-		strcpy_s(LIREC.LINAME,FCP->NAME);
+		LIREC.LINAME = FCP->NAME;
 		for (LGTH=0;LGTH<8;LGTH++)
 		{
 			GENBYTE(ORD(LIREC.LINAME[LGTH]));
@@ -374,11 +371,11 @@ void LINKERINFO::GLOBALSEARCH(CTP FCP)
 			WRITECODE(false);
 			IC=0;
 		}
-		if (FCP->LLINK!=NULL)
-			GLOBALSEARCH(FCP->LLINK);
+		if (FCP->LLINK()!=NULL)
+			GLOBALSEARCH(FCP->LLINK());
 	
-		if (FCP->RLINK!=NULL)
-			GLOBALSEARCH(FCP->RLINK);
+		if (FCP->RLINK()!=NULL)
+			GLOBALSEARCH(FCP->RLINK());
 	}
 } /*GLOBALSEARCH*/
 
@@ -394,7 +391,7 @@ void LINKERINFO::GLOBALSEARCH0(CTP FCP)
 		break;
 
 	case KONST:
-		if ((FCP->IDTYPE->SIZE==1)&& !options.INMODULE)
+		if ((FCP->IDTYPE->size()==1)&& !options.INMODULE)
 		{
 			LIREC.LITYPE=CONSTDEF;
 			LIREC.CONSTANT=FCP->VALUES.IVAL;
@@ -418,7 +415,7 @@ void LINKERINFO::GLOBALSEARCH0(CTP FCP)
 				if (FCP->KLASS==FORMALVARS)
 					LIREC.NWORDS=PTRSIZE;
 				else
-					LIREC.NWORDS=FCP->IDTYPE->SIZE;
+					LIREC.NWORDS=FCP->IDTYPE->size();
 			}
 			LIREC.FORMAT=BIG;
 		}
@@ -473,8 +470,8 @@ void LINKERINFO::GLOBALSEARCH0(CTP FCP)
 					LIREC.NPARAMS=LIREC.NPARAMS + PTRSIZE;
 				else
 					if (FCP->KLASS==ACTUALVARS)
-						if (LCP->IDTYPE->FORM<=POWER)
-							LIREC.NPARAMS=LIREC.NPARAMS + LCP->IDTYPE->SIZE;
+						if (LCP->IDTYPE->form()<=POWER)
+							LIREC.NPARAMS=LIREC.NPARAMS + LCP->IDTYPE->size();
 						else
 							LIREC.NPARAMS=LIREC.NPARAMS + PTRSIZE;
 				LCP=LCP->NEXT;
@@ -527,7 +524,7 @@ void LINKERINFO::GLOBALSEARCH1(CTP FCP)
 			if (SET<128>(SEPPREF,SEPFREF).in(LIREC.LITYPE))
 				GETREFS(-FCP->PFNAME,1);
 			else
-				GETREFS(FCP->VADDR + 32,FCP->IDTYPE->SIZE);
+				GETREFS(FCP->VADDR + 32,FCP->IDTYPE->size());
 		break;
 
 	case CONSTDEF:

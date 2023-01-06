@@ -3,11 +3,8 @@
 #include "new.h"
 #include <memory>
 
-//#include "../Frame Lisp/symbol_table.h"
 #include "../Frame Lisp/btreetype.h"
-//#include "../Frame Lisp/node_list.h"
-//#include "../Frame Lisp/text_object.h"
-
+#include "insymbol.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -19,6 +16,16 @@ using namespace std;
 bool structures::m_bTracing;
 bool identifiers::m_bTracing;
 
+#define SANDBOX_SIZE	1310072	
+sandbox S;
+
+sandbox::sandbox ()
+{
+	m_size = SANDBOX_SIZE;
+	LPVOID ptr = allocate_p(m_size);
+	m_buffer = ptr;
+}
+
 LPVOID sandbox::allocate_p(size_t size)
 {
 	BOOL b_valid;
@@ -29,6 +36,29 @@ LPVOID sandbox::allocate_p(size_t size)
 	ASSERT (p_addr!=NULL);
 	b_valid = (BOOL) VirtualLock (p_addr,allocation);
 	return p_addr;
+}
+
+LPVOID sandbox::pascal_new (size_t sz)
+{
+	char *ptr = (char*) m_buffer + m_pos;
+	// round size up to nezrest 8 byte boundey.
+	m_pos += ((sz+7)>>3)<<3;
+	WRITELN (OUTPUT,"sandbox::pascal_new: position <",(int)m_pos,"> size <",(int)sz,">");
+	ASSERT (m_pos>=0);
+	ASSERT (m_pos<m_size);	
+	return (LPVOID) ptr;
+}
+
+void sandbox::pascal_mark (LPVOID &ptr)
+{
+	ptr = (char*) m_buffer + m_pos;
+}
+
+void sandbox::pascal_release (LPVOID ptr)
+{
+	m_pos = (char*)ptr - (char*)m_buffer;
+	ASSERT (m_pos>=0);
+	ASSERT (m_pos<m_size);
 }
 
 CONSTREC::CONSTREC(enum _CSTCLASS _cst)
@@ -60,8 +90,9 @@ identifier::identifier ()
 
 identifier *identifier::allocate ()
 {
+	size_t sz = sizeof(identifier);
 	identifier *id;
-	void *pascal_heap = NULL;
+	void *pascal_heap = S.pascal_new (sz);
 	id = new (pascal_heap) identifier;
 	if (identifiers::m_bTracing==true)
 		debug1 (id,true);
@@ -70,8 +101,9 @@ identifier *identifier::allocate ()
 
 identifier *identifier::allocate (IDCLASS idclass)
 {
+	size_t sz = sizeof(identifier);
 	identifier *id;
-	void *pascal_heap = NULL;
+	void *pascal_heap = S.pascal_new (sz);
 	id = new (pascal_heap) identifier;
 	id->KLASS = idclass;
 	if (identifiers::m_bTracing==true)
@@ -81,11 +113,12 @@ identifier *identifier::allocate (IDCLASS idclass)
 
 identifier *identifier::allocate (char *str, STP ptr, IDCLASS idclass)
 {
+	size_t sz = sizeof(identifier);
 	identifier *id;
-	void *pascal_heap = NULL;
+	void *pascal_heap = S.pascal_new (sz);
 	id = new (pascal_heap) identifier;
 	if (str!=NULL)
-		strcpy_s(id->NAME,IDENTSIZE,str);
+		id->NAME = str;
 	id->IDTYPE = ptr;
 	id->KLASS = idclass;
 	if (identifiers::m_bTracing==true)
@@ -100,7 +133,7 @@ void identifier::debug1 (identifier *stp, bool alloc)
 	sprintf_s(addr_str,16,"%08x",addr_val);
 	if (alloc==true)
 		::WRITE (OUTPUT,"new ");
-	WRITELN (OUTPUT,"identifier addr: 0x",addr_str," ",(char*)stp->NAME);
+	WRITELN (OUTPUT,"identifier addr: 0x",addr_str," ",stp->NAME);
 }
 
 void structure::debug1 (structure *stp)
@@ -115,12 +148,21 @@ void structure::debug1 (structure *stp)
 	sprintf_s(addr,16,"%08x",(int)stp);
 	WRITE (OUTPUT,"structure addr: ",addr);
 	if (stp!=NULL)
-		tag_name = tag_names[stp->FORM];
+		tag_name = tag_names[stp->form()];
 	else
 		tag_name = NULL;
 	WRITELN (OUTPUT," form: ",tag_name);
 	WRITELN (OUTPUT);
 //	ASSERT(false);
+}
+
+structure *structure::allocate (STRUCTFORM form)
+{
+	size_t sz = sizeof(structure);
+	structure *id;
+	void *pascal_heap = S.pascal_new (sz);
+	id = new (pascal_heap) structure (form);
+	return id;
 }
 
 void *structure::operator new (size_t sz1,void* ptr2)
@@ -141,7 +183,7 @@ void *structure::operator new (size_t sz1,void* ptr2)
 
 structure::structure (STRUCTFORM form)
 {
-	this->FORM = form;
+	this->m_form = form;
 	if (structures::m_bTracing==true)
 		debug1 (this);
 }

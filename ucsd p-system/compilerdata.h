@@ -1,12 +1,8 @@
 
-#include "insymbol.h"
 
 using namespace std;
 
 #define SEGMENT /**/
-#define	DISPLIMIT	12
-#define MAXLEVEL	8
-#define MAXADDR		65536
 #define INTSIZE		1
 #define REALSIZE	2
 #define BITSPERWD	16
@@ -15,15 +11,10 @@ using namespace std;
 #define PTRSIZE		1
 #define FILESIZE	300
 #define NILFILESIZE	40
-#define BITSPERCHR	8	
 #define CHRSPERWD	2
-#define STRINGSIZE	0
 #define DEFSTRGLGTH	80
 #define LCAFTERMARKSTACK	1
 #define REFSPERBLK	128
-#define MAXJTAB		24
-#define MAXSEG		15
-#define MAXPROCNUM	149
 
 class USERPROGRAM
 {
@@ -52,18 +43,6 @@ typedef enum  _NONRESIDENT_
 
 typedef	int NONRESPFLIST[MAXNONRESIDENT];
 
-#if 0
-BITRANGE==0..BITSPERWD;
-OPRANGE==0..80;
-CURSRANGE==0..MAXCURSOR;
-PROCRANGE==0..MAXPROCNUM;
-LEVRANGE==0..MAXLEVEL;
-ADDRRANGE==0..MAXADDR;
-JTABRANGE==0..MAXJTAB;
-SEGRANGE==0..MAXSEG;
-DISPRANGE==0..DISPLIMIT;
-#endif
-
 typedef enum  _STRUCTFORM
 {
 	UNDEFINED,
@@ -86,23 +65,40 @@ typedef enum  _DECLKIND
 	SPECIAL,
 } DECLKIND;
 
-class structure
+class RECORD
 {
 protected:
-	structure();
-
-public:
-	void *operator new (size_t,void*);
-	structure(STRUCTFORM);
-	static void debug1 (structure *stp);
-
-public:
-	ADDRRANGE	SIZE;
-	STRUCTFORM	FORM;
+	STRUCTFORM	m_form;
+	ADDRRANGE	m_size;
 	bool AISPACKD;
 	bool AISSTRNG;
+
+public:
 	union
 	{
+#if 0
+		pascal_type<SCALAR>::scalar scalar;
+		pascal_type<SUBRANGE>::subrange subrange;
+		pascal_type<POINTER>::pointer pointer;
+		pascal_type<POWER>::power power;
+		pascal_type<ARRAYS>::arrays arrays;
+		pascal_type<RECORDS>::records records;
+		pascal_type<FILES>::files files;
+		pascal_type<TAGFLD>::tagfld tagfld;
+		pascal_type<VARIANT2>::variant variant;
+#endif
+#if 0
+		pascal_type<SCALAR>		scalar;
+		pascal_type<SUBRANGE>	subrange;
+		pascal_type<POINTER>	pointer;
+		pascal_type<POWER>		power;
+		pascal_type<ARRAYS>		arrays;
+		pascal_type<RECORDS>	records;
+		pascal_type<FILES>		files;
+		pascal_type<TAGFLD>		tagfld;
+		pascal_type<VARIANT2>	variant;
+#endif
+
 		struct //SCALAR
 		{
 			DECLKIND SCALKIND;
@@ -156,6 +152,159 @@ public:
 	};
 };
 
+class structure: public RECORD
+{
+protected:
+	void *operator new (size_t,void*);
+	structure (STRUCTFORM);
+
+public:
+	static structure *allocate (STRUCTFORM);
+	
+	inline void resize (size_t sz)
+	{
+		m_size = (int) sz;
+	}
+	inline size_t size()
+	{
+		size_t sz = m_size;
+		return m_size;
+	}
+	inline STRUCTFORM form()
+	{
+		return m_form;
+	}
+	inline bool is_scalar()
+	{
+		bool result;
+		if (form()==SCALAR)
+			result = true;
+		else
+			result = false;
+		return result;
+	}
+	inline bool is_long()
+	{
+		bool result;
+		if (form()==LONGINT)
+			result = true;
+		else
+			result = false;
+		return result;
+	}
+	inline bool is_pointer()
+	{
+		bool result;
+		if (form()==POINTER)
+			result = true;
+		else
+			result = false;
+		return result;
+	}
+	inline bool is_power()
+	{
+		bool result;
+		if (form()==POWER)
+			result = true;
+		else
+			result = false;
+		return result;
+	}
+	inline bool is_file()
+	{
+		bool result;
+		if (form()==FILES)
+			result = true;
+		else
+			result = false;
+		return result;
+	}
+	inline bool is_packed()
+	{
+		return AISPACKD; 
+	}
+	inline void set_packed(bool val)
+	{
+		AISPACKD=val;
+	}
+	inline void set_string(bool val)
+	{
+		AISSTRNG=val;
+	}
+	inline bool is_string()
+	{
+		return AISSTRNG;
+	}
+	
+	static void debug1 (structure *stp);
+};
+
+template <STRUCTFORM X>
+class pascal_type
+{
+public:
+};
+
+class scalar: public pascal_type<SCALAR>
+{
+	DECLKIND SCALKIND;
+	union
+	{
+		CTP	DECLARED;
+		CTP	FCONST;
+	};
+};
+
+class subrange: public pascal_type<SUBRANGE>
+{
+	STP		RANGETYPE;
+	VALU	MIN, MAX;
+};
+
+class pointer: public pascal_type<POINTER>
+{
+	STP	ELTYPE;	
+};
+
+class power: public pascal_type<POWER>
+{
+	STP	ELSET;	
+};
+
+class arrays: public pascal_type<ARRAYS>	
+{
+	STP	AELTYPE;
+	STP INXTYPE;			
+	BITRANGE ELSPERWD;
+	BITRANGE ELWIDTH;
+	int MAXLENG;
+};
+
+class records: public pascal_type<RECORDS>
+{
+	CTP	FSTFLD;
+	STP	RECVAR;
+};
+
+class files: public pascal_type<FILES>
+{
+	STP	FILTYPE;
+};
+
+class tagfld: public pascal_type<TAGFLD>
+{
+	CTP	TAGFIELDP;
+	STP	FSTVAR;
+};
+
+class variant: public pascal_type<VARIANT2>
+{
+	STP	NXTVAR;
+	STP	SUBVAR;
+	VALU VARVAL;
+};
+
+
 /*NAMES*/
 typedef enum _IDCLASS0
 {
@@ -176,8 +325,71 @@ typedef enum _IDKIND
 	FORMAL,
 } IDKIND;
 
-class identifier
+class pascal_data
 {
+public:
+	union/*DECLKIND */
+	{
+		struct/*KONST*/
+		{
+			VALU VALUES;
+		};
+		struct/*FORMALVARS, ACTUALVARS*/
+		{
+			LEVRANGE VLEV;
+			ADDRRANGE VADDR;
+			bool PUBLIC;
+		};
+		struct/*FIELD*/
+		{
+			ADDRRANGE FLDADDR;
+			bool FISPACKED;
+			BITRANGE FLDRBIT,FLDWIDTH;
+		};
+		struct/*PROC FUNC*/
+		{
+			DECLKIND PFDECKIND;
+			union
+			{
+				struct/*SPECIAL*/
+				{
+					int KEY;
+				};
+				struct/*STANDARD*/
+				{
+					int CSPNUM;
+				};
+				struct/*DECLARED*/
+				{ 
+					LEVRANGE PFLEV;
+					PROCRANGE PFNAME;
+					SEGRANGE PFSEG;
+					IDKIND PFKIND;
+					union
+					{
+						ADDRRANGE LOCALLC;
+						bool FORWDECL;
+						bool EXTURNAL;
+						bool INSCOPE;
+						bool IMPORTED;
+					};
+				};
+				int SEGID;//MODULE;
+			};
+		};
+	};
+};
+
+class identifier: 
+	public pascal_data,
+	public bNodeType<identifier>
+{
+public:
+	ALPHA NAME;
+	IDCLASS KLASS;
+	STP IDTYPE;
+	CTP NEXT;
+	
 protected:
 	void *operator new (size_t,void*);
 	identifier();
@@ -189,65 +401,15 @@ public:
 	static void debug1 (identifier *stp, bool);
 
 public:
-	CTP LLINK;
-	CTP RLINK;
-	CTP NEXT;
-	STP IDTYPE;
-	ALPHA NAME;
-	struct
+	CTP LLINK()
 	{
-		IDCLASS KLASS;
-		union/*DECLKIND */
-		{
-			struct/*KONST*/
-			{
-				VALU VALUES;
-			};
-			struct/*FORMALVARS, ACTUALVARS*/
-			{
-				LEVRANGE VLEV;
-				ADDRRANGE VADDR;
-				bool PUBLIC;
-			};
-			struct/*FIELD*/
-			{
-				ADDRRANGE FLDADDR;
-				bool FISPACKED;
-				BITRANGE FLDRBIT,FLDWIDTH;
-			};
-			struct/*PROC FUNC*/
-			{
-				DECLKIND PFDECKIND;
-				union
-				{
-					struct/*SPECIAL*/
-					{
-						int KEY;
-					};
-					struct/*STANDARD*/
-					{
-						int CSPNUM;
-					};
-					struct/*DECLARED*/
-					{ 
-						LEVRANGE PFLEV;
-						PROCRANGE PFNAME;
-						SEGRANGE PFSEG;
-						IDKIND PFKIND;
-						union
-						{
-							ADDRRANGE LOCALLC;
-							bool FORWDECL;
-							bool EXTURNAL;
-							bool INSCOPE;
-							bool IMPORTED;
-						};
-					};
-					int SEGID;//MODULE;
-				};
-			};
-		};
-	};
+		return static_cast<CTP>(branch1);
+	}
+	CTP RLINK()
+	{
+		return static_cast<CTP>(branch2);
+	}
+	
 };
 
 typedef enum _WHERE
@@ -439,6 +601,19 @@ protected:
 	void troff ()
 	{
 		m_bTracing = false;
+	}
+	void symbol_dump ()
+	{
+		treesearch::printtree("identifiers::UTYPPTR",UTYPPTR,false);
+		treesearch::printtree("identifiers::UCSTPTR",UCSTPTR,false);
+		treesearch::printtree("identifiers::UVARPTR",UVARPTR,false);
+		treesearch::printtree("identifiers::UFLDPTR",UFLDPTR,false);
+		treesearch::printtree("identifiers::MODPTR",MODPTR,false);
+		treesearch::printtree("identifiers::INPUTPTR",INPUTPTR,false);
+		treesearch::printtree("identifiers::OUTPUTPTR",OUTPUTPTR,false);
+		treesearch::printtree("identifiers::OUTERBLOCK",OUTERBLOCK,false);
+		treesearch::printtree("identifiers::FWPTR",FWPTR,false);
+		treesearch::printtree("identifiers::USINGLIST",USINGLIST,false);
 	}
 
 protected:
