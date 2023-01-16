@@ -10,13 +10,11 @@
 
 using namespace std;
 
-
 #define STRGLGTH	255
 #define MAXDIRLEN	40
 #define MAXINT		32767
 #define MAXDEC		36
 #define EOL			13
-
 
 extern char *SYMBOL_NAMES1[];
 extern char *SYMBOL_NAMES2[];
@@ -28,20 +26,9 @@ struct key_info;
 extern key_info operators[];
 };
 
-
-class identifier;
-typedef identifier* CTP;
 class structure;
+class object;
 typedef structure*	STP;
-
-namespace treesearch
-{
-	int compare (ALPHA &str1, ALPHA &str2);
-	int search (const CTP& n1, CTP& n2, ALPHA &str);
-	void printtree (char *tag, const CTP &n1, bool verbose);
-	void printtree1(const CTP &n1);
-	void symbol_dump ();
-};
 
 namespace SYMBOLS
 {
@@ -174,7 +161,7 @@ struct // for eventual refactoring
 	SYMBOLS::SYMBOL	SY;			/*SYMBOL FOUND BY INSYMBOL*/
 	OPERATOR	OP;				/*CLASSIFICATION LAST SYMBOL*/
 	ALPHA		ID;				/*LAST identifier FOUND*/			
-    VALU		VAL;			/*VALUE THEN LAST CONSTANT*/
+    VALU		VAL;			/*VALUE OF LAST CONSTANT*/
 };
 
 struct
@@ -213,6 +200,7 @@ struct // _options
 	 
 	char		SYSTEMLIB[MAXDIRLEN];
 	char		*COMMENT;
+
 	pascal_file		*_LP;
 	pascal_file		*LIBRARY;
 	pascal_file		*INCLFILE;
@@ -243,7 +231,7 @@ private:
 
 protected:
 	char GETC();
-	void CERROR(int ERRORNUM);
+	virtual void CERROR(int ERRORNUM) = 0;
 	void PRINTLINE();
 	void WRITETEXT();
 	void GETNEXTPAGE();

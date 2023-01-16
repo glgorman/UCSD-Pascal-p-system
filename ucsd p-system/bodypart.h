@@ -10,8 +10,8 @@ protected:
 
 private:
 	void LINKERREF(IDCLASS KLASS, int ID, int ADDR);
-	void GENLDC(INT_PTR IVAL);
-	void GENBIG(INT_PTR IVAL);
+	void GENLDC(int IVAL);
+	void GENBIG(int IVAL);
 	void GEN0(OPRANGE FOP);
 	void GEN1(OPRANGE FOP, int FP2);
 	void GEN2(OPRANGE FOP, int P1, int FP2);
@@ -24,11 +24,11 @@ private:
 	void LOAD();
 	void STORE(ATTR &FATTR);
 	void LOADADDRESS();
-	void SELECTOR(const SETOFSYS &FSYS, CTP FCP);
-	void SELECTOR0 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
-	void SELECTOR1 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
-	void SELECTOR2 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
-	void SELECTOR3 (const SETOFSYS &FSYS, CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR(const SETOFSYS &FSYS, const CTP FCP);
+	void SELECTOR0 (const SETOFSYS &FSYS, const CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR1 (const SETOFSYS &FSYS, const CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR2 (const SETOFSYS &FSYS, const CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
+	void SELECTOR3 (const SETOFSYS &FSYS, const CTP FCP, ATTR &LATTR, CTP &LCP, int &LMIN, int &LMAX);
 
 	void CALL(const SETOFSYS &, CTP);
 //	nested procedures within call

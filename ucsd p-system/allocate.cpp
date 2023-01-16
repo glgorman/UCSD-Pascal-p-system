@@ -5,6 +5,7 @@
 
 #include "../Frame Lisp/btreetype.h"
 #include "insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -13,9 +14,10 @@
 
 using namespace std;
 
-bool structures::m_bTracing;
-bool identifiers::m_bTracing;
+bool structures::m_bTracing = false;
+bool identifiers::m_bTracing = false;
 
+//#define TRACK_ALLOCATIONS	
 #define SANDBOX_SIZE	1310072	
 sandbox S;
 
@@ -43,7 +45,11 @@ LPVOID sandbox::pascal_new (size_t sz)
 	char *ptr = (char*) m_buffer + m_pos;
 	// round size up to nezrest 8 byte boundey.
 	m_pos += ((sz+7)>>3)<<3;
+
+#ifdef TRACK_ALLOCATIONS
 	WRITELN (OUTPUT,"sandbox::pascal_new: position <",(int)m_pos,"> size <",(int)sz,">");
+#endif
+
 	ASSERT (m_pos>=0);
 	ASSERT (m_pos<m_size);	
 	return (LPVOID) ptr;
@@ -136,7 +142,7 @@ void identifier::debug1 (identifier *stp, bool alloc)
 	WRITELN (OUTPUT,"identifier addr: 0x",addr_str," ",stp->NAME);
 }
 
-void structure::debug1 (structure *stp)
+void structures::debug1 (structure *stp)
 {
 	char *tag_names[] =
 	{
@@ -158,16 +164,32 @@ void structure::debug1 (structure *stp)
 
 structure *structure::allocate (STRUCTFORM form)
 {
-	size_t sz = sizeof(structure);
-	structure *id;
-	void *pascal_heap = S.pascal_new (sz);
-	id = new (pascal_heap) structure (form);
-	return id;
+	size_t sz2 = sizeof(structure);
+	structure *ptr;
+	void *pascal_heap = S.pascal_new (sz2);
+	ptr = new (pascal_heap) structure (form);
+	ptr->resize(1); // default value.
+	return ptr;
+}
+
+structure *structure::allocate (STRUCTFORM form, size_t sz1)
+{
+	structure *ptr = allocate(form);
+	ptr->resize (sz1);
+	return ptr;
+}
+
+structure *structure::allocate (STRUCTFORM form, DECLKIND type, size_t sz1)
+{
+	structure *ptr = allocate(form);
+	ptr->SCALKIND = type;
+	ptr->resize (sz1);
+	return ptr;
 }
 
 void *structure::operator new (size_t sz1,void* ptr2)
 {
-	char fill_char = 0xff;
+	unsigned char fill_char = 0;// 0xcd;
 	size_t sz2;
 	sz2 = sizeof(structure);
 	structure *ptr;
@@ -185,16 +207,14 @@ structure::structure (STRUCTFORM form)
 {
 	this->m_form = form;
 	if (structures::m_bTracing==true)
-		debug1 (this);
+		structures::debug1 (this);
 }
 
-#if 0
 void *PASCALCOMPILER::operator new (size_t,void* ptr2)
 {
 	void *placement = (void*) ptr2;
 	return placement;
 }
-#endif
 
 void *PASCALSOURCE::allocate (void* ptr)
 {
@@ -211,8 +231,8 @@ void *PASCALSOURCE::allocate (void* ptr)
 
 void *COMPILERDATA::allocate (void* ptr)
 {
-	size_t sz1 = sizeof(COMPILERDATA);
 	void *ptr1;
+	size_t sz1 = sizeof(COMPILERDATA);
 	if (ptr==NULL)
 		ptr1 = malloc(sz1);
 	else
@@ -222,17 +242,35 @@ void *COMPILERDATA::allocate (void* ptr)
 	return ptr1;
 }
 
-void *PASCALCOMPILER::allocate (void* ptr)
+PASCALCOMPILER *PASCALCOMPILER::allocate (INFOREC &user)
 {
-	size_t sz1 = sizeof(PASCALCOMPILER);
-	void *ptr1;
-	if (ptr==NULL)
-		ptr1 = malloc(sz1);
-	else
-		ptr1 = ptr;
-	memset(ptr1,0,sz1);
-	PASCALCOMPILER *ptr2 = reinterpret_cast<PASCALCOMPILER*>(ptr1);
+	size_t sz1 = sizeof(PASCALSOURCE);
+	size_t sz2 = sizeof(COMPILERDATA);
+	size_t sz3 = sizeof(DECLARATIONPART);
+	size_t sz4 = sizeof(BODYPART);
+	size_t sz5 = sizeof(PASCALCOMPILER);
+	size_t sz6 = sizeof(LINKERINFO);
+
+	void *pascal_heap = S.pascal_new (4096);
+	PASCALCOMPILER *ptr1 = new (pascal_heap) PASCALCOMPILER (user);
 	return ptr1;
+}
+
+void *LINKERINFO::operator new (size_t,void* ptr2)
+{
+	void *placement = (void*) ptr2;
+	return placement;
+}
+
+LINKERINFO *LINKERINFO::allocate (PASCALCOMPILER *ptr1)
+{
+	LINKERINFO *ptr2;
+	size_t sz1 = sizeof(PASCALCOMPILER);
+	size_t sz2 = sizeof(LINKERINFO);
+	void *pascal_heap = S.pascal_new (sz1);
+	ptr2 = new (pascal_heap) LINKERINFO;
+	memcpy ((void*)ptr2,(void*)ptr1,sz1);
+	return ptr2;
 }
 
 void *BODYPART::allocate (void* ptr)

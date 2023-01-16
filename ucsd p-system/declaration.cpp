@@ -3,12 +3,13 @@
 
 #include "../Frame Lisp/btreetype.h"
 #include "insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
 #include "compiler.h"
 
-//#define TRACE_PROCDECL		1
+#define TRACE_PROCDECL		1
 //#define TRACE_SIMPLETYPE	1
 //#define TRACE_PACKABLE		1
 //#define TRACE_CONSTDECL		1
@@ -180,9 +181,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 			while (DISPLAY[TOP].OCCUR!=BLCK)
 				TOP=TOP - 1;
 
-			LSP = structure::allocate (SCALAR);
-			LSP->resize(INTSIZE);
-			LSP->SCALKIND=DECLARED;
+			LSP = structure::allocate (SCALAR,DECLARED,INTSIZE);
 			LCP1=NULL;
 			LCNT=0;
 			do {
@@ -221,7 +220,7 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 				INSYMBOL();
 				if (LCP->KLASS==KONST)
 				{
-					LSP = structure::allocate (SUBRANGE);
+					LSP = structure::allocate (SUBRANGE,INTSIZE);
 					LSP->RANGETYPE=LCP->IDTYPE;
 					if (STRGTYPE(LSP->RANGETYPE))
 					{
@@ -229,7 +228,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 						LSP->RANGETYPE=NULL;
 					}
 					LSP->MIN=LCP->VALUES;
-					LSP->resize(INTSIZE);
 					if (SY==SYMBOLS::COLON)
 						INSYMBOL();
 					else
@@ -299,12 +297,12 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 								if (!options.ININTERFACE)
 									CERROR(191); /*NO PRIVATE FILES*/
 						if (LSP!=NULL)
-							FSIZE=LSP->size();
+							FSIZE=(int)LSP->size();
 				}
 			} /*SY==IDENT*/
 			else
 			{ 
-				LSP = structure::allocate (SUBRANGE);
+				LSP = structure::allocate (SUBRANGE,INTSIZE);
 				CONSTANT(FSYS+SYMBOLS::COLON,LSP1,LVALU2);
 				if (STRGTYPE(LSP1))
 				{
@@ -313,7 +311,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 				}
 				LSP->RANGETYPE = LSP1;
 				LSP->MIN = LVALU2;
-				LSP->resize(INTSIZE);
 				if (SY==SYMBOLS::COLON)
 					INSYMBOL();
 				else
@@ -326,7 +323,6 @@ void DECLARATIONPART::SIMPLETYPE(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZ
 			if (LSP!=NULL)
 			{ // with LSP
 				if (LSP->form()==SUBRANGE)
-
 					if (LSP->RANGETYPE!=NULL)
 						if (LSP->RANGETYPE==REALPTR)
 							CERROR(399);
@@ -819,9 +815,8 @@ void DECLARATIONPART::POINTERTYPE(stack_frame *param)
 	debug_stack ("DECLARATIONPART::POINTERTYPE",param);
 
 //	FSP=LSP;
-	LSP = structure::allocate (POINTER);
+	LSP = structure::allocate (POINTER,PTRSIZE);
 	LSP->ELTYPE=NULL;
-	LSP->resize(PTRSIZE);
 	INSYMBOL();
 	if (SY==SYMBOLS::IDENT)
 	{
@@ -1216,16 +1211,19 @@ void DECLARATIONPART::TYPEDECLARATION(const SETOFSYS &FSYS)
 	}
 	WRITELN(OUTPUT,"FINISHING <DECLARATIONPART::TYPEDECLARATION>");
 #if 0
-	PRINTTREE1(DISPLAY[0].FNAME);
-	PRINTTREE1(DISPLAY[1].FNAME);
-#endif
+	for (int i=0;i<=TOP;i++)
+	{
+		WRITELN (OUTPUT,"IDENTIFIERS LEVEL = ",i);
+		treesearch::printtree("TREE: ",DISPLAY[i].FNAME,i,ACTUALVARS,false);
+		WRITELN (OUTPUT);
+	}
 	if (FWPTR!=NULL)
 	{
 		CERROR(117);
 		identifier::debug1 (FWPTR,false);
-
 		FWPTR=NULL;
 	}
+#endif
 } /*TYPEDECLARATION*/ 
 
 void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
@@ -1255,6 +1253,7 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 			}
 			else
 				CERROR(2);
+
 			if (!(FSYS+SYMBOLS::COMMA+SYMBOLS::COLON+BNF::TYPEDELS).in(SY))
 			{
 				CERROR(6);
@@ -1266,6 +1265,7 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 				INSYMBOL();
 		}
 		while (!TEST);
+
 		if (SY==SYMBOLS::COLON)
 			INSYMBOL();
 		else
@@ -1274,7 +1274,7 @@ void DECLARATIONPART::VARDECLARATION(const SETOFSYS &FSYS)
 
 		LSP=NULL;
 		TYP1((FSYS+SYMBOLS::SEMICOLON+BNF::TYPEDELS),LSP,LSIZE);
-		structure::debug1 (LSP);
+		structures::debug1 (LSP);
 		
 		CTP NXT1 = NXT;  // mark staring position
 		while (NXT!=NULL)
@@ -1714,7 +1714,7 @@ void DECLARATIONPART::PARAMETERLIST
 								CERROR(121);
 							else
 							if (LSP->form()<=POWER)
-								LEN=LSP->size();
+								LEN=(int)LSP->size();
 					LC=LC+COUNT*LEN;
 				}
 				else
@@ -1796,6 +1796,125 @@ void DECLARATIONPART::PARAMETERLIST
 		FPAR=NULL;
 } /*PARAMETERLIST*/
 
+
+void DECLARATIONPART::ARRAY (const SETOFSYS &FSYS, stack_frame *param)
+{
+	union
+	{
+	struct /*locals*/
+	{
+		STP			LSP,LSP1,LSP2;
+		DISPRANGE	OLDTOP;
+		CTP			LCP,LAST;
+		ADDRRANGE	LSIZE,DISPL;
+		int			LMIN,LMAX;
+		bool		PACKING;
+		BITRANGE	NEXTBIT,NUMBITS;
+	  };
+	  char fp[sizeof(stack_frame)];
+	};
+	memcpy (fp,param,sizeof(stack_frame));
+
+	WRITELN(OUTPUT,"SY==SYMBOLS::ARRAYSY");
+	INSYMBOL();
+	if (SY==SYMBOLS::LBRACK)
+		INSYMBOL();
+	else
+		CERROR(11);
+	LSP1=NULL;
+	do {
+		LSP = structure::allocate (ARRAYS);
+		LSP->AELTYPE=LSP1;
+		LSP->INXTYPE=NULL;
+		LSP->set_string(false);
+		if (PACKING)
+		{
+			LSP->set_packed(true);
+			LSP->set_string(false);
+		}
+		else
+			LSP->set_packed(false);
+
+		LSP1=LSP;
+		SIMPLETYPE(FSYS+SYMBOLS::COMMA+SYMBOLS::RBRACK+SYMBOLS::OFSY,LSP2,LSIZE);
+		ASSERT(LSIZE>0);
+		LSP1->resize (LSIZE);
+		if (LSP2!=NULL)
+			if (LSP2->form()<=SUBRANGE)
+			{
+				if (LSP2==REALPTR)
+				{
+					CERROR(109);
+					LSP2=NULL;
+				}
+				else if (LSP2==INTPTR)
+				{
+					CERROR(149);
+					LSP2=NULL;
+				}
+				LSP->INXTYPE=LSP2;
+			}
+			else
+			{
+				CERROR(113);
+				LSP2=NULL;
+			}
+		TEST=SY!=SYMBOLS::COMMA;
+		if (!TEST)
+			INSYMBOL();
+	}
+	while (!TEST);
+	if (SY==SYMBOLS::RBRACK)
+		INSYMBOL();
+	else
+		CERROR(12);
+	if (SY==SYMBOLS::OFSY)
+		INSYMBOL();
+	else
+		CERROR(8);
+// YES - RECURSUVE!
+	TYP1(FSYS,LSP,LSIZE);
+	if (LSP!=NULL)
+		if (LSP->is_file()==true)
+		CERROR(108);
+
+	if (PACKABLE(param,LSP))
+		if (int(NUMBITS) + int(NUMBITS)<=BITSPERWD)
+		{
+			LSP1->set_packed(true);
+			LSP1->ELSPERWD=BITSPERWD/NUMBITS;
+			LSP1->ELWIDTH=NUMBITS;
+		}
+	do 
+	{
+		LSP2=LSP1->AELTYPE;
+		LSP1->AELTYPE=LSP;
+		if (LSP1->INXTYPE!=NULL)
+		{
+			GETBOUNDS(LSP1->INXTYPE,LMIN,LMAX);
+			if (LSP1->ELSPERWD==0)
+				LSP1->ELSPERWD=1;
+			if (LSP1->is_packed())
+				LSIZE=(LMAX-LMIN+LSP1-> ELSPERWD)/LSP1->ELSPERWD;
+			else
+			{
+				ASSERT(LSIZE>0);
+				LSIZE=LSIZE*(LMAX-LMIN+1);
+			}
+			if (LSIZE<=0)
+			{
+				CERROR(398);
+				LSIZE=1;//fixme?
+			}
+			LSP1->resize(LSIZE);
+		}
+		LSP=LSP1;
+		LSP1=LSP2;
+	}
+	while (!LSP1==NULL);
+	memcpy (param,fp,sizeof(stack_frame));
+}
+
 void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 {
 	union
@@ -1815,9 +1934,7 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 	};
 	memset(fp,0,sizeof(stack_frame));
 	stack_frame *param = reinterpret_cast<stack_frame*>(fp);
-#if 0
 	debug_stack ("DECLARATIONPART::TYP1",param);
-#endif
 
 	SETOFSYS S4 = FSYS;
 	S4+=SYMBOLS::ENDSY;
@@ -1883,8 +2000,8 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 					LSP->set_string(false);
 					if (PACKING)
 					{
-						LSP->set_string(false);
 						LSP->set_packed(true);
+						LSP->set_string(false);
 					}
 					else
 						LSP->set_packed(false);
@@ -1952,7 +2069,9 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 							LSIZE=(LMAX-LMIN+LSP1->ELSPERWD)/LSP1->ELSPERWD;
 						else
 						{
- 							ASSERT(LSIZE>0);
+ //							ASSERT(LSIZE>0);
+							if (LSIZE==0)
+								LSIZE=1;
 							LSIZE=LSIZE*(LMAX-LMIN+1);
 						}
 						if (LSIZE<=0)
@@ -1987,10 +2106,9 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				NEXTBIT=0;			
 				FIELDLIST(param,S4,LSP1);
 				DISPL=DISPL + ORD(NEXTBIT>0);
-				LSP = structure::allocate (RECORDS);
+				LSP = structure::allocate (RECORDS,DISPL);
 				LSP->FSTFLD=DISPLAY[TOP].FNAME;
 				LSP->RECVAR=LSP1;
-				LSP->resize(DISPL);
 				TOP=OLDTOP;
 				if (SY==SYMBOLS::ENDSY)
 					INSYMBOL();
@@ -2061,9 +2179,9 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 				break;
 #endif
 			default:
-				break;
-			FSP=LSP;
+				break;			
 		}
+		FSP=LSP;
 		if (!(FSYS.in(SY)))
 		{
 			CERROR(6);
@@ -2073,6 +2191,6 @@ void DECLARATIONPART::TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE)
 	if (FSP==NULL)
 		FSIZE=1;
 	else
-		FSIZE=FSP->size();
+		FSIZE=(int)FSP->size();
 }/*TYP*/
 

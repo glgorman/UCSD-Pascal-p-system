@@ -92,14 +92,13 @@ private:
 	void GETNEXTBLOCK();
 
 public:
-	LINKERINFO() {};
-	LINKERINFO (PASCALCOMPILER*);
+	static LINKERINFO *allocate (PASCALCOMPILER*);
+	void *operator new (size_t,void*);
 	void WRITELINKERINFO(bool DECSTUFF);
 };
 
 class UNITPART: public LINKERINFO
 {
-	
 public:
 	void GENWORD(int);
 	void OPENREFFILE();

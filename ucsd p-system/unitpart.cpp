@@ -2,16 +2,12 @@
 
 #include "../Frame Lisp/btreetype.h"
 #include "insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
 #include "compiler.h"
 #include "unitpart.h"
-
-LINKERINFO::LINKERINFO(PASCALCOMPILER *ptr)
-{
-	memcpy(this,ptr,sizeof(PASCALCOMPILER));
-}
 
 void LINKERINFO::GETNEXTBLOCK()
 {
@@ -245,7 +241,7 @@ void UNITPART::UNITDECLARATION(SETOFSYS FSYS, TESTP &UMARKP)
 			DISPLAY[TOP].OCCUR=BLCK;
 //};
 		if (LCP!=NULL)
-			ENTERID(LCP);
+			 ENTERID(LCP);
 	}
 	else
 		CERROR(250);
@@ -415,7 +411,7 @@ void LINKERINFO::GLOBALSEARCH0(CTP FCP)
 				if (FCP->KLASS==FORMALVARS)
 					LIREC.NWORDS=PTRSIZE;
 				else
-					LIREC.NWORDS=FCP->IDTYPE->size();
+					LIREC.NWORDS=(int)FCP->IDTYPE->size();
 			}
 			LIREC.FORMAT=BIG;
 		}
@@ -470,7 +466,7 @@ void LINKERINFO::GLOBALSEARCH0(CTP FCP)
 					LIREC.NPARAMS=LIREC.NPARAMS + PTRSIZE;
 				else
 					if (FCP->KLASS==ACTUALVARS)
-						if (LCP->IDTYPE->form()<=POWER)
+						if ((int)LCP->IDTYPE->form()<=POWER)
 							LIREC.NPARAMS=LIREC.NPARAMS + LCP->IDTYPE->size();
 						else
 							LIREC.NPARAMS=LIREC.NPARAMS + PTRSIZE;
@@ -524,7 +520,7 @@ void LINKERINFO::GLOBALSEARCH1(CTP FCP)
 			if (SET<128>(SEPPREF,SEPFREF).in(LIREC.LITYPE))
 				GETREFS(-FCP->PFNAME,1);
 			else
-				GETREFS(FCP->VADDR + 32,FCP->IDTYPE->size());
+				GETREFS(FCP->VADDR + 32,(int)FCP->IDTYPE->size());
 		break;
 
 	case CONSTDEF:

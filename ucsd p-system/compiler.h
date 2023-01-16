@@ -1,8 +1,6 @@
 
 class PASCALCOMPILER;
 
-
-
 class COMPINIT
 {
 protected:
@@ -32,19 +30,16 @@ protected:
 	void BODY(const SETOFSYS &FSYS, CTP FPROCP);
 	void WRITELINKERINFO(bool);
 	void UNITPART(SETOFSYS);
-//	void SEARCHSECTION(CTP FCP, CTP &FCP1);
 	void SEARCHID(const SETOFIDS &FIDCLS, CTP &FCP);
-	void GETBOUNDS(STP FSP, int &FMIN, int &FMAX);
-//	void SKIP(SETOFSYS);
 	bool STRGTYPE(STP FSP);
 	int DECSIZE(int I);
 	void CONSTANT(const SETOFSYS &FSYS, STP &FSP, VALU &FVALU);
-	bool COMPTYPES(STP &FSP1, STP &FSP2);
+	bool COMPTYPES(STP const FSP1, const STP FSP2);
+	void GETBOUNDS(STP FSP, int &FMIN, int &FMAX);
 	void GENBYTE(int FBYTE);
 	void GENWORD(int FWORD);
 	void WRITECODE(bool FORCEBUF);
 	void FINISHSEG();
-//	void CERROR(int ERRORNUM);
 
 protected:
 	void ENTERID(CTP FCP);
@@ -53,10 +48,11 @@ protected:
 	bool PAOFCHAR(STP FSP);
 	
 public:
-//	void *operator new (size_t,void*);
-	static void *allocate (void *);
 	PASCALCOMPILER();
 	PASCALCOMPILER(INFOREC &);
+	void *operator new (size_t,void*);
+	static PASCALCOMPILER *allocate (INFOREC &);
+	
 	void COMPINIT();
 	int COMPILER_MAIN (LPVOID param);
 	static UINT THREAD_ENTRY (LPVOID param);

@@ -1,5 +1,4 @@
 
-
 using namespace std;
 
 #define SEGMENT /**/
@@ -43,62 +42,15 @@ typedef enum  _NONRESIDENT_
 
 typedef	int NONRESPFLIST[MAXNONRESIDENT];
 
-typedef enum  _STRUCTFORM
-{
-	UNDEFINED,
-	SCALAR,
-	SUBRANGE,
-	POINTER,
-	LONGINT,
-	POWER,
-	ARRAYS,
-	RECORDS,
-	FILES,
-	TAGFLD,
-	VARIANT2
-} STRUCTFORM;
-
-typedef enum  _DECLKIND
-{
-	STANDARD,
-	DECLARED,
-	SPECIAL,
-} DECLKIND;
-
 class RECORD
 {
 protected:
-	STRUCTFORM	m_form;
 	ADDRRANGE	m_size;
-	bool AISPACKD;
-	bool AISSTRNG;
+	STRUCTFORM	m_form;	
 
 public:
 	union
 	{
-#if 0
-		pascal_type<SCALAR>::scalar scalar;
-		pascal_type<SUBRANGE>::subrange subrange;
-		pascal_type<POINTER>::pointer pointer;
-		pascal_type<POWER>::power power;
-		pascal_type<ARRAYS>::arrays arrays;
-		pascal_type<RECORDS>::records records;
-		pascal_type<FILES>::files files;
-		pascal_type<TAGFLD>::tagfld tagfld;
-		pascal_type<VARIANT2>::variant variant;
-#endif
-#if 0
-		pascal_type<SCALAR>		scalar;
-		pascal_type<SUBRANGE>	subrange;
-		pascal_type<POINTER>	pointer;
-		pascal_type<POWER>		power;
-		pascal_type<ARRAYS>		arrays;
-		pascal_type<RECORDS>	records;
-		pascal_type<FILES>		files;
-		pascal_type<TAGFLD>		tagfld;
-		pascal_type<VARIANT2>	variant;
-#endif
-
 		struct //SCALAR
 		{
 			DECLKIND SCALKIND;
@@ -124,9 +76,11 @@ public:
 		struct //ARRARYS
 		{
 			STP	AELTYPE;
-			STP INXTYPE;			
+			STP INXTYPE;
+			bool AISPACKD;
 			BITRANGE ELSPERWD;
 			BITRANGE ELWIDTH;
+			bool AISSTRNG;
 			int MAXLENG;
 		};
 		struct	//RECORDS
@@ -160,6 +114,8 @@ protected:
 
 public:
 	static structure *allocate (STRUCTFORM);
+	static structure *allocate (STRUCTFORM,size_t);
+	static structure *allocate (STRUCTFORM form, DECLKIND type, size_t sz1);
 	
 	inline void resize (size_t sz)
 	{
@@ -234,90 +190,8 @@ public:
 	inline bool is_string()
 	{
 		return AISSTRNG;
-	}
-	
-	static void debug1 (structure *stp);
+	}	
 };
-
-template <STRUCTFORM X>
-class pascal_type
-{
-public:
-};
-
-class scalar: public pascal_type<SCALAR>
-{
-	DECLKIND SCALKIND;
-	union
-	{
-		CTP	DECLARED;
-		CTP	FCONST;
-	};
-};
-
-class subrange: public pascal_type<SUBRANGE>
-{
-	STP		RANGETYPE;
-	VALU	MIN, MAX;
-};
-
-class pointer: public pascal_type<POINTER>
-{
-	STP	ELTYPE;	
-};
-
-class power: public pascal_type<POWER>
-{
-	STP	ELSET;	
-};
-
-class arrays: public pascal_type<ARRAYS>	
-{
-	STP	AELTYPE;
-	STP INXTYPE;			
-	BITRANGE ELSPERWD;
-	BITRANGE ELWIDTH;
-	int MAXLENG;
-};
-
-class records: public pascal_type<RECORDS>
-{
-	CTP	FSTFLD;
-	STP	RECVAR;
-};
-
-class files: public pascal_type<FILES>
-{
-	STP	FILTYPE;
-};
-
-class tagfld: public pascal_type<TAGFLD>
-{
-	CTP	TAGFIELDP;
-	STP	FSTVAR;
-};
-
-class variant: public pascal_type<VARIANT2>
-{
-	STP	NXTVAR;
-	STP	SUBVAR;
-	VALU VARVAL;
-};
-
-
-/*NAMES*/
-typedef enum _IDCLASS0
-{
-	NONE,
-	TYPES,
-	KONST,
-	FORMALVARS,
-	ACTUALVARS,
-	FIELD,
-	PROC1,
-	FUNC,
-	MODULE,
-} IDCLASS;
 
 typedef enum _IDKIND
 {
@@ -328,6 +202,9 @@ typedef enum _IDKIND
 class pascal_data
 {
 public:
+	bool FISPACKED;
+	DECLKIND PFDECKIND;
+	IDKIND PFKIND;
 	union/*DECLKIND */
 	{
 		struct/*KONST*/
@@ -343,12 +220,12 @@ public:
 		struct/*FIELD*/
 		{
 			ADDRRANGE FLDADDR;
-			bool FISPACKED;
+//			bool FISPACKED;
 			BITRANGE FLDRBIT,FLDWIDTH;
 		};
 		struct/*PROC FUNC*/
 		{
-			DECLKIND PFDECKIND;
+//			DECLKIND PFDECKIND;
 			union
 			{
 				struct/*SPECIAL*/
@@ -364,7 +241,7 @@ public:
 					LEVRANGE PFLEV;
 					PROCRANGE PFNAME;
 					SEGRANGE PFSEG;
-					IDKIND PFKIND;
+//					IDKIND PFKIND;
 					union
 					{
 						ADDRRANGE LOCALLC;
@@ -409,7 +286,6 @@ public:
 	{
 		return static_cast<CTP>(branch2);
 	}
-	
 };
 
 typedef enum _WHERE
@@ -441,19 +317,30 @@ typedef enum _VACCESS
 
 class ATTR
 {
-public:
-  STP TYPTR;
-  ATTRKIND KIND;
-  VACCESS ACCESS;
-  VALU CVAL;
-  LEVRANGE VLEVEL;
-  ADDRRANGE DPLMT;
-  ADDRRANGE IDPLMT;
+private:
+	VACCESS access;
 
-  ATTR()
-  {
-	memset(this,0,sizeof(ATTR));
-  }
+public:
+	STP TYPTR;
+	ATTRKIND KIND;
+	VALU CVAL;
+	LEVRANGE VLEVEL;
+	ADDRRANGE DPLMT;
+	ADDRRANGE IDPLMT;
+	
+	ATTR()
+	{
+		memset(this,0,sizeof(ATTR));
+	}
+	void set_access(VACCESS a)
+	{
+		access = a; 
+	}
+	VACCESS ACCESS()
+	{
+		VACCESS result = access;
+		return result;
+	}
 };
 
 struct TESTPOINTER;
@@ -472,10 +359,13 @@ struct CODELABEL
 	bool DEFINED;
 	union
 	{
-		ADDRRANGE REFLIST;
-		ADDRRANGE OCCURIC;
+		ADDRRANGE REFLIST;	// false
+		struct				// true
+		{
+			ADDRRANGE OCCURIC;
+			JTABRANGE JTABINX;
+		};
 	};  
-	JTABRANGE JTABINX;
 };
 
 struct USERLABEL;
@@ -520,8 +410,10 @@ struct DISPLAYDATA
 			LEVRANGE	CLEV;
 			ADDRRANGE	CDSPL;
 		} CREC;
-		ADDRRANGE	VREC;
-		ADDRRANGE	VDSPL;
+		struct // _VREC;
+		{
+			ADDRRANGE	VDSPL;
+		} VREC;
 	};				
 };
 
@@ -556,6 +448,8 @@ public:
 class structures
 {
 friend class structure;
+public:
+	static void debug1 (structure *stp);
 
 protected:
 	static bool	m_bTracing;
@@ -604,16 +498,16 @@ protected:
 	}
 	void symbol_dump ()
 	{
-		treesearch::printtree("identifiers::UTYPPTR",UTYPPTR,false);
-		treesearch::printtree("identifiers::UCSTPTR",UCSTPTR,false);
-		treesearch::printtree("identifiers::UVARPTR",UVARPTR,false);
-		treesearch::printtree("identifiers::UFLDPTR",UFLDPTR,false);
-		treesearch::printtree("identifiers::MODPTR",MODPTR,false);
-		treesearch::printtree("identifiers::INPUTPTR",INPUTPTR,false);
-		treesearch::printtree("identifiers::OUTPUTPTR",OUTPUTPTR,false);
-		treesearch::printtree("identifiers::OUTERBLOCK",OUTERBLOCK,false);
-		treesearch::printtree("identifiers::FWPTR",FWPTR,false);
-		treesearch::printtree("identifiers::USINGLIST",USINGLIST,false);
+//		treesearch::printtree("identifiers::UTYPPTR",UTYPPTR,false);
+//		treesearch::printtree("identifiers::UCSTPTR",UCSTPTR,false);
+//		treesearch::printtree("identifiers::UVARPTR",UVARPTR,false);
+//		treesearch::printtree("identifiers::UFLDPTR",UFLDPTR,false);
+//		treesearch::printtree("identifiers::MODPTR",MODPTR,false);
+//		treesearch::printtree("identifiers::INPUTPTR",INPUTPTR,false);
+//		treesearch::printtree("identifiers::OUTPUTPTR",OUTPUTPTR,false);
+//		treesearch::printtree("identifiers::OUTERBLOCK",OUTERBLOCK,false);
+//		treesearch::printtree("identifiers::FWPTR",FWPTR,false);
+//		treesearch::printtree("identifiers::USINGLIST",USINGLIST,false);
 	}
 
 protected:
@@ -640,7 +534,7 @@ class COMPILERDATA:
 public:
 	static void *allocate(void*);
 	ATTR		GATTR;			/*DESCRIBES CURRENT EXPRESSION*/
-	DISPRANGE	TOP;			/*TOP) DISPLAY*/
+	DISPRANGE	TOP;			/*TOP OF DISPLAY*/
 	DISPRANGE	DISX;			/*LEVEL THEN LAST ID SEARCHED*/
 	ADDRRANGE	LCMAX;			/*TEMPORARIES LOCATION COUNTER*/
 
@@ -686,6 +580,11 @@ protected:
 	int				CURBYTE;
     unsigned char	DISKBUF[512];
 
+// declared in INSYMBOL, but called from
+// declaration part, etc.  Needs access to
+// COMPILERDATA for debugging
+	void CERROR(int ERRORNUM);
+
 protected:
 	// declared in PASCALCOMPILER, but called from
 	// declaration part, etc.
@@ -700,7 +599,7 @@ protected: // fuctions called from DECLARATIONPART
 	virtual void GETBOUNDS(STP FSP, int &FMIN, int &FMAX) = 0;
 	virtual bool STRGTYPE(STP FSP) = 0;
 	virtual int DECSIZE(int I) = 0;
-	virtual bool COMPTYPES(STP &FSP1, STP &FSP2) = 0;
+	virtual bool COMPTYPES(const STP FSP1, const STP FSP2) = 0;
 
 protected:	// functions called from BODYPART
 	virtual void GENBYTE(int FBYTE) = 0;

@@ -29,6 +29,7 @@ class USESDECLARATION;
 private:
 	void debug_stack (char *src, stack_frame *ptr);
 	void TYP1(const SETOFSYS &FSYS, STP &FSP, ADDRRANGE &FSIZE);
+		void ARRAY (const SETOFSYS &FSYS, stack_frame *param);
 		bool PACKABLE(stack_frame *param, STP FSP);
 		void FIELDLIST(stack_frame *param, const SETOFSYS &FSYS, STP &FRECVAR);
 		void ALLOCATE(stack_frame *paarm, CTP FCP);

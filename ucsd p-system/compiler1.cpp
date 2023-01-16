@@ -4,6 +4,7 @@
 #include <vector>
 #include "../eliza/eliza.h"
 #include "insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "compilerdata.h"
 #include "declarationpart.h"
 #include "bodypart.h"
@@ -229,19 +230,6 @@ void PASCALSOURCE::DEBUG_SY (const PSYMBOL &p, SYMBOLS::SYMBOL start, SYMBOLS::S
 
 void PASCALSOURCE::build_tree ()
 {
-#if 0
-	union
-	{
-	  struct
-	  {
-		bTreeType<PSYMBOL> *root,*branch1,*branch2,*markov;
-		PSYMBOL m_pData;
-	  };
-	  char ptr[sizeof(bTreeType<PSYMBOL>)];
-	};
-	bTreeType<PSYMBOL> &tree = *reinterpret_cast<bTreeType<PSYMBOL>*> (ptr);
-#endif
-
 	alias (ptr,bTreeType<PSYMBOL> *root,*branch1,*branch2,*markov; PSYMBOL m_pData; );
 	bTreeType<PSYMBOL> *tree = new (ptr) bTreeType<PSYMBOL>;
 	SYMBOLS::SYMBOL &SY = m_pData.SY;

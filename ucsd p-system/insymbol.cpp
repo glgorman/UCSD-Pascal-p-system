@@ -3,6 +3,7 @@
 #include <vector>
 #include "../Frame Lisp/btreetype.h"
 #include "insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "compilerdata.h"
 
 //#define DEBUG_GETIDENT `1
@@ -83,7 +84,7 @@ char PASCALSOURCE::GETC()
 	return c;
 }
 
-void PASCALSOURCE::CERROR(int ERRORNUM)
+void COMPILERDATA::CERROR(int ERRORNUM)
 {
 	char CH;
 	if ((USERINFO.ERRSYM!=m_src.SYMCURSOR)||(USERINFO.ERRBLK!=m_src.SYMBLK))
@@ -104,7 +105,6 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 		if (pos<0)
 			pos=0;
 		char *str1 = (char*)m_src.SYMBUFP;
-//		char *str2 = &(str1[pos]);
 		memcpy (str2,&(str1[pos]),255);
 		str2[255] = 0;
 		WRITE(OUTPUT,str2);
@@ -145,6 +145,39 @@ void PASCALSOURCE::CERROR(int ERRORNUM)
 	}
 	if (CH==USERINFO.ALTMODE)
 	{
+		COMPILERDATA *ptr1;
+		ptr1 = reinterpret_cast<COMPILERDATA*>(this);
+		int top = ptr1->TOP;
+
+		switch (ERRORNUM)
+		{
+		case 158:
+			for (int i=0;i<=top;i++)
+			{
+				WRITELN (OUTPUT,"FIELD VARS LEVEL = ",i);
+				CTP ptr2 = ptr1->DISPLAY[i].FNAME;
+				treesearch::printtree("TREE: ",ptr2,i,FIELD,false);
+				WRITELN (OUTPUT);
+			}
+			break;
+
+		default:
+			for (int i=0;i<=top;i++)
+			{
+				WRITELN (OUTPUT,"TYPES LEVEL = ",i);
+				CTP ptr2 = ptr1->DISPLAY[i].FNAME;
+				treesearch::printtree("TREE: ",ptr2,i,TYPES,false);
+				WRITELN (OUTPUT);
+			}
+			for (int i=0;i<=top;i++)
+			{
+				WRITELN (OUTPUT,"IDENTIFIERS LEVEL = ",i);
+				CTP ptr2 = ptr1->DISPLAY[i].FNAME;
+				treesearch::printtree("TREE: ",ptr2,i,ACTUALVARS,false);
+				WRITELN (OUTPUT);
+			}
+			break;
+		}
 		ASSERT(false);
 	}
 	if ((ERRORNUM>400)||(CH==(char)(27)))
@@ -302,7 +335,7 @@ void PASCALSOURCE::PARSEOPTION(char STOPPER)
 		switch (CH) {
 			case 'C':
 				if (LEVEL>1)
-					PASCALSOURCE::CERROR(194);
+					CERROR(194);
 				COMMENT = new char [80];
 				SCANSTRING(COMMENT,80,STOPPER);
 				return;
@@ -445,7 +478,7 @@ void PASCALSOURCE::COMMENTER(char STOPPER)
 			CH = PEEK();
 			if (CH==0) {
 				GETNEXTPAGE();
-			CH = PEEK();
+				CH = PEEK();
 			}
 			CH = GETC();		
 		}
@@ -577,7 +610,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 			{
 				CH1 = GETC();
 				if (m_src.SYMCURSOR==FPART)
-					PASCALSOURCE::CERROR(201);
+					CERROR(201);
 			}
 			ENDF=m_src.SYMCURSOR-1;
 		}
@@ -600,7 +633,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		}
 		ENDE=m_src.SYMCURSOR-1;
 		if (ENDE<EPART)
-			PASCALSOURCE::CERROR(201); /* CERROR IN REAL CONSTANT */
+			CERROR(201); /* CERROR IN REAL CONSTANT */
 	}
 /* NOW CONVERT INTERNAL FORM */
 	if (TIPE==INTTIPE)
@@ -631,7 +664,7 @@ OR INTEGER AND CONVERTS IT; /*FIXME*/;
 		{
 			if (ENDI-IPART>=MAXDEC)
 			{
-				PASCALSOURCE::CERROR(203);
+				CERROR(203);
 				IPART=ENDI;
 				K=ENDI;
 			}
@@ -698,7 +731,7 @@ void PASCALSOURCE::WRITETEXT()
 {
 	char *src;
 	src = *CODEP;
-	MOVELEFT(m_src.SYMBUFP[m_src.SYMCURSOR],(char*)CODEP[0],1024);
+	MOVELEFT(m_src.SYMBUFP[m_src.SYMCURSOR],(char*)&((*CODEP)[0]),1024);
 	if (USERINFO.ERRNUM==0)
        if (SYSCOMM::BLOCKWRITE(USERINFO.WORKCODE,(unsigned char*)src,2,CURBLK)!=2)
          CERROR(402);
@@ -716,10 +749,10 @@ void PASCALSOURCE::GETIDENT()
 		WRITELN(OUTPUT);
 		WRITELN(OUTPUT,"PASCALSOURCE::GETIDENT1: \"",ID,"\" ");
 #endif
-	index = SEARCH::IDSEARCH(val,(char*&)(m_src.SYMBUFP));
+	index = treesearch::keysearch(val,(char*&)(m_src.SYMBUFP));
 	if (index!=-1)
 	{
-		key = SEARCH::get_key_info (index);
+		key = treesearch::get_key_info (index);
 		ASSERT((key->SY>=0)&&(key->SY<SYMBOLS::MAXSYMBOL));
 		SY = key->SY;
 		OP = key->OP;
@@ -770,9 +803,7 @@ bool PASCALSOURCE::GETOPERATOR()
 	OP=NOOP;
 	int index = 0;
 	for(index=0;;index++) {
-		key = &(pascal0::operators[index]);
-		SY=key->SY;
-		OP=key->OP;
+		key = &(pascal0::operators[index]);	
 		if (key->SY==SYMBOLS::OTHERSY)
 			break;
 		ch2 = key->ID[0];
@@ -781,8 +812,11 @@ bool PASCALSOURCE::GETOPERATOR()
 			continue;
 		if ((ch3==0)||(ch1==ch3))
 		{
-			found = true;
 			ID = key->ID;
+			SY=key->SY;
+			OP=key->OP;
+			found = true;
+
 #ifdef DEBUG_INSYMBOL
 			WRITELN (OUTPUT,"GETOPERATOR () - found SY = ",SYMBOL_NAMES1[SY]," \"",ID,"\"");
 #endif
@@ -819,7 +853,7 @@ retry:
 			options.GETSTMTLEV=true;
 		}
 		if (SY==SYMBOLS::OTHERSY)
-			PASCALSOURCE::CERROR(400);
+			CERROR(400);
 		else
 			goto retry;
 	}
