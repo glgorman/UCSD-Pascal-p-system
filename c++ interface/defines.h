@@ -1,5 +1,4 @@
 
-
 //#define	HAS_CONSOLE 
 #define waitForConsole DEBUG_STR.get ();
 #define releaseConsole DEBUG_STR.release ();
@@ -15,7 +14,6 @@
 #define imageFolder "imageFiles\\"
 
 #define order 8
-#define spagettiConstant 20
 
 //#define useSerial true
 //#define reportExceptions true

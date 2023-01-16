@@ -3,7 +3,7 @@
 // which is created by usihg a typedef as
 // needed
 
-#define IDENTSIZE	63
+#define IDENTSIZE	31
 #define MAXCURSOR	8191
 #define MAXCODE		2047
 
@@ -13,7 +13,7 @@ typedef pstring<MAXCURSOR+256>	SYMBUFARRAY;
 typedef pstring<MAXCODE+1>		CODEARRAY;
 
 template <size_t sz>
-class pstring
+class pstring<sz>
 {
 protected:
 	char str[sz];

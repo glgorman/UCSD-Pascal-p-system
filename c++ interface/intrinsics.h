@@ -22,7 +22,36 @@ typedef char *TEXT;
 //#define WRITE(DEVICE,COUNT,...) _WRITE(DEVICE,COUNT, __VA_ARGS__)
 //#define WRITELN(DEVICE,COUNT,...) _WRITELN(DEVICE,COUNT, __VA_ARGS__)
 
-typedef	enum { CHAR1, CHARPTR1, DOUBLE1, DWORD1, FLOAT1, INT1, SIZE1, ULONG1, VOID1 } PTYPE;
+typedef	enum { CHAR1, CHARPTR1, DOUBLE1, DWORD1, FLOAT1, HEXCH, INT1, SIZE1, ULONG1, VOID1 } PTYPE;
+
+/*NAMES*/
+typedef enum
+{
+	NONE,
+	TYPES,
+	KONST,
+	FORMALVARS,
+	ACTUALVARS,
+	FIELD,
+	PROC1,
+	FUNC,
+	MODULE,
+} IDCLASS;
+
+typedef enum
+{
+	UNDEFINED,
+	SCALAR,
+	SUBRANGE,
+	POINTER,
+	LONGINT,
+	POWER,
+	ARRAYS,
+	RECORDS,
+	FILES,
+	TAGFLD,
+	VARIANT2
+} STRUCTFORM;
 
 class sandbox
 {
@@ -114,11 +143,23 @@ namespace pascal0
 struct key_info;
 };
 
-namespace SEARCH
+class identifier;
+typedef identifier* CTP;
+
+namespace treesearch
 {
 	pascal0::key_info *get_key_info (int index);
-	void RESET_SYMBOLS();
-	int IDSEARCH(int pos, char *&str);
+	void symbol_dump(const CTP &n1, int i, IDCLASS ftype);
+	int compare (ALPHA &str1, ALPHA &str2);
+	int idsearch (const CTP& n1, CTP& n2, ALPHA &str);
+	int keysearch (int pos, char *&str);
+	void printleaf (const CTP node, IDCLASS target);
+	void printtree (char *tag, const CTP &n1, int i, IDCLASS, bool verbose);
+	void printtree1 (const CTP &n1);
+	void reset_symbols ();
+	void TRAP1 (char *str1, char *str2);
+	void TRAP2 (char *str1, char *str2, CTP LCP0);
+	void TRAP3 (char *str1, char *str2);
 };
 
 namespace SYSCOMM
@@ -142,7 +183,7 @@ using namespace std;
 
 void READLN(int uid, char *(&));
 
-void _WRITE(int uid, size_t argc, ...);
+void _WRITE(int uid, bool, size_t argc, ...);
 void WRITE(int uid, const s_param &);
 void WRITE(int uid, const s_param &,const s_param &);
 void WRITE(int uid, const s_param &,const s_param &,const s_param &);
@@ -159,8 +200,6 @@ void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_para
 		   const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
 void WRITE(int uid, const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,
 		   const s_param &,const s_param &,const s_param &,const s_param &,const s_param &,const s_param &);
-
-void _WRITELN(int uid, size_t argc, ...);
 
 void WRITELN(int uid);
 void WRITELN(int uid, const s_param &);

@@ -1,10 +1,14 @@
 
+/////////////////////////////////////////////////////////
 //
-// functions needed to support "set" type in Pascal
+//
+// F unctions needed to support "set" type in Pascal
 // like languages.  Copyright 2021 Gerold Lee Gorman
 // Permission to redistribute and make use of this
 // software under GNU/MIT license.
 //
+//
+////////////////////////////////////////////////////////
 
 #include "stdafx.h"
 #include <stdarg.h>
@@ -31,10 +35,10 @@ namespace chartypes
 		'N','O','P','Q','R','S','T','U','V','W','X','Y','Z',
 		'a','b','c','d','e','f','g','h','i','j','k','l','m',
 		'n','o','p','q','r','s','t','u','v','w','x','y','z');
-	SETOFCHAR punct1(12,'.',',',':','\\','"','\'','(',')','{','}','[',']');
 	SETOFCHAR operat(11,'+','-','*','/','%','|','~','=','&','>','<');
+	SETOFCHAR punct1(12,'.',',',':','\\','"','\'','(',')','{','}','[',']');
+	SETOFCHAR punct2(9,'`','!','@','#','$','^','&','_','|');
 }
-
 
 SETOFSYS::SETOFSYS()
 {

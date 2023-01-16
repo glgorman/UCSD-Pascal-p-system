@@ -17,7 +17,7 @@ using namespace std;
 
 int compare (char *item1, char *item2)
 {
-	char buffer1 [4096], buffer2 [4096];
+	char buffer1 [256], buffer2 [256];
 	int result;
 	try {
 		if ((item1==NULL)||(item2==NULL))

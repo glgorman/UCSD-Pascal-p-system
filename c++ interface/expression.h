@@ -18,7 +18,7 @@ public:
 	fraction ();
 	fraction (int);
 	fraction(int, int);
-	fraction (MATH_TYPE);
+//	fraction (MATH_TYPE);
 	bool operator != (int arg);
 	long numerator;
 	long denominator;
@@ -40,7 +40,7 @@ public:
 	bool operator<(int arg);
 	bool operator>(int arg); 
 
-	operator MATH_TYPE ();
+	float convert_to_real ();
 	fraction &operator = (fraction &arg);
 	long operator = (long arg);
 };
@@ -52,33 +52,35 @@ public:
 	rational (fraction);
 };
 
-typedef enum opcodes
-{	
-	null,identifier,integer,real,frac,
-	add,subtract,multiply,divide,and,or,
-	nand,nor,xor,not,modulus,symbol,
-	left,right,function,
-
-} opcodes;
+namespace mathop
+{
+	typedef enum opcode
+	{		
+		null,identifier,integer,real,frac,
+		add,subtract,multiply,divide,and,or,
+		nand,nor,xor,not,modulus,symbol,
+		left,right,function,
+	};
+}
 
 class operation
 {
 private:
-	opcodes m_opcode;
+	mathop::opcode m_opcode;
 
 public:
-	inline operation &operator = (opcodes x)
+	inline operation &operator = (mathop::opcode x)
 	{
 		m_opcode = x;
 		return *this;
 	};
-	inline bool operator == (opcodes x)
+	inline bool operator == (mathop::opcode x)
 	{
 		bool result;
 		result = (m_opcode==x?true:false);
 		return result;
 	};
-	inline bool operator != (opcodes x)
+	inline bool operator != (mathop::opcode x)
 	{
 		bool result;
 		result = (m_opcode!=x?true:false);

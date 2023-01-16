@@ -4,6 +4,7 @@
 #include <iostream>
 #include "../Frame Lisp/framelisp.h"
 #include "../p-system compiler/insymbol.h"
+#include "../Frame Lisp/objects.h"
 #include "../p-system compiler/compilerdata.h"
 #include "../p-system compiler/declarationpart.h"
 #include "../p-system compiler/bodypart.h"
@@ -113,7 +114,7 @@ key_info keywords [] =
 };
 };
 
-namespace SEARCH
+namespace treesearch
 {
 	char *operators[] = 
 	{
@@ -130,78 +131,78 @@ namespace SEARCH
 		"REPEAT","NOT","OTHERWISE","WHILE","AND","DIV","MOD",
 		"FOR","OR",NULL
 	};
+	char *klass_names [] =
+	{
+		"NONE",
+		"TYPES",
+		"KONST",
+		"FORMALVARS",
+		"ACTUALVARS",
+		"FIELD",
+		"PROC1",
+		"FUNC",
+		"MODULE"
+	};
+	char *struct_forms [] =
+	{
+		"UNDEFINED",
+		"SCALAR",
+		"SUBRANGE",
+		"POINTER",
+		"LONGINT",
+		"POWER",
+		"ARRAYS",
+		"RECORDS",
+		"FILES",
+		"TAGFLD",
+		"VARIANT2"
+	};
 	frame m_pFrame;
 	symbol_table *m_keywords;
 	pascal0::key_info *get_key_info (int index);
-	void RESET_SYMBOLS();
-	int IDSEARCH(int pos, char *&str);
+	void struct_info (const CTP node, STP stp);
+	void printnode (const CTP &n1, size_t &N, IDCLASS, bool verbose);
+	void PRINTNODE1(const CTP &n1, size_t &N);
+	void printleaf (const CTP node, IDCLASS target);
+	void INDENT_NEWLINE (int i);
+	void ADJUST_LINE(size_t &I);
 };
 
-void SEARCH::RESET_SYMBOLS()
+void treesearch::symbol_dump (const CTP &n1, int i, IDCLASS ftype)
 {
-	frame &f = SEARCH::m_pFrame;
+	WRITELN (OUTPUT,"Identifiers Level = ",i);
+	treesearch::printtree("Tree: ",n1, i, ftype,false);
+	WRITELN (OUTPUT);
+}
+
+void treesearch::TRAP1 (char *str1, char *str2)
+{
+	if (strcmp(str1,str2)==0)
+		ASSERT(false);
+}
+
+void treesearch::TRAP2 (char *str1, char *str2, CTP LCP0)
+{
+	if (strcmp(str1,str2)==0)
+		treesearch::printtree1(LCP0);
+}
+
+void treesearch::TRAP3 (char *str1, char *str2)
+{
+//	WRITELN(OUTPUT);
+	if (strcmp(str1,str2)==0)
+	{
+		::WRITE(OUTPUT,"PASCALCOMPILER::SEARCHID: ");
+		WRITELN(OUTPUT,"Searching for: \"",str1,"\" in SETOFIDS ");
+	}
+}
+
+void treesearch::reset_symbols()
+{
+	frame &f = treesearch::m_pFrame;
 	symbol_table *t=NULL;
 	t = f.cons(keywords)->sort();
  	m_keywords = t;
-}
-
-pascal0::key_info *SEARCH::get_key_info (int index)
-{
-	pascal0::key_info *result;
-	ASSERT((index>=0)&&(index<=42));
-	result = &pascal0::keywords [index];
-	return result;
-}
-
-int SEARCH::IDSEARCH(int pos, char *&str)
-{
-//	SEARCH::RESET_SYMBOLS();
-#ifdef DEBUG_SEARCH
-	WRITE(OUTPUT,"\nSEARCH::IDSEARCH --> ");
-#endif
-
-	size_t i, len, sz;
-	bool found = false;
-	int syid = -1;
-	pascal0::key_info result;
-	pascal0::key_info *kp = pascal0::keywords;
-	char c1, buf[32];
-	char *str1=str+pos;
-	for (len=0;len<32;len++)
-	{
-		c1=str1[len];
-		if (!chartypes::ident.in(c1))
-			break;
-	}
-	memcpy(buf,str1,len);
-	buf[len]=0;
-
-#ifdef DEBUG_SEARCH
-	WRITELN (OUTPUT,"searching for \"",buf,"\"");
-#endif
-
-	symbol_table &T = *SEARCH::m_keywords;
-	sz = T.size();
-	token *t;
-	for (i=0;i<sz;i++)
-	{
-		t = &T[(int)i];
-		len = strlen(t->ascii);
-		if (strcmp(buf,t->ascii)==0)
-		{
-			result.ID = t->ascii;
-			found = true;
-			syid = t->m_index;
-			break;
-		}
-	}
-#ifdef DEBUG_SEARCH
-	if (found==true)
-		WRITELN(OUTPUT,"FOUND \"",result.ID,"\"");
-	else
-		WRITELN(OUTPUT,"NOT FOUND \"",buf,"\"");
-#endif
-	return syid;
 }
 
 int treesearch::compare (ALPHA &str1, ALPHA &str2)
@@ -242,11 +243,20 @@ int treesearch::compare (ALPHA &str1, ALPHA &str2)
 	return test;
 }
 
-int treesearch::search(const CTP& n1, CTP& n2, ALPHA &str)
+pascal0::key_info *treesearch::get_key_info (int index)
+{
+	pascal0::key_info *result;
+	ASSERT((index>=0)&&(index<=42));
+	result = &pascal0::keywords [index];
+	return result;
+}
+
+int treesearch::idsearch(const CTP& n1, CTP& n2, ALPHA &str)
 {
 #ifdef DEBUG_TREESEARCH
 	WRITE(OUTPUT,"treesearch(CTP& n1, CTP& n2,\"",(char*)str,"\")");
 #endif
+	TRAP1 ("SIZE",str);
 
 	CTP ptr = n1;
 	bool found = false;
@@ -278,7 +288,58 @@ int treesearch::search(const CTP& n1, CTP& n2, ALPHA &str)
 	return test;
 }
 
-void ADJUST_LINE(size_t &I)
+int treesearch::keysearch(int pos, char *&str)
+{
+//	SEARCH::RESET_SYMBOLS();
+#ifdef DEBUG_SEARCH
+	WRITE(OUTPUT,"\nSEARCH::IDSEARCH --> ");
+#endif
+
+	size_t i, len, sz;
+	bool found = false;
+	int syid = -1;
+	pascal0::key_info result;
+	pascal0::key_info *kp = pascal0::keywords;
+	char c1, buf[32];
+	char *str1=str+pos;
+	for (len=0;len<32;len++)
+	{
+		c1=str1[len];
+		if (!chartypes::ident.in(c1))
+			break;
+	}
+	memcpy(buf,str1,len);
+	buf[len]=0;
+
+#ifdef DEBUG_SEARCH
+	WRITELN (OUTPUT,"searching for \"",buf,"\"");
+#endif
+
+	symbol_table &T = *treesearch::m_keywords;
+	sz = T.size();
+	token *t;
+	for (i=0;i<sz;i++)
+	{
+		t = &T[(int)i];
+		len = strlen(t->ascii);
+		if (strcmp(buf,t->ascii)==0)
+		{
+			result.ID = t->ascii;
+			found = true;
+			syid = t->m_index;
+			break;
+		}
+	}
+#ifdef DEBUG_SEARCH
+	if (found==true)
+		WRITELN(OUTPUT,"FOUND \"",result.ID,"\"");
+	else
+		WRITELN(OUTPUT,"NOT FOUND \"",buf,"\"");
+#endif
+	return syid;
+}
+
+void treesearch::ADJUST_LINE(size_t &I)
 {
 	if (I>120){
 //		WRITE(OUTPUT,"[",(int)I,"]");
@@ -288,7 +349,7 @@ void ADJUST_LINE(size_t &I)
 	}
 }
 
-void INDENT_NEWLINE (int i)
+void treesearch::INDENT_NEWLINE (int i)
 {
 	int j;
 	WRITELN(OUTPUT);
@@ -296,7 +357,130 @@ void INDENT_NEWLINE (int i)
 	  WRITE(OUTPUT,"--");
 }
 
-void PRINTNODE(const CTP &n1, size_t &N, bool verbose)
+void treesearch::struct_info (const CTP node, STP stp)
+{
+	char *fname = NULL;
+	STP IDTYPE = node->IDTYPE;
+	STP eltype = NULL;
+	STP recvar = NULL;
+	STRUCTFORM form1;
+	STRUCTFORM form2;
+	int i;
+	int lex = 1;
+	do {
+		if (IDTYPE!=NULL)
+		{
+			form1 = IDTYPE->form();
+			eltype = IDTYPE->ELTYPE;
+			recvar = IDTYPE->RECVAR;
+		}
+		else
+			form1 = UNDEFINED;
+
+		if (lex>0)
+		{
+			for (i=0;i<lex;i++)
+				WRITE(OUTPUT,"----");
+			WRITE (OUTPUT,">");
+		}
+		WRITELN (OUTPUT," STRUCTFORM = <",struct_forms[form1],">");
+		if (form1==POINTER)
+		{
+			IDTYPE = eltype;
+			if (eltype!=NULL)
+			{
+				form2 = eltype->form();
+				fname = struct_forms[form2]; 
+			}
+
+			for (i=0;i<lex;i++)
+				WRITE(OUTPUT,"----");
+			WRITE (OUTPUT,">");
+
+			WRITELN (OUTPUT," ELETYPE->form = <",fname,">");
+		}
+		else if (form1==ARRAYS)
+		{
+			eltype = IDTYPE->AELTYPE;
+			STP index_type = IDTYPE->INXTYPE;
+			form2 = eltype->form();
+			fname = struct_forms[form2];
+			
+			for (i=0;i<lex;i++)
+				WRITE(OUTPUT,"----");
+			WRITE (OUTPUT,">");
+
+			WRITELN (OUTPUT," AELETYPE->form = <",fname,">");
+			if (index_type!=NULL)
+			{
+				form2 = index_type->form();
+				fname = struct_forms[form2];
+			}
+			else
+				fname = NULL;
+
+			for (i=0;i<lex;i++)
+				WRITE(OUTPUT,"----");
+			WRITE (OUTPUT,">");
+
+			WRITE (OUTPUT," INXTYPE->form = <",fname,">");
+			if ((index_type!=NULL)&&(form2==SUBRANGE))
+			{
+				int min, max;
+				min = (int)index_type->MIN.IVAL;
+				max = (int)index_type->MAX.IVAL;
+				WRITE (OUTPUT, " MIN = ",min,", MAX = ",max);
+			}
+			WRITELN (OUTPUT);
+			IDTYPE = eltype;
+		}
+		else if (form1==RECORDS)
+		{
+			IDTYPE = IDTYPE->RECVAR;
+			if (IDTYPE!=NULL)
+			{
+				form2 = IDTYPE->form ();
+				fname = struct_forms[form2]; 
+			}
+			else
+				fname = NULL;
+
+			for (i=0;i<lex;i++)
+				WRITE(OUTPUT,"----");
+			WRITE (OUTPUT,">");
+
+			WRITELN (OUTPUT," RECVAR->form = <",fname,">");
+		}
+		else
+			IDTYPE = NULL;
+		lex++;
+	}
+	while (IDTYPE!=NULL);
+}
+
+void treesearch::printleaf (const CTP node, IDCLASS target)
+{
+	IDCLASS id = node->KLASS;
+	STP IDTYPE = node->IDTYPE;
+	if (id!=target)
+		return;
+
+	WRITE (OUTPUT,"\"",node->NAME,"\",");
+	WRITE (OUTPUT," KLASS = <",klass_names[id],">");
+	if (id==KONST)
+		WRITE (OUTPUT,", IVAL = <",node->VALUES.IVAL,">");
+
+	WRITELN(OUTPUT);
+	struct_info (node,IDTYPE);
+}
+
+void treesearch::printnode
+(
+	const CTP &n1,
+	size_t &N,
+	IDCLASS ftype,
+	bool verbose
+)
 {
 	CTP node;
 	node = n1;
@@ -308,7 +492,7 @@ void PRINTNODE(const CTP &n1, size_t &N, bool verbose)
 //	N+=5;
 	if (node->LLINK()!=NULL)
 	{
-		PRINTNODE(node->LLINK(),N,verbose);			
+		printnode (node->LLINK(),N,ftype,verbose);			
 	}
 	else
 	{
@@ -316,11 +500,12 @@ void PRINTNODE(const CTP &n1, size_t &N, bool verbose)
 		if (verbose==true)
 		  WRITE(OUTPUT,"nil,");
 	}
-	WRITE (OUTPUT,"\"",node->NAME,"\",");
+	printleaf (node,ftype);
+	
 //	N+= (strlen(node->NAME)+4);
 	if (node->RLINK()!=NULL)
 	{
-		PRINTNODE(node->RLINK(),N,verbose);	
+		printnode (node->RLINK(),N,ftype,verbose);	
 	}
 	else
 	{
@@ -334,36 +519,7 @@ void PRINTNODE(const CTP &n1, size_t &N, bool verbose)
 //	++N;
 }
 
-void treesearch::printtree(char *tag, const CTP &n1, bool verbose)
-{
-	CTP node;
-//	size_t J  = 5;
-	size_t lex = 0;
-	node = n1;
-	WRITE(OUTPUT,tag,": ");
-	if (node==NULL)
-	{
-	WRITELN(OUTPUT,"TREE = NULL");
-	return;
-	}
-		WRITE(OUTPUT,"TREE(");
-	if (node->LLINK()!=NULL)
-	{
-		PRINTNODE(node->LLINK(),lex,verbose);	
-	}
-	else if (verbose==true)
-		WRITE(OUTPUT,"nil,");
-	WRITE (OUTPUT,"\"",node->NAME,"\",");
-	if (node->RLINK()!=NULL)
-	{
-		PRINTNODE(node->RLINK(),lex,verbose);	
-	}
-	else if (verbose==true)
-		WRITE(OUTPUT,"nil,");
-	WRITELN(OUTPUT,")");
-}
-
-void PRINTNODE1(const CTP &n1, size_t &N)
+void treesearch::PRINTNODE1(const CTP &n1, size_t &N)
 {
 	CTP node;
 	node = n1;
@@ -389,6 +545,46 @@ void PRINTNODE1(const CTP &n1, size_t &N)
 //	WRITE(OUTPUT,")");
 	N--;
 //	++N;
+}
+
+void treesearch::printtree
+(
+	char *tag,
+	const CTP &n1,
+	int i,
+	IDCLASS ftype,
+	bool verbose
+)
+{
+	CTP node;
+//	size_t J  = 5;
+	size_t lex = 0;
+	node = n1;
+	WRITELN (OUTPUT,tag);
+	if (node==NULL)
+	{
+		WRITELN(OUTPUT,"TREE = NULL");
+	return;
+	}
+//	WRITE(OUTPUT,"TREE(");
+	if (node->LLINK()!=NULL)
+	{
+		printnode (node->LLINK(),lex,ftype,verbose);	
+	}
+	else if (verbose==true)
+		WRITE(OUTPUT,"nil,");
+
+	printleaf (node,ftype);
+//	WRITE (OUTPUT,"\"",node->NAME,"\",");
+	if (node->RLINK()!=NULL)
+	{
+		printnode (node->RLINK(),lex,ftype,verbose);	
+	}
+	else if (verbose==true)
+	{
+		WRITE(OUTPUT,"nil,");
+		WRITELN(OUTPUT,")");
+	}
 }
 
 void treesearch::printtree1(const CTP &n1)

@@ -60,6 +60,21 @@ namespace chartypes
 	extern SETOFCHAR operat;
 }
 
+class SETOFPRIMES: public SET<65536> 
+{
+public:
+	SETOFPRIMES();
+	SETOFPRIMES(const SET&);
+	SETOFPRIMES(size_t,...);
+	SETOFPRIMES &operator = (const SETOFSYS&);
+	SETOFPRIMES operator + (const SETOFSYS&) const;
+	SETOFPRIMES &operator += (int);
+	SETOFPRIMES &operator -= (int);
+	SETOFPRIMES operator + (int) const;
+	static SETOFPRIMES range (int low, int high);
+	void debug_list (char *str="") const;
+};
+
 class SETOFSYS: public SET<128> 
 {
 public:
